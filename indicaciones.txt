@@ -1,0 +1,30 @@
+Cambios realizados:
+
+1. Se configuro el settings
+2. creacion de apps
+3. app autenticacion (por realizar)
+4. app mascota
+5. estructura - cada app tiene su carpeta template donde iran los templates de cada vista
+6. paleta de colores - en static/js/paleta.js se detallan los colores a usar en los templates
+7. en la ruta localhost:8000/autenticacion/paleta/ - pueden visualizar los colores 
+8. Creacion del modelo User vamos a trabajar por rol en este caso admin, veterinario y dueño
+
+POR REALIZAR:
+Login, register y dashboard
+
+1. Login (Villavicencio)
+por correo y contraseña
+para el login usen el logotipo que se creo igual para el registro
+
+2. registro (Guevara)
+El registro el rol por default es (dueños) con sus demas datos
+Los datos del veterinario no se piden en el registro es un modulo aparte del registro de veterinarios
+Aplicar validacion de cedula, la vaidacion se encuentra en apps/autenticacion/util/validar_cedula.py
+
+3. dashboard
+El dashboard puede estar vacio, ya que no podemos colocar datos aun
+
+4. Gestion de usuarios
+Aqui se va a poder ver,crear,editar y eliminar usuarios de todo tipo/rol
+
+RECUERDEN REALIZAR LOS TEMPLATES TOTALMENTE RESPONSIVOS

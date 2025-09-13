@@ -1,0 +1,49 @@
+<nav class="bg-primary-600 shadow-md border-b border-primary-700 sticky top-0 z-50 text-white">
+  <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      
+      <!-- Logo y Hamburguesa -->
+      <div class="flex items-center space-x-4">
+        <!-- Botón hamburguesa (visible en todos los tamaños) -->
+        <button id="menu-toggle" class="p-2 rounded-lg hover:bg-primary-700 transition-colors text-white focus:outline-none focus:ring-2 focus:ring-secondary-400/30">
+          <i class="fas fa-bars text-lg"></i>
+        </button>
+        
+        <!-- Logo -->
+        <div class="flex items-center">
+          <span class="font-bold text-xl">Pet<span class="text-accent-400">Face</span> ID</span>
+        </div>
+        
+      </div>
+      
+      <div>
+        <!-- Acciones del usuario -->
+        <div class="ml-2 md:ml-3 lg:ml-4">
+          <a href="#" class="group hover:bg-primary-700 py-1 px-2 rounded-lg transition-colors" title="Ver mi perfil">
+            <div class="flex items-center gap-3">
+              {% if request.user.is_authenticated %}
+                <div class="w-8 h-8 bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg">
+                  <span class="text-white font-medium text-sm">{{ request.user.username|slice:":2"|upper }}</span>
+                </div>
+                <div class="hidden lg:block">
+                  <p class="text-sm font-medium text-white">{{ request.user.get_full_name|default:request.user.username }}</p>
+                  <p class="text-xs text-primary-100">Sesión activa</p>
+                </div>
+              {% else %}
+                <div class="w-8 h-8 bg-primary-700 rounded-full flex items-center justify-center group-hover:bg-primary-800 transition-colors shadow-md">
+                  <i class="fas fa-user text-primary-200 group-hover:text-white"></i>
+                </div>
+                <div class="hidden lg:block">
+                  <p class="text-sm font-medium text-white">Invitado</p>
+                  <p class="text-xs text-primary-200">No autenticado</p>
+                </div>
+              {% endif %}
+            </div>
+          </a>
+        </div>
+
+      </div>
+      
+    </div>
+  </div>
+</nav>
