@@ -1,0 +1,211 @@
+{% extends "generic/list_mixin.html" %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block card_statistics %}
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {% include 'includes/card_statistics.html' with icon="fas fa-users" icon_bg="bg-blue-100" icon_color="text-blue-500" titulo_estadistica="Total Usuarios" description=Total_users %}
+        {% include 'includes/card_statistics.html' with icon="fas fa-user-check" icon_bg="bg-green-100" icon_color="text-green-500" titulo_estadistica="Usuarios Activos" description=admin_users %}
+        {% include 'includes/card_statistics.html' with icon="fas fa-user-shield" icon_bg="bg-purple-100" icon_color="text-purple-500" titulo_estadistica="Administradores" description=veterinario_users %}
+        {% include 'includes/card_statistics.html' with icon="fas fa-user-md" icon_bg="bg-primary-100" icon_color="text-primary-500" titulo_estadistica="Veterinarios" description=dueno_users %}
+        {% include 'includes/card_statistics.html' with icon="fas fa-user" icon_bg="bg-accent-100" icon_color="text-accent-500" titulo_estadistica="Dueños" description=dueno_users %}
+    </div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{% url 'auth:user_create' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 border border-primary-500 rounded-lg hover:from-primary-600 hover:to-primary-700 hover:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-md hover:shadow-lg transition-all duration-200">
+    <i class="fas fa-plus-circle mr-2"></i>
+    <span>Nuevo Usuario</span>
+</a>
+{% endblock %}
+
+{% block card_info %}
+<!-- Pestañas de navegación (filtros de rol) -->
+<div class="tabs-container mb-6">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="flex flex-wrap text-sm font-medium text-center border-b border-gray-200">
+            <a href="{% url 'auth:users_list' %}" class="inline-block p-4 w-full sm:w-auto {% if not role_filter %}text-primary-600 border-b-2 border-primary-500 active{% else %}text-gray-500 hover:text-primary-600 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fas fa-users mr-2"></i>
+                <span>Todos los Usuarios</span>
+            </a>
+            <a href="{% url 'auth:users_list' %}?role=ADMIN" class="inline-block p-4 w-full sm:w-auto {% if role_filter == 'ADMIN' %}text-primary-600 border-b-2 border-primary-500 active{% else %}text-gray-500 hover:text-primary-600 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fas fa-user-shield mr-2"></i>
+                <span>Administradores</span>
+            </a>
+            <a href="{% url 'auth:users_list' %}?role=VET" class="inline-block p-4 w-full sm:w-auto {% if role_filter == 'VET' %}text-primary-600 border-b-2 border-primary-500 active{% else %}text-gray-500 hover:text-primary-600 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fas fa-user-md mr-2"></i>
+                <span>Veterinarios</span>
+            </a>
+            <a href="{% url 'auth:users_list' %}?role=OWNER" class="inline-block p-4 w-full sm:w-auto {% if role_filter == 'OWNER' %}text-primary-600 border-b-2 border-primary-500 active{% else %}text-gray-500 hover:text-primary-600 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fas fa-user mr-2"></i>
+                <span>Dueños</span>
+            </a>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block table_header %}
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+    Usuario
+</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+    Rol
+</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+    Correo
+</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+    Cédula
+</th>
+<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+    Estado
+</th>
+<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+    Acciones
+</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if users %}
+        {% for user in users %}
+            <tr>
+                <!-- Usuario - visible en todas las pantallas -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <img class="h-10 w-10 rounded-full object-cover" src="{{ user.get_image }}" alt="{{ user.username }}">
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ user.get_full_name|default:user.username }}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                @{{ user.username|default:'Sin registrar' }}
+                            </div>
+                            <!-- Información adicional visible solo en móvil -->
+                            <div class="md:hidden mt-2 flex flex-col space-y-1">
+                                <!-- Rol en móvil -->
+                                {% if user.is_admin %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 w-fit">
+                                        <i class="fas fa-user-shield mr-1"></i> Admin
+                                    </span>
+                                {% elif user.is_vet %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary-100 text-primary-800 w-fit">
+                                        <i class="fas fa-user-md mr-1"></i> Vet
+                                    </span>
+                                {% elif user.is_owner %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-100 text-accent-800 w-fit">
+                                        <i class="fas fa-user mr-1"></i> Dueño
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Estado en móvil -->
+                                <div class="sm:hidden">
+                                    {% if user.is_active %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-100 text-success-800 w-fit">
+                                            <i class="fas fa-check-circle mr-1"></i> Activo
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-100 text-danger-800 w-fit">
+                                            <i class="fas fa-times-circle mr-1"></i> Inactivo
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                
+                <!-- Rol - oculto en móvil -->
+                <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                    {% if user.is_admin %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                            <i class="fas fa-user-shield mr-1"></i> Administrador
+                        </span>
+                    {% elif user.is_vet %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary-100 text-primary-800">
+                            <i class="fas fa-user-md mr-1"></i> Veterinario
+                        </span>
+                    {% elif user.is_owner %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-100 text-accent-800">
+                            <i class="fas fa-user mr-1"></i> Dueño
+                        </span>
+                    {% endif %}
+                </td>
+                
+                <!-- Correo - oculto en móvil -->
+                <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                    <div class="text-sm text-gray-900">{{ user.email|default:'Sin registrar' }}</div>
+                </td>
+                
+                <!-- Cédula - oculto en móvil y tablet pequeña -->
+                <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                    <div class="text-sm text-gray-900">{{ user.dni|default:'Sin registrar' }}</div>
+                </td>
+                
+                <!-- Estado - oculto en móvil pequeño -->
+                <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                    {% if user.is_active %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-100 text-success-800">
+                            Activo
+                        </span>
+                    {% else %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-100 text-danger-800">
+                            Inactivo
+                        </span>
+                    {% endif %}
+                </td>
+                
+                <!-- Acciones -->
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end items-center gap-1">
+                        <!-- Botón detalles -->
+                        <a href="{% url 'auth:user_detail' user.id %}" class="no-underline" style="all:unset;">
+                            {% include "components/button.html" with btn_type="detalles" id="btn-detalles-"|add:user.id|slugify title="Ver detalles" %}
+                        </a>
+
+                        <!-- Botón editar -->
+                        <a href="{% url 'auth:user_edit' user.id %}" class="no-underline" style="all:unset;">
+                            {% include "components/button.html" with btn_type="editar" id="btn-editar-"|add:user.id|slugify title="Editar" %}
+                        </a>
+                        
+                        <!-- Botón contraseña -->
+                        <a href="{% url 'auth:user_password_change' user.id %}" class="no-underline" style="all:unset;">
+                            {% include "components/button.html" with btn_type="password" id="btn-password-"|add:user.id|slugify title="Cambiar contraseña" %}
+                        </a>
+
+                        <!-- Botón eliminar -->
+                        <a href="{% url 'auth:user_delete' user.id %}" class="btn btn-delete" title="Eliminar" style="all:unset;"
+                            data-title="¿Estás seguro de que deseas eliminar este usuario?"
+                            data-details='[
+                                {"icon": "fas fa-user", "label": "Usuario", "value": "{{ user.username }}"},
+                                {"icon": "fas fa-envelope", "label": "Email", "value": "{{ user.email|default:"No especificado" }}"},
+                                {"icon": "fas fa-id-card", "label": "Nombre", "value": "{% if user.first_name and user.last_name %}{{ user.first_name }} {{ user.last_name }}{% else %}No especificado{% endif %}"}
+                            ]'>
+                                <i class="fas fa-trash text-danger-500 hover:text-danger-700"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="6" class="px-6 py-10 text-center">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="rounded-full bg-gray-100 p-3 mb-4">
+                        <i class="fas fa-users text-2xl text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm">No hay usuarios que coincidan con los criterios de búsqueda.</p>
+                    {% if search_query or role_filter %}
+                        <a href="{% url 'auth:users_list' %}" class="mt-2 text-primary-600 hover:text-primary-800 text-sm">
+                            <i class="fas fa-times-circle mr-1"></i> Limpiar filtros
+                        </a>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    {% endif %}
+{% endblock %}
