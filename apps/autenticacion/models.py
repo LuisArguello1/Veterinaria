@@ -10,7 +10,7 @@ class User(AbstractUser):
         VET = 'VET', _('Veterinario')
     
     # Campos adicionales
-    dni = models.CharField(max_length=10, unique=True, verbose_name="Cédula")
+    dni = models.CharField(max_length=10, unique=True, null=True, blank=True, verbose_name="Cédula")
     image = models.ImageField(upload_to='users/', null=True, blank=True, verbose_name="Foto de perfil")
     direction = models.CharField(max_length=255, null=True, blank=True, verbose_name="Dirección")
     phone = models.CharField(max_length=15, null=True, blank=True, verbose_name="Teléfono")

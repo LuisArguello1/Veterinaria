@@ -32,6 +32,12 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Configuración rápida para desarrollo - no apta para producción
 # Ver https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# Configuración de autenticación
+AUTHENTICATION_BACKENDS = [
+    'apps.autenticacion.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # ADVERTENCIA DE SEGURIDAD: ¡mantén la clave secreta usada en producción en secreto!
 SECRET_KEY = env('SECRET_KEY')
 
@@ -181,8 +187,9 @@ AUTH_USER_MODEL = 'autenticacion.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# LOGIN_URL = '/signin/'
-# LOGIN_REDIRECT_URL = '/security/'
+LOGIN_URL = 'auth:login'
+LOGIN_REDIRECT_URL = 'auth:Dashboard'  # Redirige al dashboard después del login
+LOGOUT_REDIRECT_URL = 'auth:login'     # Redirige al login después del logout
 
 # Configuracion de guardado de la imagenes y videos en azure
 # STORAGES = {
