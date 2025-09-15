@@ -1,1 +1,38 @@
-#Falta configurar
+# Base de datos SQLite
+*.sqlite3
+db.sqlite3
+
+# Carpeta Veterinaria
+/Veterinaria/
+
+# Python
+*.py[cod]
+__pycache__/
+*.so
+.Python
+*.pyc
+
+# Entorno virtual
+.env
+.venv
+env/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de medios y estáticos recopilados
+media/
+staticfiles/
+
+# Archivos de migración
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# Archivos de configuración local
+local_settings.py
