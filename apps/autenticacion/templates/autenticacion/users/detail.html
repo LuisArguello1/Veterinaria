@@ -1,0 +1,213 @@
+{% extends "generic/detail_mixin.html" %}
+{% load static %}
+
+{% block title %}Detalle de Usuario{% endblock %}
+
+{% block detail_content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Columna 1: Información básica y foto -->
+    <div class="md:col-span-1">
+        <div class="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-200">
+            <!-- Foto de perfil -->
+            <div class="w-24 h-24 mb-4">
+                {% if user_obj.image %}
+                    <img src="{{ user_obj.get_image }}" alt="{{ user_obj.username }}" class="rounded-full w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-2xl text-white font-bold">
+                        {{ user_obj.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Nombre y usuario -->
+            <h2 class="text-lg font-bold text-gray-900">{{ user_obj.get_full_name }}</h2>
+            <p class="text-sm text-gray-600">@{{ user_obj.username }}</p>
+            
+            <!-- Rol -->
+            <div class="mt-2">
+                {% if user_obj.is_admin %}
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                        <i class="fas fa-user-shield mr-1"></i> Administrador
+                    </span>
+                {% elif user_obj.is_vet %}
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary-100 text-primary-800">
+                        <i class="fas fa-user-md mr-1"></i> Veterinario
+                    </span>
+                {% elif user_obj.is_owner %}
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-100 text-accent-800">
+                        <i class="fas fa-user mr-1"></i> Dueño
+                    </span>
+                {% endif %}
+            </div>
+            
+            <!-- Estado -->
+            <div class="mt-2">
+                {% if user_obj.is_active %}
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-success-100 text-success-800">
+                        <i class="fas fa-check-circle mr-1"></i> Activo
+                    </span>
+                {% else %}
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-danger-100 text-danger-800">
+                        <i class="fas fa-times-circle mr-1"></i> Inactivo
+                    </span>
+                {% endif %}
+            </div>
+            
+            <!-- Fecha de registro -->
+            <div class="mt-4 text-center">
+                <p class="text-xs text-gray-500">Miembro desde:</p>
+                <p class="text-sm text-gray-700">{{ user_obj.date_joined|date:"d/m/Y" }}</p>
+            </div>
+            
+            <!-- Último acceso -->
+            <div class="mt-1 text-center">
+                <p class="text-xs text-gray-500">Último acceso:</p>
+                <p class="text-sm text-gray-700">{{ user_obj.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Columna 2: Información de contacto y detalle -->
+    <div class="md:col-span-2">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Información de contacto -->
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        <i class="fas fa-address-card mr-2 text-primary-500"></i>
+                        Información de Contacto
+                    </h3>
+                </div>
+                
+                <div class="p-4">
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
+                        <!-- Correo electrónico -->
+                        <div class="md:col-span-2">
+                            <dt class="text-xs font-medium text-gray-500">Correo electrónico</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                                    <span>{{ user_obj.email }}</span>
+                                </div>
+                            </dd>
+                        </div>
+                        
+                        <!-- Cédula -->
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500">Cédula</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-id-card text-gray-400 mr-2"></i>
+                                    <span>{{ user_obj.dni }}</span>
+                                </div>
+                            </dd>
+                        </div>
+                        
+                        <!-- Teléfono -->
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500">Teléfono</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone text-gray-400 mr-2"></i>
+                                    <span>{{ user_obj.phone|default:"No especificado" }}</span>
+                                </div>
+                            </dd>
+                        </div>
+                        
+                        <!-- Dirección -->
+                        <div class="md:col-span-2">
+                            <dt class="text-xs font-medium text-gray-500">Dirección</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                                    <span>{{ user_obj.direction|default:"No especificada" }}</span>
+                                </div>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+            
+            <!-- Información específica según el rol -->
+            {% if user_obj.is_vet %}
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        <i class="fas fa-user-md mr-2 text-primary-500"></i>
+                        Información de Veterinario
+                    </h3>
+                </div>
+                
+                <div class="p-4">
+                    <dl class="grid grid-cols-1 gap-y-4">
+                        <!-- Especialización -->
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500">Especialización</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ user_obj.specialization|default:"No especificada" }}
+                            </dd>
+                        </div>
+                        
+                        <!-- Número de licencia -->
+                        <div>
+                            <dt class="text-xs font-medium text-gray-500">Número de licencia</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ user_obj.license_number|default:"No especificado" }}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Permisos del sistema (solo para administradores) -->
+            {% if user_obj.is_staff or user_obj.is_superuser %}
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        <i class="fas fa-shield-alt mr-2 text-purple-500"></i>
+                        Permisos del Sistema
+                    </h3>
+                </div>
+                
+                <div class="p-4">
+                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-5 w-5">
+                                {% if user_obj.is_staff %}
+                                    <i class="fas fa-check-circle text-success-500"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-700">Acceso al panel de administración</p>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-5 w-5">
+                                {% if user_obj.is_superuser %}
+                                    <i class="fas fa-check-circle text-success-500"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-700">Superusuario</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block detail_actions %}
+<a href="{% url 'auth:user_edit' user_obj.id %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-secondary-500 border border-transparent rounded-lg hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 shadow-md transition-colors">
+    <i class="fas fa-edit mr-2"></i>
+    Editar Usuario
+</a>
+{% endblock %}

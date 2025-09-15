@@ -28,3 +28,8 @@ El dashboard puede estar vacio, ya que no podemos colocar datos aun
 Aqui se va a poder ver,crear,editar y eliminar usuarios de todo tipo/rol
 
 RECUERDEN REALIZAR LOS TEMPLATES TOTALMENTE RESPONSIVOS
+
+
+CAMBIOS REALIZADOS
+1. Se creo la gestion de usuarios donde se puede crear, editar, eliminar, cambiar contraseña estructura
+ingresar diferentes roles de usuarios como ADMIN, OWNER, VET
