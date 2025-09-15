@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PetFace ID{% endblock %}</title>
+
+    <!-- Para visualizar los icono de font Awesome (fas fa) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS base y mensajes -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/message.css' %}">
+
+    <!-- Agregar extras al head -->
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-neutral-50">
+    <!-- Incluir sistema de alertas/mensajes -->
+    {% include "fragments/alerts.html" %}
+
+    <!-- Contenido principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Scripts base -->
+    {% include "partials/scripts.html" %}
+    
+    <!-- Scripts adicionales -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
