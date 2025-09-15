@@ -29,7 +29,7 @@
           <p class="text-xs text-primary-200 truncate">No has iniciado sesión</p>
         </div>
       {% endif %}
-      <a href="#" class="p-2 rounded-md hover:bg-primary-700 transition-colors text-primary-200 hover:text-white" title="Cerrar sesión">
+      <a href="{% url 'auth:logout' %}" class="p-2 rounded-md hover:bg-primary-700 transition-colors text-primary-200 hover:text-white" title="Cerrar sesión">
         <i class="fas fa-sign-out-alt"></i>
       </a>
     </div>
