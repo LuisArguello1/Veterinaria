@@ -8,7 +8,6 @@ Sistema de gestión para clínicas veterinarias que permite administrar usuarios
 - [Características](#-características)
 - [Cómo Colaborar](#-cómo-colaborar-en-el-proyecto)
 - [Convenciones](#-convenciones)
-- [Tecnologías](#-tecnologías)
 
 ## 🚀 Instalación
 
@@ -128,8 +127,4 @@ git commit -m "fix: error en validación de cédula"
 
 
 ---
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para más detalles.
 
