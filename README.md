@@ -1,7 +1,5 @@
 # PET FACE ID - Sistema de Gestión Veterinaria
 
-![PET FACE ID Logo](static/img/petfaceid_logo.png)
-
 Sistema de gestión para clínicas veterinarias que permite administrar usuarios, mascotas, citas y más.
 
 ## 📋 Contenido
@@ -21,7 +19,8 @@ cd Veterinaria
 
 # Crear entorno virtual
 python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+cd venv/scripts
+activate
 
 # Instalar dependencias
 pip install -r requirements.txt
