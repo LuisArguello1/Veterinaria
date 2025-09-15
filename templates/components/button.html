@@ -1,0 +1,39 @@
+{% if btn_type == "crear" %}
+    <a href="{{ url|default:'#' }}" class="no-underline" style="all:unset;">
+        <button id="{{ id }}" type="submit" class="btn btn-success text-sm px-2 py-1" title="{{ title|default:'Crear' }}">
+            <i class="fa fa-plus text-sm"></i><span class="hidden sm:inline ml-1">Crear</span>
+        </button>
+    </a>
+{% elif btn_type == "editar" %}
+    <button id="{{ id }}" type="submit" class="btn btn-warning text-sm px-1.5 py-1" title="{{ title|default:'Editar' }}">
+        <i class="fa fa-edit text-sm"></i>
+    </button>
+{% elif btn_type == "detalles" %}
+    <button id="{{ id }}" type="submit" class="btn btn-info text-sm px-1.5 py-1" title="{{ title|default:'Detalles' }}">
+        <i class="fa fa-info-circle text-sm"></i>
+    </button>
+{% elif btn_type == "password" %}
+    <button id="{{ id }}" type="submit" class="btn btn-password text-sm px-1.5 py-1" title="{{ title|default:'Cambiar contraseña' }}">
+        <i class="fa fa-key text-sm"></i>
+    </button>
+{% elif btn_type == "buscar" %}
+    <button id="{{ id }}" type="submit" class="btn btn-search text-sm px-1.5 py-1" title="{{ title|default:'Buscar' }}">
+        <i class="fa fa-search text-sm"></i>
+    </button>
+{% elif btn_type == "recargar" %}
+    <button id="{{ id }}" type="submit" class="btn btn-recargar text-sm px-2 py-1" title="{{ title|default:'Recargar' }}">
+        <i class="fa fa-sync text-sm"></i><span class="hidden sm:inline ml-1">Recargar</span>
+    </button>
+{% else %}
+    <button 
+        id="{{ id }}" 
+        type="{{ type|default:'submit' }}" 
+        class="btn {{ classes|default:'btn-secondary' }} text-sm px-2 py-1" 
+        title="{{ title|default:'Guardar' }}"
+        >
+        <i class="{{ icon|default:'fa fa-save' }} text-sm"></i>
+        <span class="hidden sm:inline ml-1">
+            {{ label|default:"" }}
+        </span>
+    </button>
+{% endif %}
