@@ -1,6 +1,7 @@
 from django.urls import path
 from apps.autenticacion.views.temp import paleta
 from apps.autenticacion.views.dashboard import Dashboard
+from apps.autenticacion.views.login import LoginView, LogoutView
 from apps.autenticacion.views.profile import ProfileView, ProfileUpdateView
 from apps.autenticacion.views.users import (
     # Vistas generales de usuarios
@@ -12,8 +13,12 @@ from apps.autenticacion.views.users import (
 app_name='auth'
 
 urlpatterns = [
+  # Autenticación
+  path('', LoginView.as_view(), name='login'),  # Login como página principal
+  path('logout/', LogoutView.as_view(), name='logout'),
+  
   # Dashboard principal
-  path('', Dashboard, name="Dashboard"),
+  path('dashboard/', Dashboard, name="Dashboard"),
   path('paleta/', paleta, name="paleta"),
     
   # Perfil de usuario

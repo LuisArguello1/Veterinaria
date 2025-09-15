@@ -29,6 +29,9 @@
                   <p class="text-sm font-medium text-white">{{ request.user.get_full_name|default:request.user.username }}</p>
                   <p class="text-xs text-primary-100">Sesión activa</p>
                 </div>
+                <a href="{% url 'auth:logout' %}" class="ml-3 p-2 rounded-md hover:bg-primary-700 transition-colors text-primary-200 hover:text-white" title="Cerrar sesión">
+                  <i class="fas fa-sign-out-alt"></i>
+                </a>
               {% else %}
                 <div class="w-8 h-8 bg-primary-700 rounded-full flex items-center justify-center group-hover:bg-primary-800 transition-colors shadow-md">
                   <i class="fas fa-user text-primary-200 group-hover:text-white"></i>
