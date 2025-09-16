@@ -300,3 +300,14 @@ class UserPasswordChangeForm(forms.Form):
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password2
 
+class RegisterForm(UserCreateForm, BaseUserForm):
+    class Meta(BaseUserForm.Meta):
+        fields = [
+            'username', 'email', 'first_name', 'last_name', 'dni',
+            'phone', 'direction', 'image', 'password1', 'password2', 'role'
+        ]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].initial = User.Role.OWNER
+        self.fields['role'].widget = forms.HiddenInput()

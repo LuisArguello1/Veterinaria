@@ -9,6 +9,7 @@ from apps.autenticacion.views.users import (
     # Vistas para cambio de contraseña
     ChangePasswordView
 )
+from apps.autenticacion.views.register import RegisterView
 
 app_name='auth'
 
@@ -24,6 +25,8 @@ urlpatterns = [
   # Perfil de usuario
   path('profile/', ProfileView.as_view(), name='profile'),
   path('profile/edit/', ProfileUpdateView.as_view(), name='profile_edit'),
+  # Registro público
+  path('register/', RegisterView.as_view(), name='register'),
   path('password/change/', ChangePasswordView.as_view(), name='password_change'),
     
   # Gestión de usuarios (CRUD)
