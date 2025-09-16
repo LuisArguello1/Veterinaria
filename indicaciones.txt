@@ -33,3 +33,7 @@ RECUERDEN REALIZAR LOS TEMPLATES TOTALMENTE RESPONSIVOS
 CAMBIOS REALIZADOS
 1. Se creo la gestion de usuarios donde se puede crear, editar, eliminar, cambiar contraseña estructura
 ingresar diferentes roles de usuarios como ADMIN, OWNER, VET
+
+2.Santiago Guevara(Register)
+acutalice el users_forms.py para ingresar los datos he los respectivos archivos como register.py y 
+sus html ademas le he asignado una imagen decoratriva al ingresar la contraseña para decorar
