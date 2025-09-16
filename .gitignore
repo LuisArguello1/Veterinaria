@@ -13,7 +13,6 @@ __pycache__/
 *.pyc
 
 # Entorno virtual
-.env
 .venv
 env/
 venv/
