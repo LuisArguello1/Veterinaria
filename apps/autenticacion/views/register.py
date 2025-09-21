@@ -1,3 +1,4 @@
+# views.py
 from django.views.generic import FormView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -11,7 +12,14 @@ class RegisterView(FormView):
     """Vista para el registro de nuevos usuarios (dueños de mascotas)"""
     template_name = 'autenticacion/auth/register.html'
     form_class = RegisterForm
-    success_url = reverse_lazy('auth:Dashboard')
+    # Si tu mensaje dice "Por favor inicia sesión", redirige al login:
+    success_url = reverse_lazy('auth:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Si ya está autenticado, no debe ver /register
+        if request.user.is_authenticated:
+            return redirect('dashboard')  # usa el name real de tu dashboard
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         """Procesa el formulario válido y crea el usuario"""
