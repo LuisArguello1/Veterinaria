@@ -1,0 +1,290 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block title %}Registro de Usuario{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-5xl flex flex-col md:flex-row">
+        <!-- Información y beneficios - Lado izquierdo -->
+        <div class="w-full md:w-5/12 bg-black text-white flex flex-col justify-between p-8 md:p-12">
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+                <div class="w-64 h-auto px-2">
+                    <img class="w-full h-auto object-contain" src="{% static 'img/logo_principal.png' %}" alt="PET FACE ID">
+                </div>
+            </div>
+            
+            <h2 class="text-3xl font-bold mb-6 text-center">Sistema de Identificación Facial para Mascotas</h2>
+            
+            <div class="space-y-5">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-1">
+                        <i class="fas fa-id-card text-accent-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="font-semibold text-lg">Registro e identificación</h4>
+                        <p class="text-gray-400">Registra tus mascotas y accede a identificación facial automática.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-1">
+                        <i class="fas fa-paw text-accent-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="font-semibold text-lg">Perfil completo de mascota</h4>
+                        <p class="text-gray-400">Clasificación automática de etapa de vida y estado corporal de tu mascota.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-1">
+                        <i class="fas fa-qrcode text-accent-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="font-semibold text-lg">Carnet digital</h4>
+                        <p class="text-gray-400">Genera carnets digitales con código QR único para tus mascotas.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-1">
+                        <i class="fas fa-search-location text-accent-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="font-semibold text-lg">Reporta mascotas perdidas</h4>
+                        <p class="text-gray-400">Marca tu mascota como "perdida" para facilitar su búsqueda y recuperación.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-800">
+                <p class="text-sm">¿Ya tienes una cuenta?</p>
+                <a href="{% url 'auth:login' %}" class="mt-2 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-900 bg-white hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-900 focus:ring-white transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+        
+        <!-- Formulario de registro - Lado derecho -->
+        <div class="w-full md:w-7/12 p-8 md:p-12">
+            <div class="max-w-md mx-auto">
+                <h2 class="text-3xl font-bold text-dark-800 mb-1">
+                    Crear tu cuenta
+                </h2>
+                <p class="text-gray-500 mb-8">
+                    Completa tus datos personales para registrarte como dueño de mascota
+                </p>
+                
+                <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="rounded-md bg-danger-50 border border-danger-200 p-4 mb-6">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-danger-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-danger-800">
+                                        Se encontraron los siguientes errores:
+                                    </h3>
+                                    <div class="mt-2 text-sm text-danger-600">
+                                        <ul class="list-disc pl-5 space-y-1">
+                                            {% for error in form.non_field_errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Información personal básica -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Apellido
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nombre de usuario -->
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre de usuario
+                        </label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user-tag text-gray-400"></i>
+                            </div>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <p class="mt-1 text-sm text-danger-600">{{ form.username.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Correo electrónico -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Correo electrónico <span class="text-secondary-600 text-xs">(será tu nombre de usuario para iniciar sesión)</span>
+                        </label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <p class="mt-1 text-sm text-danger-600">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Cédula y teléfono -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="{{ form.dni.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Cédula
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-id-card text-gray-400"></i>
+                                </div>
+                                {{ form.dni }}
+                                {% if form.dni.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.dni.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Teléfono
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                </div>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dirección -->
+                    <div>
+                        <label for="{{ form.direction.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección
+                        </label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-home text-gray-400"></i>
+                            </div>
+                            {{ form.direction }}
+                            {% if form.direction.errors %}
+                                <p class="mt-1 text-sm text-danger-600">{{ form.direction.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Foto -->
+                    <div>
+                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Foto de perfil (opcional)
+                        </label>
+                        <div class="mt-1">
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <p class="mt-1 text-sm text-danger-600">{{ form.image.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-5 mt-2">
+                        <h3 class="text-lg font-medium text-gray-700">Credenciales de acceso</h3>
+                        <p class="text-sm text-gray-500 mb-4">Estas credenciales serán utilizadas para iniciar sesión en el sistema.</p>
+                    </div>
+
+                    <!-- Contraseñas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Contraseña
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.password1.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Confirmar contraseña
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <p class="mt-1 text-sm text-danger-600">{{ form.password2.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campo rol oculto -->
+                    {{ form.role }}
+                    
+                    <!-- Botón de registro -->
+                    <div>
+                        <button type="submit" 
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white 
+                                       bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-500 hover:to-secondary-600 
+                                       focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 
+                                       shadow-lg shadow-secondary-600/30 transition-all duration-200">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Crear cuenta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

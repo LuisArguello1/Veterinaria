@@ -37,3 +37,12 @@ ingresar diferentes roles de usuarios como ADMIN, OWNER, VET
 2.Santiago Guevara(Register)
 acutalice el users_forms.py para ingresar los datos he los respectivos archivos como register.py y 
 sus html ademas le he asignado una imagen decoratriva al ingresar la contraseña para decorar
+
+3. Luis Arguello
+-. Mejora de estilos en el registro
+-. Realizacion de condiciones en el frontend para tipos de roles para dividir funcionalidades segun el tipo de rol
+-. Realizacion del modulo de <mi mascota> solo frontend todo responsive
+    - pestañas de detalle de mascota (falta de terminar)
+    - pestaña resgistro de mascota mediante opencv y datos relacionados (falta terminar) - etapas de vida y estado corporal
+    - pestaña biometria facial mediante subida de imagenes para autoentrenar el modelo y pueda reconocer espoecificamente a ese canino
+

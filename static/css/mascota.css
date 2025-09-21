@@ -1,0 +1,907 @@
+/* Estilos profesionales para el módulo de mascotas */
+/* Diseño limpio y moderno con uso controlado de colores */
+
+/* ========== PESTAÑAS PROFESIONALES ========== */
+.tab-btn {
+    position: relative;
+    padding: 1rem 2rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.tab-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(45, 149, 116, 0.05) 0%, rgba(30, 143, 255, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tab-btn:hover::before {
+    opacity: 1;
+}
+
+.tab-btn:hover {
+    color: #2d9574;
+    transform: translateY(-1px);
+}
+
+.tab-btn.active {
+    color: #2d9574;
+    border-bottom-color: #2d9574;
+    background: linear-gradient(135deg, rgba(45, 149, 116, 0.08) 0%, rgba(45, 149, 116, 0.12) 100%);
+}
+
+.tab-btn.active::before {
+    opacity: 1;
+}
+
+/* Contenedor de pestañas */
+.border-b {
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== CONTENIDO DE PESTAÑAS ========== */
+.tab-content {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-content-container {
+    background: #fafafa;
+    min-height: 600px;
+}
+
+/* ========== TARJETAS PROFESIONALES ========== */
+.card-professional {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.card-professional:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+
+/* ========== ICONOS Y COLORES CONTROLADOS ========== */
+.icon-primary {
+    color: #2d9574;
+}
+
+.icon-secondary {
+    color: #1e8fff;
+}
+
+.icon-accent {
+    color: #ff7b1c;
+}
+
+.icon-success {
+    color: #22c55e;
+}
+
+.icon-warning {
+    color: #f59e0b;
+}
+
+.icon-danger {
+    color: #f43f5e;
+}
+
+/* Fondos sutiles para iconos */
+.icon-bg-primary {
+    background: rgba(45, 149, 116, 0.1);
+    color: #2d9574;
+}
+
+.icon-bg-secondary {
+    background: rgba(30, 143, 255, 0.1);
+    color: #1e8fff;
+}
+
+.icon-bg-accent {
+    background: rgba(255, 123, 28, 0.1);
+    color: #ff7b1c;
+}
+
+.icon-bg-success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.icon-bg-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.icon-bg-danger {
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+}
+
+/* ========== BOTONES PROFESIONALES ========== */
+.btn-primary {
+    background: #2d9574;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(45, 149, 116, 0.2);
+}
+
+.btn-primary:hover {
+    background: #257a5f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 149, 116, 0.3);
+}
+
+.btn-secondary {
+    background: #1e8fff;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(30, 143, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: #1a75eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 143, 255, 0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #64748b;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+/* ========== TIPOGRAFÍA PROFESIONAL ========== */
+.text-title {
+    color: #1e293b;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.text-subtitle {
+    color: #475569;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.text-body {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.text-caption {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* ========== ESPACIADO Y LAYOUT ========== */
+.section-spacing {
+    padding: 2rem 0;
+}
+
+.content-max-width {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ========== ESTADOS Y BADGES ========== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #166534;
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+}
+
+.status-pending {
+    background: rgba(30, 143, 255, 0.1);
+    color: #1d4ed8;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 768px) {
+    .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .card-professional {
+        padding: 1rem;
+    }
+    
+    .section-spacing {
+        padding: 1rem 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .tab-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ========== ELEMENTOS ESPECÍFICOS ========== */
+.mascota-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.mascota-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.data-row {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-label {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.data-value {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* ========== ANIMACIONES SUTILES ========== */
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Contenido de las pestañas */
+.tab-content {
+    transition: all 0.4s ease-in-out;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 0 0 1rem 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+/* Contenedor principal de pestañas */
+.tab-content-container {
+    background: linear-gradient(135deg, #f0f9f6 0%, #ffffff 50%, #eff9ff 100%);
+    border-radius: 0 0 1rem 1rem;
+    border: 1px solid #dcf0e8;
+    border-top: none;
+}
+
+/* Estilos para el contenedor del slider biométrico */
+.biometric-slider-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+    background: linear-gradient(135deg, #eff9ff 0%, #f0f9f6 100%);
+    border-radius: 1rem;
+}
+
+.biometric-slider {
+    transition: all 0.5s ease-in-out;
+}
+
+.biometric-slide {
+    opacity: 1;
+    transition: all 0.4s ease-in-out;
+    min-height: 350px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #dcf0e8;
+}
+
+.biometric-slide.hidden {
+    opacity: 0;
+    display: none;
+    pointer-events: none;
+}
+
+/* Estilos para los indicadores del slider */
+.slide-indicator {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #d4d4d4 0%, #a3a3a3 100%);
+}
+
+.slide-indicator:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #85ccb3 0%, #4db08e 100%);
+}
+
+.slide-indicator.active {
+    background: linear-gradient(135deg, #2d9574 0%, #257a5f 100%);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(45, 149, 116, 0.4);
+}
+
+/* Estilos para botones biométricos */
+.biometric-prev,
+.biometric-next {
+    transition: all 0.3s ease-in-out;
+    min-width: 120px;
+    background: linear-gradient(135deg, #1e8fff 0%, #1a75eb 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(30, 143, 255, 0.3);
+}
+
+.biometric-prev:disabled {
+    cursor: not-allowed;
+    transform: none;
+    background: linear-gradient(135deg, #d4d4d4 0%, #a3a3a3 100%);
+    box-shadow: none;
+}
+
+.biometric-prev:not(:disabled):hover,
+.biometric-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 143, 255, 0.4);
+    background: linear-gradient(135deg, #2ba9ff 0%, #1e8fff 100%);
+}
+
+/* Estilos para formularios */
+.registro-normal-content input,
+.registro-normal-content select,
+.registro-normal-content textarea,
+.biometria-content input,
+.biometria-content select,
+.biometria-content textarea {
+    transition: all 0.3s ease-in-out;
+    border: 2px solid #e2e8f0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.registro-normal-content input:focus,
+.registro-normal-content select:focus,
+.registro-normal-content textarea:focus,
+.biometria-content input:focus,
+.biometria-content select:focus,
+.biometria-content textarea:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 149, 116, 0.15);
+    border-color: #2d9574;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9f6 100%);
+}
+
+/* Estilos para las tarjetas de contenido */
+.registro-normal-content .bg-white,
+.biometria-content .bg-white,
+.mi-mascota-content .bg-white {
+    transition: all 0.3s ease-in-out;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+}
+
+.registro-normal-content .bg-white:hover,
+.biometria-content .bg-white:hover,
+.mi-mascota-content .bg-white:hover {
+    box-shadow: 0 8px 25px rgba(45, 149, 116, 0.1);
+    transform: translateY(-2px);
+    border-color: #dcf0e8;
+}
+
+/* Estilos específicos para Mi Mascota */
+.mi-mascota-content .bg-gradient-to-br {
+    background: linear-gradient(135deg, #2d9574 0%, #1e8fff 50%, #22c55e 100%) !important;
+    box-shadow: 0 8px 25px rgba(45, 149, 116, 0.3);
+}
+
+.mi-mascota-content .bg-gradient-to-r {
+    background: linear-gradient(135deg, #2d9574 0%, #1e8fff 100%) !important;
+    box-shadow: 0 4px 20px rgba(45, 149, 116, 0.2);
+}
+
+/* Estilos para botones de acción */
+.mi-mascota-content button {
+    transition: all 0.3s ease-in-out;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mi-mascota-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Colores específicos usando la paleta personalizada */
+.bg-primary-600 {
+    background: linear-gradient(135deg, #2d9574 0%, #257a5f 100%) !important;
+}
+
+.bg-primary-600:hover {
+    background: linear-gradient(135deg, #4db08e 0%, #2d9574 100%) !important;
+}
+
+.bg-green-600 {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+}
+
+.bg-green-600:hover {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+}
+
+.bg-indigo-600 {
+    background: linear-gradient(135deg, #1e8fff 0%, #1a75eb 100%) !important;
+}
+
+.bg-indigo-600:hover {
+    background: linear-gradient(135deg, #2ba9ff 0%, #1e8fff 100%) !important;
+}
+
+.bg-red-600 {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+}
+
+.bg-red-600:hover {
+    background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%) !important;
+}
+
+/* Estilos para la tabla de mascotas registradas */
+.registro-normal-content table tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.registro-normal-content table tr:hover {
+    background: linear-gradient(135deg, #f0f9f6 0%, #dcf0e8 100%);
+}
+
+.registro-normal-content table a {
+    transition: color 0.2s ease-in-out;
+}
+
+/* Estilos para upload de archivos */
+.border-dashed {
+    transition: all 0.3s ease-in-out;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.border-dashed:hover {
+    border-color: #2d9574;
+    background: linear-gradient(135deg, #f0f9f6 0%, #dcf0e8 100%);
+    box-shadow: 0 4px 12px rgba(45, 149, 116, 0.1);
+}
+
+/* Estilos para elementos informativos */
+.bg-blue-100 {
+    background: linear-gradient(135deg, #daf2ff 0%, #bde8ff 100%) !important;
+}
+
+.bg-green-100 {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+}
+
+.bg-purple-100 {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
+}
+
+.bg-orange-100 {
+    background: linear-gradient(135deg, #ffefd9 0%, #ffdbb3 100%) !important;
+}
+
+.bg-indigo-100 {
+    background: linear-gradient(135deg, #daf2ff 0%, #bde8ff 100%) !important;
+}
+
+/* Estilos para alertas específicas del sistema veterinario */
+.bg-green-50 {
+    background: linear-gradient(135deg, #f0fdf0 0%, #dcfce7 100%) !important;
+    border-color: #22c55e !important;
+}
+
+.bg-blue-50 {
+    background: linear-gradient(135deg, #eff9ff 0%, #daf2ff 100%) !important;
+    border-color: #1e8fff !important;
+}
+
+.bg-yellow-50 {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+    border-color: #f59e0b !important;
+}
+
+/* Contenido de las pestañas */
+.tab-content {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+/* Estilos para el contenedor del slider biométrico */
+.biometric-slider-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.biometric-slider {
+    transition: all 0.5s ease-in-out;
+}
+
+.biometric-slide {
+    opacity: 1;
+    transition: all 0.4s ease-in-out;
+    min-height: 350px;
+}
+
+.biometric-slide.hidden {
+    opacity: 0;
+    display: none;
+    pointer-events: none;
+}
+
+/* Estilos para los indicadores del slider */
+.slide-indicator {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    height: 8px;
+    border-radius: 4px;
+}
+
+.slide-indicator:hover {
+    transform: scale(1.1);
+}
+
+.slide-indicator.active {
+    background-color: #3b82f6; /* primary-500 */
+    transform: scale(1.05);
+}
+
+/* Estilos para botones biométricos */
+.biometric-prev,
+.biometric-next {
+    transition: all 0.3s ease-in-out;
+    min-width: 120px;
+}
+
+.biometric-prev:disabled {
+    cursor: not-allowed;
+    transform: none;
+}
+
+.biometric-prev:not(:disabled):hover,
+.biometric-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para formularios */
+.registro-normal-content input,
+.registro-normal-content select,
+.registro-normal-content textarea,
+.biometria-content input,
+.biometria-content select,
+.biometria-content textarea {
+    transition: all 0.2s ease-in-out;
+}
+
+.registro-normal-content input:focus,
+.registro-normal-content select:focus,
+.registro-normal-content textarea:focus,
+.biometria-content input:focus,
+.biometria-content select:focus,
+.biometria-content textarea:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Estilos para las tarjetas de contenido */
+.registro-normal-content .bg-white,
+.biometria-content .bg-white {
+    transition: all 0.3s ease-in-out;
+}
+
+.registro-normal-content .bg-white:hover,
+.biometria-content .bg-white:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para la tabla de mascotas registradas */
+.registro-normal-content table tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.registro-normal-content table tr:hover {
+    background-color: #f9fafb;
+}
+
+.registro-normal-content table a {
+    transition: color 0.2s ease-in-out;
+}
+
+/* Estilos para upload de archivos */
+.border-dashed {
+    transition: all 0.3s ease-in-out;
+}
+
+.border-dashed:hover {
+    border-color: #3b82f6;
+    background-color: #f0f9ff;
+}
+
+/* Animaciones para el slider */
+@keyframes slideInRight {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+@keyframes slideInLeft {
+    from { 
+        transform: translateX(-100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+@keyframes slideOutRight {
+    from { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+    to { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+}
+
+@keyframes slideOutLeft {
+    from { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+    to { 
+        transform: translateX(-100%); 
+        opacity: 0; 
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.5s forwards;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.5s forwards;
+}
+
+.slide-out-right {
+    animation: slideOutRight 0.5s forwards;
+}
+
+.slide-out-left {
+    animation: slideOutLeft 0.5s forwards;
+}
+
+/* Animación de fade para pestañas */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content:not(.hidden) {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Estilos de loading para botones */
+.loading {
+    position: relative;
+    color: transparent;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 640px) {
+    .biometric-slide {
+        padding: 1rem;
+        min-height: 300px;
+    }
+    
+    .slide-indicator {
+        height: 6px;
+    }
+    
+    .slide-indicator.active {
+        width: 1.5rem;
+    }
+    
+    .tab-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .biometric-prev,
+    .biometric-next {
+        min-width: 100px;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tab-content-container {
+        padding: 1rem;
+    }
+    
+    .registro-normal-content .grid,
+    .biometria-content .grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .biometric-slide {
+        padding: 0.75rem;
+        min-height: auto;
+    }
+}
+
+/* Estilos para alertas y notificaciones dentro del módulo */
+.mascota-alert {
+    transition: all 0.3s ease-in-out;
+    border-radius: 0.5rem;
+}
+
+.mascota-alert.success {
+    background-color: #d1fae5;
+    border-color: #10b981;
+    color: #047857;
+}
+
+.mascota-alert.warning {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.mascota-alert.error {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+    color: #dc2626;
+}
+/* Estilos adicionales para el main_register.html - Minimalistas y profesionales */
+    .tab-btn i {
+        font-size: 1rem;
+    }
+    
+    /* Estilos para las tarjetas de contenido */
+    .tab-content {
+        margin-bottom: 0;
+    }
+    
+    .tab-content:hover .h-10 {
+        background-color: #dcf0e8; /* primary-100 más intenso */
+    }
+    
+    /* Mejoras básicas para el mensaje informativo */
+    .border-secondary-500 {
+        border-color: #1e8fff;
+    }
+    
+    /* Estilos de los iconos en encabezados */
+    .h-10 i {
+        font-size: 1.25rem;
+    }

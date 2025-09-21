@@ -1,0 +1,121 @@
+/* Estilos para formularios de usuario */
+
+/* Contenedor principal de formulario */
+.user-form {
+    @apply w-full max-w-4xl mx-auto;
+}
+
+/* Contenedor de campos del formulario */
+.user-form-fields {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+/* Grupo de campo individual */
+.user-form-group {
+    @apply mb-4;
+}
+
+/* Etiqueta del campo */
+.user-form-label {
+    @apply block text-sm font-medium text-dark-700 mb-1;
+}
+
+/* Contenedor del campo con icono */
+.user-form-field-wrapper {
+    @apply mt-1 relative rounded-md shadow-sm;
+}
+
+/* Contenedor del icono */
+.user-form-field-icon {
+    @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
+}
+
+/* Colores de iconos por categoría */
+.icon-user {
+    @apply text-primary-500;
+}
+
+.icon-contact {
+    @apply text-secondary-500;
+}
+
+.icon-address {
+    @apply text-accent-500;
+}
+
+.icon-security {
+    @apply text-warning-500;
+}
+
+/* Estilos para los mensajes de error */
+.user-form-error {
+    @apply mt-1 text-sm text-danger-600;
+}
+
+/* Estilos para los mensajes de ayuda */
+.user-form-help {
+    @apply mt-1 text-xs text-neutral-500;
+}
+
+/* Estilos para inputs de texto, email, etc */
+.user-form input[type="text"],
+.user-form input[type="email"],
+.user-form input[type="password"],
+.user-form input[type="tel"] {
+    @apply w-full pl-10 pr-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+/* Estilos para inputs de archivo */
+.user-form input[type="file"] {
+    @apply w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+/* Estilos para selects */
+.user-form select {
+    @apply w-full pl-10 pr-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+/* Estilos para campos checkbox */
+.user-form input[type="checkbox"] {
+    @apply rounded text-primary-600 border-neutral-300 focus:ring-primary-500;
+}
+
+/* Sección de acciones del formulario */
+.user-form-actions {
+    @apply mt-8 flex items-center justify-end space-x-3;
+}
+
+/* Vista previa de la imagen de perfil */
+.user-avatar-preview {
+    @apply w-16 h-16 rounded-full overflow-hidden border border-neutral-300 shadow-sm bg-white;
+}
+
+.user-avatar-preview img {
+    @apply w-full h-full object-cover;
+}
+
+/* Contenedor para perfil específico veterinario */
+.vet-specific-fields {
+    @apply mt-6 pt-6 border-t border-neutral-200;
+}
+
+/* Título para sección específica */
+.form-section-title {
+    @apply text-lg font-semibold text-dark-700 mb-4;
+}
+
+/* Estilos responsivos */
+@media (max-width: 640px) {
+    .user-form-fields {
+        @apply grid-cols-1;
+    }
+    
+    .user-form-actions {
+        @apply flex-col space-y-3 space-x-0;
+    }
+    
+    .user-form-actions button,
+    .user-form-actions a {
+        @apply w-full;
+    }
+}
