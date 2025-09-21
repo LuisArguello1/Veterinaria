@@ -1,0 +1,217 @@
+{% extends "generic/form_mixin.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block form %}
+<!-- Imagen de perfil - Completo ancho en desktop y mobile -->
+<div class="mb-8 bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+    <div class="flex flex-col sm:flex-row items-center">
+        <!-- Vista previa de la imagen actual -->
+        <div class="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 sm:mb-0 sm:mr-6 bg-white flex-shrink-0">
+            <img src="{{ user.get_image }}" alt="{{ user.get_full_name }}" class="w-full h-full object-cover">
+        </div>
+        
+        <!-- Campo de subida de archivo -->
+        <div class="w-full">
+            <h3 class="text-lg font-semibold text-dark-800 mb-2">Foto de Perfil</h3>
+            <p class="text-sm text-neutral-600 mb-3">Sube una foto clara para tu perfil. Recomendamos una imagen donde se vea bien tu rostro.</p>
+            <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-2">
+                Seleccionar nueva imagen
+            </label>
+            {{ form.image }}
+            {% if form.image.errors %}
+            <p class="mt-1 text-sm text-danger-600">{{ form.image.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sección de información personal -->
+<div class="mb-8">
+    <div class="flex items-center mb-4 border-b border-neutral-200 pb-2">
+        <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center mr-3">
+            <i class="fas fa-user text-primary-600"></i>
+        </div>
+        <h3 class="text-lg font-medium text-dark-800">Información Personal</h3>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Nombre -->
+        <div>
+            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Nombre
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-user text-primary-500"></i>
+                </div>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.first_name.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Apellido -->
+        <div>
+            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Apellido
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-user text-primary-500"></i>
+                </div>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.last_name.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cédula -->
+        <div>
+            <label for="{{ form.dni.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Cédula
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-id-card text-accent-500"></i>
+                </div>
+                {{ form.dni }}
+                {% if form.dni.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.dni.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Username - solo lectura -->
+        {% if form.username %}
+        <div>
+            <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Nombre de usuario
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-user-tag text-secondary-500"></i>
+                </div>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.username.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-neutral-500">El nombre de usuario no puede ser modificado</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sección de contacto -->
+<div class="mb-8">
+    <div class="flex items-center mb-4 border-b border-neutral-200 pb-2">
+        <div class="w-8 h-8 rounded-full bg-secondary-100 flex items-center justify-center mr-3">
+            <i class="fas fa-address-card text-secondary-600"></i>
+        </div>
+        <h3 class="text-lg font-medium text-dark-800">Información de Contacto</h3>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Email -->
+        <div>
+            <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Correo electrónico
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-envelope text-secondary-500"></i>
+                </div>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Teléfono -->
+        <div>
+            <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Teléfono
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-phone text-accent-500"></i>
+                </div>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Dirección - ocupa todo el ancho -->
+        <div class="md:col-span-2">
+            <label for="{{ form.direction.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Dirección
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-home text-secondary-500"></i>
+                </div>
+                {{ form.direction }}
+                {% if form.direction.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.direction.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección para información de veterinarios -->
+{% if user.is_vet %}
+<div class="mb-6">
+    <div class="flex items-center mb-4 border-b border-neutral-200 pb-2">
+        <div class="w-8 h-8 rounded-full bg-accent-100 flex items-center justify-center mr-3">
+            <i class="fas fa-stethoscope text-accent-600"></i>
+        </div>
+        <h3 class="text-lg font-medium text-dark-800">Información Profesional</h3>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Especialización -->
+        <div>
+            <label for="{{ form.specialization.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Especialización
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-stethoscope text-primary-500"></i>
+                </div>
+                {{ form.specialization }}
+                {% if form.specialization.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.specialization.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Número de licencia -->
+        <div>
+            <label for="{{ form.license_number.id_for_label }}" class="block text-sm font-medium text-dark-700 mb-1">
+                Número de licencia
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-certificate text-primary-500"></i>
+                </div>
+                {{ form.license_number }}
+                {% if form.license_number.errors %}
+                <p class="mt-1 text-sm text-danger-600">{{ form.license_number.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Campo oculto de rol -->
+{{ form.role }}
+{% endblock %}
