@@ -9,12 +9,21 @@
     <!-- Para visualizar los icono de font Awesome (fas fa) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- Css adicinal para complementar Tailwind -->
+    <!-- Iconos de las pestañas del navegador -->
+    <link rel="icon" href="{% static 'icons/favicon.ico' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'icons/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'icons/site.webmanifest' %}">
+
+    <!-- Css adicional para complementar Tailwind -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/message.css' %}">
     <link rel="stylesheet" href="{% static 'css/loading.css' %}">
     <link rel="stylesheet" href="{% static 'css/delete.css' %}">
     <link rel="stylesheet" href="{% static 'css/buttons.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user-form.css' %}">
 
     <!-- Agregar extras a la base -->
     {% block extra_head %}{% endblock %}

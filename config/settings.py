@@ -32,12 +32,6 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Configuración rápida para desarrollo - no apta para producción
 # Ver https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# Configuración de autenticación
-AUTHENTICATION_BACKENDS = [
-    'apps.autenticacion.backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
-
 # ADVERTENCIA DE SEGURIDAD: ¡mantén la clave secreta usada en producción en secreto!
 SECRET_KEY = env('SECRET_KEY')
 
@@ -66,7 +60,8 @@ THIRD_PARTY_APPS = [
 
 # Aplicaciones locales
 LOCAL_APPS = [
-    'apps.autenticacion'
+    'apps.autenticacion',
+    'apps.mascota'
 ]
 
 # Apps solo para DEBUG, y no para produccion
@@ -124,7 +119,6 @@ DATABASES = {
         'PORT': env('DB_PORT'),
     }
 }
-
 
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -184,6 +178,12 @@ NPM_BIN_PATH = r"D:\Node Js\npm.cmd"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 AUTH_USER_MODEL = 'autenticacion.User'
+
+# Configuración de autenticación personalizada
+AUTHENTICATION_BACKENDS = [
+    'apps.autenticacion.backends.EmailBackend',  # Nuestro backend personalizado para autenticar con email
+    'django.contrib.auth.backends.ModelBackend',  # Backend estándar de Django como fallback
+]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

@@ -4,13 +4,15 @@ from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from apps.autenticacion.models import User
 from apps.autenticacion.forms.users_form import (
     AdminUserCreateForm, AdminUserEditForm, UserPasswordChangeForm
 )
 
-class UserListView(ListView):
+
+class UserListView(LoginRequiredMixin, ListView):
     """Vista para listar usuarios con filtrado por roles y búsqueda"""
     model = User
     template_name = 'autenticacion/users/list.html'
@@ -47,6 +49,7 @@ class UserListView(ListView):
         context['search_query'] = self.request.GET.get('search', '')
         context['role_filter'] = self.request.GET.get('role', '')
         context['role_choices'] = User.Role.choices
+        context['user_now'] = self.request.user
         
         # Breadcrumbs
         context['breadcrumb_list'] = [
@@ -62,7 +65,7 @@ class UserListView(ListView):
         
         return context
 
-class UserDetailView(DetailView):
+class UserDetailView(LoginRequiredMixin, DetailView):
     """Vista para ver detalles de un usuario específico"""
     model = User
     template_name = 'autenticacion/users/detail.html'
@@ -81,7 +84,7 @@ class UserDetailView(DetailView):
         
         return context
 
-class UserCreateView(CreateView):
+class UserCreateView(LoginRequiredMixin, CreateView):
     """Vista para crear usuarios de cualquier rol"""
     model = User
     template_name = 'autenticacion/users/form.html'
@@ -126,7 +129,7 @@ class UserCreateView(CreateView):
         messages.error(self.request, 'Error al crear el usuario.')
         return super().form_invalid(form)
 
-class UserUpdateView(UpdateView):
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     """Vista para actualizar usuarios existentes"""
     model = User
     template_name = 'autenticacion/users/form.html'
@@ -178,7 +181,7 @@ class UserUpdateView(UpdateView):
         messages.error(self.request, 'Error al actualizar el usuario.')
         return super().form_invalid(form)
 
-class UserDeleteView(DeleteView):
+class UserDeleteView(LoginRequiredMixin, DeleteView):
     """Vista para eliminar usuarios del sistema"""
     model = User
     template_name = 'generic/delete_mixin.html'
@@ -190,7 +193,7 @@ class UserDeleteView(DeleteView):
         messages.success(self.request, 'Usuario eliminado exitosamente.')
         return super().delete(request, *args, **kwargs)
 
-class ChangePasswordView(FormView):
+class ChangePasswordView(LoginRequiredMixin, FormView):
     """Vista para cambiar la contraseña de un usuario específico"""
     template_name = 'autenticacion/users/change_password.html'
     form_class = UserPasswordChangeForm

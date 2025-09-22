@@ -163,21 +163,29 @@
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end items-center gap-1">
                         <!-- Botón detalles -->
+                        {% if user_now.role == 'VET' or user_now.role == 'ADMIN' %}
                         <a href="{% url 'auth:user_detail' user.id %}" class="no-underline" style="all:unset;">
                             {% include "components/button.html" with btn_type="detalles" id="btn-detalles-"|add:user.id|slugify title="Ver detalles" %}
                         </a>
+                        {% endif %}
+
 
                         <!-- Botón editar -->
+                        {% if user_now.role == 'VET' or user_now.role == 'ADMIN' %}
                         <a href="{% url 'auth:user_edit' user.id %}" class="no-underline" style="all:unset;">
                             {% include "components/button.html" with btn_type="editar" id="btn-editar-"|add:user.id|slugify title="Editar" %}
                         </a>
-                        
+                        {% endif %}
+
                         <!-- Botón contraseña -->
+                        {% if user_now.role == 'ADMIN' %}
                         <a href="{% url 'auth:user_password_change' user.id %}" class="no-underline" style="all:unset;">
                             {% include "components/button.html" with btn_type="password" id="btn-password-"|add:user.id|slugify title="Cambiar contraseña" %}
                         </a>
+                        {% endif %}
 
                         <!-- Botón eliminar -->
+                        {% if user_now.role == 'ADMIN' %}
                         <a href="{% url 'auth:user_delete' user.id %}" class="btn btn-delete" title="Eliminar" style="all:unset;"
                             data-title="¿Estás seguro de que deseas eliminar este usuario?"
                             data-details='[
@@ -187,6 +195,7 @@
                             ]'>
                                 <i class="fas fa-trash text-danger-500 hover:text-danger-700"></i>
                         </a>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
