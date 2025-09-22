@@ -23,26 +23,46 @@ class RegisterView(FormView):
 
     def form_valid(self, form):
         """Procesa el formulario válido y crea el usuario"""
-        user = form.save(commit=False)
-
-        # Asegurarse de que el rol sea siempre OWNER
-        user.role = user.Role.OWNER
-        
-        # Configurar contraseña segura
-        password = form.cleaned_data.get('password1')
-        if password:
-            user.set_password(password)
-        
-        # Guardar el usuario
-        user.save()
-        
-        # Iniciar sesión automáticamente
-        login(self.request, user)
-        
-        # Mensaje de éxito para la redirección
-        messages.success(
-            self.request, 
-            f'¡Bienvenido {user.first_name}! Tu cuenta ha sido creada exitosamente.'
-        )
-        
-        return super().form_valid(form)
+        try:
+            # Crear el objeto usuario pero no guardarlo todavía
+            user = form.save(commit=False)
+            
+            # Asegurarse de que el rol sea siempre OWNER
+            user.role = user.Role.OWNER
+            
+            # Verificar que se ha proporcionado la cédula
+            if not user.dni:
+                form.add_error('dni', 'El campo de cédula es obligatorio.')
+                return self.form_invalid(form)
+            
+            # Configurar contraseña segura
+            password = form.cleaned_data.get('password1')
+            if password:
+                user.set_password(password)
+            
+            # Guardar el usuario
+            user.save()
+            
+            # Iniciar sesión automáticamente especificando el backend
+            from django.contrib.auth import authenticate
+            from django.contrib.auth import get_user_model
+            
+            # Usar el backend de autenticación por defecto (ModelBackend)
+            from django.contrib.auth.backends import ModelBackend
+            login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+            
+            # Mensaje de éxito para la redirección
+            messages.success(
+                self.request, 
+                f'¡Bienvenido {user.first_name}! Tu cuenta ha sido creada exitosamente.'
+            )
+            
+            return super().form_valid(form)
+            
+        except Exception as e:
+            # Capturar cualquier error y manejarlo adecuadamente
+            if 'dni' in str(e).lower():
+                form.add_error('dni', 'Por favor, proporcione un número de cédula válido.')
+            else:
+                form.add_error(None, f'Error al crear el usuario: {str(e)}')
+            return self.form_invalid(form)

@@ -5,6 +5,13 @@ from apps.autenticacion.models import User
 class RegisterForm(UserCreationForm):
     """Formulario especializado para el registro de dueños de mascotas"""
     
+    # Hacer dni obligatorio
+    dni = forms.CharField(
+        max_length=10, 
+        required=True, 
+        error_messages={'required': 'La cédula es obligatoria'}
+    )
+    
     class Meta:
         model = User
         fields = [
@@ -37,7 +44,8 @@ class RegisterForm(UserCreationForm):
         })
         self.fields['dni'].widget = forms.TextInput(attrs={
             'class': 'w-full pl-10 pr-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-            'placeholder': 'Número de cédula'
+            'placeholder': 'Número de cédula',
+            'required': True,
         })
         self.fields['phone'].widget = forms.TextInput(attrs={
             'class': 'w-full pl-10 pr-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
@@ -70,10 +78,19 @@ class RegisterForm(UserCreationForm):
     def clean_dni(self):
         """Valida la cédula ecuatoriana"""
         dni = self.cleaned_data.get('dni')
-        if dni:
-            from apps.autenticacion.utils.validar_cedula import valida_cedula
-            try:
-                valida_cedula(dni)
-            except forms.ValidationError as e:
-                self.add_error('dni', e)
+        if not dni:
+            raise forms.ValidationError("Debe ingresar su número de cédula")
+            
+        # Validar el formato de cédula
+        from apps.autenticacion.utils.validar_cedula import valida_cedula
+        try:
+            valida_cedula(dni)
+        except forms.ValidationError as e:
+            self.add_error('dni', e)
+            
+        # Verificar si la cédula ya está registrada
+        User = self.Meta.model
+        if User.objects.filter(dni=dni).exists() and (self.instance.pk is None or self.instance.dni != dni):
+            raise forms.ValidationError("Esta cédula ya está registrada en el sistema")
+            
         return dni
