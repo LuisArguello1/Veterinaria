@@ -1,0 +1,425 @@
+{% extends 'layouts/dashboard.html' %}
+{% load static %}
+{% block title %} Scanner Canino {% endblock %}
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <!-- Cabecera profesional y minimalista -->
+    <div class="bg-white mb-6 shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-center p-4 sm:p-0">
+            <div class="mr-0 sm:mr-6 bg-black p-2 mb-4 sm:mb-0 self-center sm:self-start">
+                <img src="{% static 'img/logo_secundario2.png' %}" alt="Logo Secundario Veterinaria" class="h-16 sm:h-20 w-auto" oncontextmenu="return false;">
+            </div>
+            <div class="text-center sm:text-left py-2 sm:py-4">
+                <h1 class="text-gray-800 text-xl sm:text-2xl font-semibold mb-1">Escáner de Mascotas</h1>
+                <p class="text-gray-600 text-sm sm:text-base">Reconocimiento facial biométrico para identificar mascotas</p>
+            </div>
+        </div>
+    </div>
+
+    {% if not deps_installed %}
+    <div class="mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm">
+                    <strong>Atención:</strong> Las dependencias necesarias para el reconocimiento facial no están instaladas.
+                </p>
+                <p class="text-xs mt-1">
+                    Por favor, instala PyTorch, OpenCV y scikit-learn para habilitar esta funcionalidad.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not tiene_mascotas_entrenadas %}
+    <div class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm">
+                    <strong>Scanner no disponible:</strong> No existen mascotas con biometría entrenada.
+                </p>
+                <p class="text-xs mt-1">
+                    Para usar el scanner necesitas: registrar mascotas, subir imágenes biométricas (20) y entrenar el modelo.
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'mascota:main_register' %}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        <i class="fas fa-plus mr-2"></i>
+                        Registrar Mascotas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if not modelo_activo %}
+    <div class="mb-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm">
+                    <strong>Atención:</strong> No hay un modelo biométrico activo.
+                </p>
+                <p class="text-xs mt-1">
+                    Por favor, entrena el modelo con las imágenes biométricas de tus mascotas.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Panel principal: Captura de imagen -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-camera text-primary-600 mr-2"></i> Captura de Imagen
+                </h2>
+                
+                <div class="mb-5">
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                        <!-- Pestañas para cambiar entre cámara y subida -->
+                        <div class="bg-gray-100 rounded-lg p-1 flex mb-4 md:mb-0 w-full md:w-auto">
+                            <button type="button" class="scan-tab-btn active flex-1 md:flex-initial py-2 px-4 rounded-md bg-white shadow-sm text-sm font-medium" data-target="camera-tab">
+                                <i class="fas fa-camera mr-1"></i> Cámara
+                            </button>
+                            <button type="button" class="scan-tab-btn flex-1 md:flex-initial py-2 px-4 rounded-md text-gray-700 hover:text-gray-900 text-sm font-medium" data-target="upload-tab">
+                                <i class="fas fa-upload mr-1"></i> Subir imagen
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenido de las pestañas -->
+                    <div class="scan-tab-content mt-4" id="camera-tab">
+                        <div class="relative h-64 sm:h-80 w-full bg-black rounded-md overflow-hidden mb-3">
+                            <video id="scanner-webcam" class="h-full w-full object-cover" autoplay playsinline></video>
+                            <canvas id="scanner-canvas" class="hidden"></canvas>
+                            <div id="scanner-camera-overlay" class="absolute inset-0 flex items-center justify-center text-white bg-black bg-opacity-75">
+                                <i class="fas fa-spinner fa-spin mr-2"></i> Inicializando cámara...
+                            </div>
+                        </div>
+                        
+                        <!-- Selector de cámaras -->
+                        <div class="mb-3" id="scanner-camera-select-container" style="display: none;">
+                            <label for="scanner-camera-select" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-video mr-1"></i> Seleccionar cámara:
+                            </label>
+                            <div class="flex space-x-2">
+                                <select id="scanner-camera-select" class="flex-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                    <option value="">Cargando cámaras...</option>
+                                </select>
+                                <button id="scanner-switch-camera" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                                    <i class="fas fa-sync-alt mr-0 sm:mr-2"></i>
+                                    <span class="hidden sm:inline">Cambiar</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2 mb-3">
+                            <button id="scanner-start-camera" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md flex items-center justify-center" {% if not scanner_habilitado %}disabled title="Scanner no disponible"{% endif %}>
+                                <i class="fas fa-play mr-2"></i> Iniciar cámara
+                            </button>
+                            <button id="scanner-capture-photo" class="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                                <i class="fas fa-camera mr-2"></i> Capturar foto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="scan-tab-content mt-4 hidden" id="upload-tab">
+                        <!-- Zona de drop para archivos -->
+                        <div id="scanner-drop-zone" class="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center h-48 sm:h-64 bg-gray-50 mb-4">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-primary-400 mb-3"></i>
+                            <p class="mb-2 text-sm text-gray-700 text-center">
+                                <span class="font-semibold">Haz clic para seleccionar</span> o arrastra un archivo aquí
+                            </p>
+                            <p class="text-xs text-gray-500 mb-3">PNG, JPG o JPEG (máx. 5MB)</p>
+                            <input id="scanner-file-input" name="imagen" type="file" accept="image/*" class="hidden" {% if not scanner_habilitado %}disabled{% endif %} />
+                            <button type="button" id="scanner-select-file-btn" class="bg-gray-100 hover:bg-gray-200 py-2 px-4 rounded-md text-sm text-gray-700" {% if not scanner_habilitado %}disabled title="Scanner no disponible"{% endif %}>
+                                Seleccionar archivo
+                            </button>
+                        </div>
+                        
+                        <!-- Vista previa de imagen (separada del drop zone) -->
+                        <div id="scanner-file-preview" class="hidden mb-6">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Vista previa:</h4>
+                                <div class="relative max-h-40 max-w-full mx-auto mb-3">
+                                    <img id="scanner-preview-img" src="" alt="Vista previa" class="max-h-40 max-w-full rounded-md object-contain mx-auto block">
+                                    <button id="scanner-clear-file" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-lg">
+                                        <i class="fas fa-times text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón de reconocer (separado y fijo al final) -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <button id="scanner-upload-file-btn" class="w-full bg-secondary-600 hover:bg-secondary-700 text-white py-3 px-4 rounded-md flex items-center justify-center font-medium" disabled>
+                                <i class="fas fa-search mr-2"></i> Reconocer mascota
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Canvas para procesar imagen -->
+                <canvas id="scanner-canvas" class="hidden"></canvas>
+                
+                <!-- Resultado del reconocimiento -->
+                <div id="recognition-result" class="hidden">
+                    <div class="border-t border-gray-200 pt-4 mt-4">
+                        <h3 class="font-medium text-lg text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-search text-primary-600 mr-2"></i> Resultado del reconocimiento
+                        </h3>
+                        
+                        <div id="result-loading" class="py-8 flex flex-col items-center justify-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                            <p class="mt-3 text-gray-600 text-sm">Analizando imagen...</p>
+                        </div>
+                        
+                        <div id="result-success" class="hidden">
+                            <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-green-600"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-green-800">¡Mascota identificada!</h4>
+                                        <div class="mt-2 text-sm text-green-700">
+                                            <p id="result-success-message">Mascota identificada con éxito.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-md overflow-hidden">
+                                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                                    <h4 class="text-sm font-medium text-gray-700">Información de la Mascota</h4>
+                                    <span id="result-confianza" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                        Confianza: 95%
+                                    </span>
+                                </div>
+                                
+                                <!-- Información principal de la mascota -->
+                                <div class="px-4 py-3 flex items-center border-b border-gray-100">
+                                    <div class="flex-shrink-0 h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img id="result-foto-mascota" src="" alt="Foto de la mascota" class="h-full w-full object-cover hidden">
+                                        <i id="result-icono-mascota" class="fas fa-paw text-gray-500 text-xl"></i>
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <h5 id="result-nombre" class="text-lg font-semibold text-gray-900 mb-1">Nombre de la mascota</h5>
+                                        <div class="space-y-1">
+                                            <p id="result-raza" class="text-sm text-gray-600 flex items-center">
+                                                <i class="fas fa-info-circle w-4 mr-2"></i>
+                                                <span>Raza</span>
+                                            </p>
+                                            <p id="result-edad-peso" class="text-sm text-gray-600 flex items-center">
+                                                <i class="fas fa-weight w-4 mr-2"></i>
+                                                <span>Edad • Peso</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Información del propietario -->
+                                <div id="propietario-info" class="px-4 py-3 border-b border-gray-100">
+                                    <h6 class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                        <i class="fas fa-user mr-2"></i>
+                                        Información del Propietario
+                                    </h6>
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                            <img id="result-foto-propietario" src="" alt="Foto del propietario" class="h-full w-full object-cover hidden">
+                                            <i id="result-icono-propietario" class="fas fa-user text-gray-500"></i>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <p id="result-propietario-nombre" class="text-sm font-medium text-gray-900">Nombre del propietario</p>
+                                            <div class="space-y-1">
+                                                <p id="result-propietario-email" class="text-xs text-gray-500 flex items-center">
+                                                    <i class="fas fa-envelope w-3 mr-1"></i>
+                                                    <span>email@ejemplo.com</span>
+                                                </p>
+                                                <p id="result-propietario-telefono" class="text-xs text-gray-500 flex items-center">
+                                                    <i class="fas fa-phone w-3 mr-1"></i>
+                                                    <span>+1234567890</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Detalles adicionales -->
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wide">Color</p>
+                                            <p id="result-color" class="text-gray-900 font-medium">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wide">Género</p>
+                                            <p id="result-genero" class="text-gray-900 font-medium">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wide">Etapa de Vida</p>
+                                            <p id="result-etapa-vida" class="text-gray-900 font-medium">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wide">Estado</p>
+                                            <p id="result-estado-salud" class="text-gray-900 font-medium">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Alerta de mascota perdida -->
+                                <div id="mascota-perdida-alert" class="hidden px-4 py-3 bg-red-50 border-t border-red-200">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <h4 class="text-sm font-medium text-red-800">¡Esta mascota está reportada como perdida!</h4>
+                                            <p class="text-xs text-red-700 mt-1">Si la has encontrado, puedes ayudar reportándola como encontrada.</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 flex justify-end">
+                                        <button id="btn-reportar-encontrada" 
+                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                            <i class="fas fa-check-circle mr-1"></i> Reportar como encontrada
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="px-4 py-3 flex justify-between items-center">
+                                    <div class="text-xs text-gray-500">
+                                        <p>Tiempo de procesamiento: <span id="result-tiempo" class="font-medium">-</span></p>
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        <p>Reconocimiento biométrico • <span id="result-fecha" class="font-medium">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="result-error" class="hidden">
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-circle text-yellow-600"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-sm font-medium text-yellow-800">No se pudo identificar la mascota</h4>
+                                        <div class="mt-2 text-sm text-yellow-700">
+                                            <p id="result-error-message">No se ha podido encontrar una coincidencia con suficiente confianza.</p>
+                                            <p class="mt-1 text-xs">Intenta con una imagen de mejor calidad o desde otro ángulo.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel lateral: Historial y consejos -->
+        <div class="lg:col-span-1">
+            <!-- Últimos reconocimientos -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+                <h3 class="text-gray-800 font-medium mb-3 flex items-center">
+                    <i class="fas fa-history text-primary-600 mr-2"></i> Últimos reconocimientos
+                </h3>
+                
+                <div class="space-y-3">
+                    {% if ultimos_reconocimientos %}
+                        {% for rec in ultimos_reconocimientos %}
+                            <div class="flex items-start space-x-3 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                                <div class="flex-shrink-0 h-10 w-10 overflow-hidden rounded-md bg-gray-200">
+                                    {% if rec.imagen_analizada %}
+                                        <img src="{{ rec.imagen_analizada.url }}" alt="Imagen reconocimiento" class="h-full w-full object-cover">
+                                    {% else %}
+                                        <div class="h-full w-full flex items-center justify-center">
+                                            <i class="fas fa-image text-gray-400"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                        {% if rec.exito and rec.mascota_predicha and rec.mascota_predicha.id %}
+                                            <a href="{% url 'mascota:detalle' rec.mascota_predicha.id %}">{{ rec.mascota_predicha.nombre }}</a>
+                                        {% else %}
+                                            <span class="text-yellow-600">No identificado</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ rec.fecha|date:"d/m/Y H:i" }} · 
+                                        <span class="{% if rec.exito %}text-green-600{% else %}text-yellow-600{% endif %}">
+                                            Confianza: {{ rec.confianza|floatformat:2 }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-gray-500">
+                            <i class="fas fa-search text-3xl mb-2 text-gray-400"></i>
+                            <p>No hay reconocimientos recientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Consejos para mejores resultados -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+                <h3 class="text-gray-800 font-medium mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-primary-600 mr-2"></i> Consejos para mejores resultados
+                </h3>
+                
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span>Asegúrate de que la cara de la mascota sea visible claramente</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span>Buena iluminación mejora el reconocimiento</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span>Evita movimiento excesivo al tomar la foto</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span>Si falla, intenta desde otro ángulo</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span>Añadir más fotos de entrenamiento mejora la precisión</span>
+                    </li>
+                </ul>
+                
+                <div class="mt-4 border-t border-gray-200 pt-3">
+                    <a href="#" class="text-primary-600 hover:text-primary-800 text-sm flex items-center justify-center">
+                        <i class="fas fa-book mr-1"></i> Más información sobre biometría
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/scanner.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/scanner.css' %}">
+{% endblock %}

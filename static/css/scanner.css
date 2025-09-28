@@ -1,0 +1,7 @@
+.scan-tab-btn.active {
+        color: var(--color-primary-700);
+    }
+    
+    #scanner-webcam {
+        transform: scaleX(-1); /* Efecto espejo para la cámara frontal */
+    }
