@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 ¡Buenas noticias! {{ mascota.nombre }} ha sido encontrada</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f0fdf4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .celebration-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .mascota-card {
+            border: 2px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #f0fdf4;
+        }
+        .mascota-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .mascota-foto {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 3px solid #10b981;
+        }
+        .mascota-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #d1fae5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            border: 3px solid #10b981;
+            font-size: 24px;
+            color: #10b981;
+        }
+        .mascota-detalles h3 {
+            margin: 0;
+            color: #059669;
+            font-size: 20px;
+        }
+        .mascota-detalles p {
+            margin: 5px 0;
+            color: #065f46;
+        }
+        .encuentro-info {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .encuentro-info h4 {
+            margin: 0 0 10px 0;
+            color: #92400e;
+            font-size: 16px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #78350f;
+        }
+        .info-item i {
+            width: 20px;
+            margin-right: 8px;
+        }
+        .cta-section {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .cta {
+            background-color: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            margin: 10px;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .alegria {
+            color: #059669;
+            font-weight: 600;
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .mensaje-importante {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="celebration-icon">🎉</div>
+            <h1>¡EXCELENTE NOTICIA!</h1>
+            <p>{{ mascota.nombre }} ha sido encontrada</p>
+        </div>
+        
+        <div class="content">
+            <p class="alegria">¡{{ propietario.get_full_name|default:propietario.username }}, tenemos noticias maravillosas!</p>
+            
+            <div class="mascota-card">
+                <div class="mascota-info">
+                    {% if foto_url %}
+                        <img src="{{ foto_url }}" alt="Foto de {{ mascota.nombre }}" class="mascota-foto">
+                    {% else %}
+                        <div class="mascota-placeholder">🐕</div>
+                    {% endif %}
+                    <div class="mascota-detalles">
+                        <h3>{{ mascota.nombre }}</h3>
+                        <p><strong>Raza:</strong> {{ mascota.raza|default:"No especificada" }}</p>
+                        <p style="color: #059669; font-weight: 600;">✅ ENCONTRADA</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mensaje-importante">
+                <strong>📱 Una persona ha reportado haber encontrado a {{ mascota.nombre }}</strong>
+                <p style="margin: 10px 0 5px 0;">
+                    Alguien ha utilizado nuestro sistema de reconocimiento facial para identificar y reportar que encontró a tu mascota.
+                </p>
+            </div>
+
+            <div class="encuentro-info">
+                <h4>📍 Información del reporte:</h4>
+                <div class="info-item">
+                    <i>🕒</i>
+                    <span><strong>Fecha y hora:</strong> {{ datos_encuentro.fecha_hora|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% if datos_encuentro.ubicacion_aproximada %}
+                <div class="info-item">
+                    <i>🌍</i>
+                    <span><strong>Ubicación:</strong> {{ datos_encuentro.ubicacion_aproximada }}</span>
+                </div>
+                {% if datos_encuentro.precision_ubicacion %}
+                <div class="info-item">
+                    <i>🎯</i>
+                    <span><strong>Precisión:</strong> {{ datos_encuentro.precision_ubicacion }}</span>
+                </div>
+                {% endif %}
+                {% if datos_encuentro.coordenadas %}
+                <div class="info-item" style="font-size: 12px; color: #a0a0a0;">
+                    <i>📍</i>
+                    <span>Coordenadas: {{ datos_encuentro.coordenadas.latitud|floatformat:6 }}, {{ datos_encuentro.coordenadas.longitud|floatformat:6 }}</span>
+                </div>
+                {% endif %}
+                {% endif %}
+                {% if datos_encuentro.dispositivo_info %}
+                <div class="info-item">
+                    <i>📱</i>
+                    <span><strong>Reportado desde:</strong> {{ datos_encuentro.dispositivo_info }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <h3 style="color: #059669; margin-bottom: 15px;">¿Qué hacer ahora?</h3>
+                <ol style="text-align: left; max-width: 400px; margin: 0 auto; color: #374151;">
+                    <li style="margin: 10px 0;"><strong>Mantén la calma</strong> - ¡Tu mascota ha sido encontrada!</li>
+                    <li style="margin: 10px 0;"><strong>Revisa la ubicación</strong> proporcionada arriba</li>
+                    <li style="margin: 10px 0;"><strong>Dirígete al área</strong> lo antes posible</li>
+                    <li style="margin: 10px 0;"><strong>Lleva identificación</strong> para demostrar que eres el propietario</li>
+                </ol>
+            </div>
+
+            <div class="cta-section">
+                <p style="margin-bottom: 15px; font-size: 16px; color: #374151;">
+                    <strong>Hemos actualizado automáticamente el estado de {{ mascota.nombre }} como "encontrada"</strong>
+                </p>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">
+                    Si por alguna razón aún no logras recuperar a tu mascota, puedes volver a reportarla como perdida desde tu panel de control.
+                </p>
+            </div>
+
+            <div style="background-color: #f0f9ff; border: 1px solid #60a5fa; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #1e40af; text-align: center;">
+                    <strong>💙 Gracias a nuestra comunidad de usuarios</strong><br>
+                    <small>Este reporte fue posible gracias a alguien que se tomó el tiempo de ayudar. ¡Juntos cuidamos de nuestras mascotas!</small>
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>PetFaceID - Sistema de Identificación de Mascotas</strong></p>
+            <p>Este email fue enviado automáticamente cuando alguien reportó haber encontrado a {{ mascota.nombre }}.</p>
+            <p>¡Esperamos que tengas un feliz reencuentro! 🐾❤️</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,6 +1,8 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
 
+{% block title %}Mi Mascota{% endblock %}
+
 {% block content %}
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <!-- Cabecera profesional y minimalista -->
@@ -38,21 +40,359 @@
     <!-- Contenido de las pestañas -->
     <div class="tab-content-container p-3 sm:p-6">
         <!-- Pestaña 1: Mi Mascota -->
-        <div id="mi-mascota" class="tab-content">
-            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm">
+        <div id="mi-mascota" class="tab-content" style="display: block;">
+            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm hidden" id="mi-mascota-content">
                 <div class="mb-4 flex flex-wrap items-center">
                     <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
                         <i class="fas fa-paw text-primary-600"></i>
                     </div>
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Detalles de su Mascota</h2>
                 </div>
-                {% include 'mi_mascota/detail.html' %}
+                
+                <!-- Contenido de mascotas del usuario -->
+                {% if mascota_count > 0 %}
+                <div class="mx-auto max-w-7xl">
+                    <!-- Selector de mascotas si hay más de una -->
+                    {% if mascota_count > 1 %}
+                    <div class="mb-6 flex justify-center">
+                        <div class="inline-flex rounded-md shadow-sm" role="group">
+                            {% for data in mascota_data %}
+                            <button type="button" class="mascota-tab-btn {% if forloop.first %}active{% endif %} px-4 py-2 text-sm font-medium {% if forloop.first %}bg-primary-700 text-white{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %} {% if forloop.first %}rounded-l-lg border border-primary-700{% elif forloop.last %}rounded-r-lg border border-gray-200{% else %}border-t border-b border-gray-200{% endif %}" data-target="mascota-{{ data.mascota.id }}">
+                                {{ data.mascota.nombre }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- Contenedor para cada mascota -->
+                    {% for data in mascota_data %}
+                    <div class="mascota-detail {% if not forloop.first %}hidden{% endif %}" id="mascota-{{ data.mascota.id }}">
+                        <!-- Cabecera con información principal -->
+                        <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="flex flex-col md:flex-row">
+                                <!-- Imagen principal o placeholder -->
+                                <div class="w-full md:w-1/3 bg-primary-50 flex items-center justify-center p-6">
+                                    {% if data.mascota.foto_perfil %}
+                                        <img src="{{ data.mascota.foto_perfil.url }}" alt="{{ data.mascota.nombre }}" class="rounded-lg max-h-48 object-cover shadow-md">
+                                    {% else %}
+                                        <div class="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-paw text-gray-400 text-6xl"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Información principal -->
+                                <div class="w-full md:w-2/3 p-6">
+                                    <div class="flex items-center mb-3">
+                                        <h1 class="text-2xl font-bold text-gray-800">{{ data.mascota.nombre }}</h1>
+                                        {% if data.biometria_entrenada %}
+                                            <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i class="fas fa-fingerprint mr-1"></i> Biometría Activa
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Especie/Raza:</span> 
+                                                {{ data.mascota.raza|default:"No especificada" }}
+                                            </p>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Edad:</span> 
+                                                {{ data.mascota.edad_completa }}
+                                            </p>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Sexo:</span> 
+                                                {{ data.mascota.get_sexo_display|default:"No especificado" }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Etapa de vida:</span> 
+                                                {{ data.mascota.get_etapa_vida_display|default:"No especificada" }}
+                                            </p>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Estado corporal:</span> 
+                                                {{ data.mascota.get_estado_corporal_display|default:"No especificado" }}
+                                            </p>
+                                            <p class="text-sm text-gray-600 mb-2">
+                                                <span class="font-medium text-gray-700">Peso:</span> 
+                                                {% if data.mascota.peso %}{{ data.mascota.peso }} kg{% else %}No especificado{% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                
+                                    <!-- Botones de acción -->
+                                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                        <a href="#" class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                                            <i class="fas fa-edit mr-1"></i> Editar información
+                                        </a>
+                                        <button onclick="generarQR({{ data.mascota.id }})" 
+                                            class="inline-flex items-center justify-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md shadow-sm text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-400">
+                                            <i class="fas fa-qrcode mr-1"></i> Código QR
+                                        </button>
+                                        
+                                        <!-- Botón de reportar perdida / cancelar perdida -->
+                                        {% if data.mascota.reportar_perdida %}
+                                        <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                            class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
+                                            <i class="fas fa-check-circle mr-1"></i> Cancelar perdida
+                                        </button>
+                                        {% else %}
+                                        <button onclick="reportarMascotaPerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                            class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i> Reportar perdida
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if data.biometria_entrenada %}
+                                        <button onclick="eliminarBiometria({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                            class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
+                                            <i class="fas fa-eye-slash mr-1"></i> Eliminar biometría
+                                        </button>
+                                        {% endif %}
+                                        <button onclick="eliminarMascota({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                            class="inline-flex items-center justify-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md shadow-sm text-red-600 bg-white hover:bg-red-50 hover:border-red-400">
+                                            <i class="fas fa-trash mr-1"></i> Eliminar Mascota
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Panel principal: Información detallada -->
+                            <div class="lg:col-span-2">
+                                <!-- Detalles adicionales -->
+                                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+                                    <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                                            <i class="fas fa-info-circle text-primary-500 mr-2"></i> Información detallada
+                                        </h3>
+                                    </div>
+                                    <div class="px-4 py-5 sm:p-6">
+                                        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                                            {% if data.mascota.fecha_nacimiento %}
+                                            <div>
+                                                <dt class="text-sm font-medium text-gray-500">Fecha de nacimiento</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">{{ data.mascota.fecha_nacimiento|date:"d/m/Y" }}</dd>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if data.mascota.color %}
+                                            <div>
+                                                <dt class="text-sm font-medium text-gray-500">Color</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">{{ data.mascota.color }}</dd>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div>
+                                                <dt class="text-sm font-medium text-gray-500">Fecha de registro</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">{{ data.mascota.created_at|date:"d/m/Y H:i" }}</dd>
+                                            </div>
+                                            
+                                            <div>
+                                                <dt class="text-sm font-medium text-gray-500">Última actualización</dt>
+                                                <dd class="mt-1 text-sm text-gray-900">{{ data.mascota.updated_at|date:"d/m/Y H:i" }}</dd>
+                                            </div>
+                                            
+                                            {% if data.mascota.caracteristicas_especiales %}
+                                            <div class="sm:col-span-2">
+                                                <dt class="text-sm font-medium text-gray-500">Características especiales</dt>
+                                                <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line">{{ data.mascota.caracteristicas_especiales }}</dd>
+                                            </div>
+                                            {% endif %}
+                                        </dl>
+                                    </div>
+                                </div>
+                                
+                                <!-- Galería de imágenes -->
+                                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                                    <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6 flex justify-between items-center">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                                            <i class="fas fa-images text-primary-500 mr-2"></i> Galería de imágenes
+                                        </h3>
+                                        <span class="text-sm text-gray-600">{{ data.total_images|default:"0" }} imágenes</span>
+                                    </div>
+                                    <div class="px-4 py-5 sm:p-6">
+                                        {% if data.images_by_type %}
+                                            {% for type_name, images in data.images_by_type.items %}
+                                            <h4 class="text-md font-medium text-gray-700 mb-2 flex items-center">
+                                                <i class="fas fa-tag text-primary-400 mr-2"></i> {{ type_name }} ({{ images|length }})
+                                            </h4>
+                                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
+                                                {% for img in images %}
+                                                    <div class="group relative aspect-square overflow-hidden rounded-md border border-gray-200">
+                                                        <img src="{{ img.imagen.url }}" alt="Imagen {{ img.id }}" 
+                                                            class="h-full w-full object-cover transition-transform group-hover:scale-110 duration-300">
+                                                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            {{ img.uploaded_at|date:"d/m/Y" }}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endfor %}
+                                        {% else %}
+                                            <div class="text-center py-6">
+                                                <div class="mx-auto h-12 w-12 text-gray-300">
+                                                    <i class="fas fa-image text-4xl"></i>
+                                                </div>
+                                                <h3 class="mt-2 text-sm font-medium text-gray-900">No hay imágenes</h3>
+                                                <p class="mt-1 text-sm text-gray-500">Añade imágenes para tu mascota.</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Panel lateral: Estado biométrico y reconocimientos -->
+                            <div class="lg:col-span-1">
+                                <!-- Estado del entrenamiento biométrico -->
+                                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                                    <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                                            <i class="fas fa-fingerprint text-primary-500 mr-2"></i> Estado biométrico
+                                        </h3>
+                                    </div>
+                                    <div class="px-4 py-5 sm:p-6">
+                                        <div class="mb-4">
+                                            <h4 class="text-sm font-medium text-gray-700 mb-1">Imágenes biométricas</h4>
+                                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                <div class="bg-primary-600 h-2.5 rounded-full" style="width: {% widthratio data.biometric_images|default:0 20 100 %}%"></div>
+                                            </div>
+                                            <div class="flex justify-between text-xs mt-1">
+                                                <span>{{ data.biometric_images|default:0 }}/20</span>
+                                                <span>{% widthratio data.biometric_images|default:0 20 100 %}%</span>
+                                            </div>
+                                        </div>
+                                    
+                                        <div class="my-4">
+                                            <h4 class="text-sm font-medium text-gray-700 mb-1">Estado</h4>
+                                            {% if data.biometria_entrenada %}
+                                                <div class="rounded-md bg-green-50 p-3">
+                                                    <div class="flex">
+                                                        <div class="flex-shrink-0">
+                                                            <i class="fas fa-check-circle text-green-400"></i>
+                                                        </div>
+                                                        <div class="ml-3">
+                                                            <h3 class="text-sm font-medium text-green-800">Entrenamiento completado</h3>
+                                                            <div class="mt-2 text-sm text-green-700">
+                                                                <p>La biometría de esta mascota está activa y lista para ser reconocida.</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% elif data.tiene_suficientes_imagenes %}
+                                                <div class="rounded-md bg-yellow-50 p-3">
+                                                    <div class="flex">
+                                                        <div class="flex-shrink-0">
+                                                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
+                                                        </div>
+                                                        <div class="ml-3">
+                                                            <h3 class="text-sm font-medium text-yellow-800">Listo para entrenar</h3>
+                                                            <div class="mt-2 text-sm text-yellow-700">
+                                                                <p>Has subido suficientes imágenes. Puedes entrenar el modelo ahora.</p>
+                                                                <div class="mt-3">
+                                                                    <button type="button" onclick="entrenarModelo({{ data.mascota.id }})" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                                                        <i class="fas fa-brain mr-1"></i> Entrenar modelo
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                            <div class="rounded-md bg-blue-50 p-3">
+                                                <div class="flex">
+                                                    <div class="flex-shrink-0">
+                                                        <i class="fas fa-info-circle text-blue-400"></i>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <h3 class="text-sm font-medium text-blue-800">Requiere más imágenes</h3>
+                                                        <div class="mt-2 text-sm text-blue-700">
+                                                            <p>Necesitas subir más imágenes para completar el entrenamiento biométrico.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Historial de reconocimientos -->
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                                <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                                        <i class="fas fa-history text-primary-500 mr-2"></i> Últimos reconocimientos
+                                    </h3>
+                                </div>
+                                <div class="px-4 py-5 sm:p-6">
+                                    {% if reconocimientos %}
+                                        <div class="space-y-3">
+                                            {% for rec in reconocimientos %}
+                                            <div class="flex items-start space-x-3 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                                                <div class="flex-shrink-0 h-10 w-10 overflow-hidden rounded-md bg-gray-200">
+                                                    {% if rec.imagen_analizada %}
+                                                    <img src="{{ rec.imagen_analizada.url }}" alt="Reconocimiento" class="h-full w-full object-cover">
+                                                    {% else %}
+                                                    <div class="h-full w-full flex items-center justify-center">
+                                                        <i class="fas fa-image text-gray-400"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900">
+                                                        {% if rec.exito %}
+                                                        <span class="text-green-600">Reconocimiento exitoso</span>
+                                                        {% else %}
+                                                        <span class="text-yellow-600">No identificado</span>
+                                                        {% endif %}
+                                                    </p>
+                                                    <p class="text-xs text-gray-500">
+                                                        {{ rec.fecha|date:"d/m/Y H:i" }} · 
+                                                        <span class="{% if rec.exito %}text-green-600{% else %}text-yellow-600{% endif %}">
+                                                            Confianza: {{ rec.confianza|floatformat:2 }}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4">
+                                            <p class="text-sm text-gray-500">No hay reconocimientos registrados para esta mascota.</p>
+                                        </div>
+                                    {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <!-- Mensaje cuando no hay mascotas -->
+                <div class="text-center py-10">
+                    <div class="mx-auto h-20 w-20 text-gray-300 mb-4">
+                        <i class="fas fa-paw text-5xl"></i>
+                    </div>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">No tiene mascotas registradas</h3>
+                    <p class="mt-1 text-gray-500">Use la pestaña "Registro Normal" para añadir una nueva mascota.</p>
+                    <div class="mt-6">
+                        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" onclick="document.querySelector('.tab-btn[data-target=\'registro-normal\']').click()">
+                            <i class="fas fa-plus-circle mr-2"></i>
+                            Registrar nueva mascota
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
         
         <!-- Pestaña 2: Registro normal -->
-        <div id="registro-normal" class="tab-content hidden">
-            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm">
+        <div id="registro-normal" class="tab-content" style="display: none;">
+            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm" id="registro-normal-content">
                 <div class="mb-4 flex flex-wrap items-center">
                     <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
                         <i class="fas fa-clipboard-list text-primary-600"></i>
@@ -64,15 +404,44 @@
         </div>
         
         <!-- Pestaña 3: Datos biométricos -->
-        <div id="datos-biometricos" class="tab-content hidden">
-            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm">
+        <div id="datos-biometricos" class="tab-content" style="display: none;">
+            <div class="p-4 sm:p-6 bg-white border border-primary-100 rounded-lg shadow-sm" id="datos-biometricos-content">
                 <div class="mb-4 flex flex-wrap items-center">
                     <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
                         <i class="fas fa-fingerprint text-primary-600"></i>
                     </div>
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Captura de Datos Biométricos</h2>
                 </div>
-                {% include 'biometria_registro/biometria.html' %}
+                
+                {% if todas_mascotas_entrenadas %}
+                <!-- Mensaje cuando todas las mascotas ya tienen biometría -->
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-green-800 font-medium text-lg">¡Perfecto! Todas tus mascotas tienen biometría entrenada</h3>
+                            <p class="text-green-700 mt-2">
+                                Tienes <strong>{{ mascotas_con_biometria }}</strong> mascota{{ mascotas_con_biometria|pluralize }} con reconocimiento facial activo.
+                            </p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <a href="{% url 'mascota:scanner' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-camera mr-2"></i>
+                                    Usar scanner
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Contenedor para el selector de mascotas (se rellena vía JS) -->
+                <div id="biometria-selector-container" class="mb-6"></div>
+                <!-- Contenedor para el contenido biométrico -->
+                <div id="biometria-content-container">
+                    {% include 'biometria_registro/biometria.html' %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -92,50 +461,31 @@
     </div>
 </div>
 </div> <!-- Cierre del contenedor mx-auto max-w-7xl -->
-
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Scripts modulares organizados -->
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/app-config.js' %}"></script>
+<script src="{% static 'js/mascota-tabs.js' %}"></script>
+<script src="{% static 'js/qr-management.js' %}"></script>
+<script src="{% static 'js/biometria-management.js' %}"></script>
+<script src="{% static 'js/mascota-management.js' %}"></script>
+<script src="{% static 'js/mascota-perdida.js' %}"></script>
 <script src="{% static 'js/mascota.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Inicialización de configuración -->
+<script>
+    // Inicializar configuración de la aplicación
+    document.addEventListener('DOMContentLoaded', function() {
+        window.configUtils.init({
+            activeBiometriaId: {% if active_biometria_id %}'{{ active_biometria_id }}'{% else %}null{% endif %}
+        });
+    });
+</script>
 {% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/mascota.css' %}">
-<style>
-    /* Estilos para mantener consistencia entre pestañas */
-    .bg-primary-50 {
-        background-color: #f0f9f6; /* color primary-50 */
-    }
-    
-    /* Asegurar que todos los contenedores tengan la misma altura mínima */
-    .content-max-width {
-        min-height: 150px;
-    }
-    
-    /* Estilos para los elementos informativos */
-    .alert-info {
-        background-color: #daf2ff; /* color secondary-100 */
-        color: #1e5295; /* color secondary-900 */
-        border-color: #56c4ff; /* color secondary-400 */
-        border-radius: 0.375rem;
-        padding: 0.75rem 1rem;
-    }
-    
-    /* Consistencia en los contenedores de pestañas */
-    .tab-content .bg-white {
-        transition: box-shadow 0.3s;
-    }
-    
-    /* Estilos responsivos adicionales */
-    @media (max-width: 640px) {
-        .tab-btn {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
-        
-        .tab-content-container {
-            padding: 0.75rem;
-        }
-    }
-</style>
 {% endblock %}

@@ -1,18 +1,258 @@
 {% load static %}
 
 <!-- Contenido de Datos Biométricos - Diseño Profesional -->
-<div class="biometria-content content-max-width">
+<div class="biometria-content content-max-width" data-mascota-id="{% if mascota %}{{ mascota.id }}{% endif %}">
     <!-- Contenedor con estilo armonizado -->
     <div class="bg-primary-50 p-5 rounded-lg">
+        {% if mascota %}
         <div class="alert alert-info mb-4" role="alert">
-            Aquí irán los datos para realizar la captura de datos bioetricos
+            <div class="flex items-center">
+                <i class="fas fa-info-circle mr-2 text-lg"></i>
+                <div>
+                    <strong>Información importante:</strong>
+                    <p class="mt-1 text-sm">Para el reconocimiento facial de tu mascota, necesitamos al menos <strong>20 fotografías</strong> desde diferentes ángulos. Cuantas más fotos proporciones, más preciso será el reconocimiento.</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mb-4" role="alert">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2 text-yellow-600 text-lg"></i>
+                <div>
+                    <strong>Seleccione una mascota:</strong>
+                    <p class="mt-1 text-sm">Para utilizar las funciones biométricas, primero debe seleccionar una de sus mascotas registradas o registrar una nueva.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if mascota %}
+        <!-- Panel de estadísticas -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-5 border border-primary-100">
+            <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                <i class="fas fa-chart-pie text-primary-500 mr-2"></i> Estado del Entrenamiento
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Imágenes subidas -->
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 text-sm">Imágenes subidas</span>
+                        <span class="text-gray-800 font-bold">{{ mascota.imagenes_count|default:"0" }} / 20</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        {% with progress=mascota.imagenes_count|default:0 %}
+                        <div class="bg-primary-600 h-2.5 rounded-full" style="width: {% if progress >= 20 %}100%{% else %}{{ progress|floatformat:0 }}%{% endif %}"></div>
+                        {% endwith %}
+                    </div>
+                </div>
+        {% endif %}
+                
+                <!-- Estado del modelo -->
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 text-sm">Estado del modelo</span>
+                        <span class="text-gray-800 font-bold">
+                            {% if mascota.biometria_entrenada %}
+                                <span class="text-green-600">Entrenado</span>
+                            {% else %}
+                                <span class="text-yellow-600">Pendiente</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        {% if mascota.biometria_entrenada %}
+                            Último entrenamiento: {{ mascota.updated_at|date:"d/m/Y H:i" }}
+                        {% else %}
+                            Se requieren al menos 20 imágenes
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Confianza del modelo -->
+                <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 text-sm">Confianza de reconocimiento</span>
+                        <span class="text-gray-800 font-bold">
+                            {% if mascota.confianza_biometrica %}
+                                {{ mascota.confianza_biometrica|floatformat:2 }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if mascota.confianza_biometrica %}
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div class="bg-primary-600 h-2.5 rounded-full" style="width: {{ mascota.confianza_biometrica|floatformat:0 }}%"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         
-        <!-- Espacio reservado para contenido futuro -->
-        <div class="h-40 flex items-center justify-center border border-dashed border-primary-300 rounded-lg bg-white">
-            <p class="text-gray-500">
-                <i class="fas fa-fingerprint mr-2 text-primary-400"></i>Registro de datos biométricos
-            </p>
+        {% if mascota %}
+        <!-- Sección de cámara en vivo -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-5 border border-primary-100">
+            <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                <i class="fas fa-camera text-primary-500 mr-2"></i> Captura en vivo
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <div id="video-container" class="relative h-64 w-full bg-black rounded-md overflow-hidden mb-3">
+                        <video id="webcam" class="h-full w-full object-cover" autoplay playsinline></video>
+                        <div id="camera-overlay" class="absolute inset-0 items-center justify-center text-white bg-black bg-opacity-75 hidden">
+                            <i class="fas fa-spinner fa-spin mr-2"></i> Inicializando cámara...
+                        </div>
+                    </div>
+                    
+                    <!-- Selector de cámaras -->
+                    <div class="mb-3" id="camera-select-container" style="display: none;">
+                        <label for="camera-select" class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="fas fa-video mr-1"></i> Seleccionar cámara:
+                        </label>
+                        <div class="flex space-x-2">
+                            <select id="camera-select" class="flex-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                <option value="">Cargando cámaras...</option>
+                            </select>
+                            <button id="switch-camera" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                                <i class="fas fa-sync-alt mr-0 sm:mr-2"></i>
+                                <span class="hidden sm:inline">Cambiar</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 mb-3">
+                        <button id="start-camera" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
+                            <i class="fas fa-play mr-2"></i> Iniciar cámara
+                        </button>
+                        <button id="capture-photo" class="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                            <i class="fas fa-camera mr-2"></i> Capturar foto
+                        </button>
+                    </div>
+                    
+                    <div class="text-sm text-gray-600">
+                        <p><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Consejos para buenas fotos:</p>
+                        <ul class="list-disc pl-5 mt-1 text-xs space-y-1">
+                            <li>Asegura una buena iluminación</li>
+                            <li>Captura diferentes ángulos (frontal, perfil, etc.)</li>
+                            <li>Evita movimientos bruscos</li>
+                            <li>La cara de tu mascota debe ser claramente visible</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div>
+                    <div id="preview-container" class="h-64 w-full bg-gray-100 rounded-md overflow-hidden flex items-center justify-center mb-3 border-2 border-dashed border-gray-300">
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <img id="captured-image" class="max-h-full max-w-full hidden">
+                        <div id="placeholder" class="text-gray-400 text-center p-4">
+                            <i class="fas fa-image text-3xl mb-2"></i>
+                            <p>La foto capturada aparecerá aquí</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 mb-3">
+                        <button id="save-photo" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                            <i class="fas fa-save mr-2"></i> Guardar foto
+                        </button>
+                        <button id="discard-photo" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md flex items-center justify-center" disabled>
+                            <i class="fas fa-trash mr-2"></i> Descartar
+                        </button>
+                    </div>
+                    
+                    <form id="upload-form" class="hidden">
+                        {% csrf_token %}
+                        <input type="hidden" name="imagen_base64" id="imagen_base64">
+                        <input type="hidden" name="mascota_id" value="{{ mascota.id }}">
+                        <input type="hidden" name="tipo" value="biometrica">
+                    </form>
+                </div>
+            </div>
         </div>
+        
+        </div>
+        {% endif %}
+        
+        {% if mascota %}
+        <!-- Sección de subida de archivos -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-5 border border-primary-100">
+            <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                <i class="fas fa-upload text-primary-500 mr-2"></i> Subida de imágenes
+            </h3>
+            
+            <form id="file-upload-form" action="{% url 'mascota:upload_biometria' %}" method="post" enctype="multipart/form-data" class="mb-4">
+                {% csrf_token %}
+                <input type="hidden" name="mascota_id" value="{{ mascota.id }}">
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-primary-400 mb-3"></i>
+                    <p class="mb-2 text-sm text-gray-700">
+                        <span class="font-semibold">Haz clic para seleccionar</span> o arrastra archivos aquí
+                    </p>
+                    <p class="text-xs text-gray-500">PNG, JPG o JPEG (máx. 5MB por archivo)</p>
+                    <input id="file-input" name="imagenes" type="file" accept="image/*" multiple class="hidden" />
+                    <button type="button" id="select-files-btn" class="mt-3 bg-gray-100 hover:bg-gray-200 py-2 px-4 rounded-md text-sm text-gray-700">Seleccionar archivos</button>
+                </div>
+                
+                <div id="file-preview-container" class="mt-4 hidden">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+                </div>
+                
+                <div class="flex justify-end mt-4">
+                    <button type="submit" id="upload-files-btn" class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-6 rounded-md flex items-center justify-center" disabled>
+                        <i class="fas fa-upload mr-2"></i> Subir imágenes
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        </div>
+        {% endif %}
+        
+        {% if mascota %}
+        <!-- Galería de imágenes biométricas -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-primary-100">
+            <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+                <i class="fas fa-images text-primary-500 mr-2"></i> Imágenes biométricas
+            </h3>
+            
+            <div id="gallery-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {% if mascota.imagenes.exists %}
+                    {% for imagen in mascota.imagenes.all %}
+                        {% if imagen.is_biometrica %}
+                            <div class="image-card relative group">
+                                <div class="h-24 sm:h-32 w-full rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+                                    <img src="{{ imagen.imagen.url }}" alt="Imagen biométrica" class="h-full w-full object-cover">
+                                </div>
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <button class="delete-image-btn bg-red-600 hover:bg-red-700 text-white p-1 rounded-full" data-id="{{ imagen.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1 truncate">{{ imagen.uploaded_at|date:"d/m/Y H:i" }}</div>
+                                {% if imagen.procesada %}
+                                    <span class="absolute top-1 right-1 bg-green-500 text-xs text-white px-1 rounded-sm">✓</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="col-span-full text-center py-10 text-gray-500">
+                        <i class="fas fa-camera-retro text-4xl mb-2 text-gray-400"></i>
+                        <p>No hay imágenes biométricas</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if mascota.tiene_suficientes_imagenes and not mascota.biometria_entrenada %}
+                <div class="mt-5 flex justify-center">
+                    <button id="train-model-btn" class="bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-6 rounded-md flex items-center justify-center">
+                        <i class="fas fa-brain mr-2"></i> Entrenar modelo biométrico
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
