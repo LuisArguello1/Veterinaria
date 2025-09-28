@@ -48,12 +48,6 @@
             <span>Dashboard</span>
         </a> 
 
-        <!-- Paleta Colores -->
-        <a href="{% url 'auth:paleta' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
-            <i class="fas fa-palette text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
-            <span>Paleta colores</span>
-        </a> 
-
         <!-- Gestion de usuarios -->
         {% if request.user.role == 'VET' or request.user.role == 'ADMIN' %}
         <a href="{% url 'auth:users_list' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
@@ -61,12 +55,20 @@
             <span>Gestion de usuarios</span>
         </a> 
         {% endif %}
-
-        <!-- Mi mascota -->
+        
+        <!-- Registrar mascota -->
         {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' %}
         <a href="{% url 'mascota:main_register' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
             <i class="fas fa-dog text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
             <span>Mi Mascota</span>
+        </a>
+        {% endif %}
+
+        <!-- Mi mascota -->
+        {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' or request.user.role == 'VET' %}
+        <a href="{% url 'mascota:scanner' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
+            <i class="fas fa-qrcode text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <span>Escaner</span>
         </a>
         {% endif %}
 

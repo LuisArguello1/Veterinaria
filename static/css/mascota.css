@@ -905,3 +905,122 @@
     .h-10 i {
         font-size: 1.25rem;
     }
+
+/* ========== ESTILOS ADICIONALES PARA MAIN REGISTER ========== */
+
+/* Estilos para mantener consistencia entre pestañas */
+.bg-primary-50 {
+    background-color: #f0f9f6; /* color primary-50 */
+}
+
+/* Asegurar que todos los contenedores tengan la misma altura mínima */
+.content-max-width {
+    min-height: 150px;
+}
+
+/* Estilos para los elementos informativos */
+.alert-info {
+    background-color: #daf2ff; /* color secondary-100 */
+    color: #1e5295; /* color secondary-900 */
+    border-color: #56c4ff; /* color secondary-400 */
+    border-radius: 0.375rem;
+    padding: 0.75rem 1rem;
+}
+
+/* Consistencia en los contenedores de pestañas */
+.tab-content .bg-white {
+    transition: box-shadow 0.3s;
+}
+
+/* Estilos específicos para el control de pestañas */
+#mi-mascota {
+    display: block !important; /* Siempre visible para evitar el problema */
+}
+
+#mi-mascota-content.hidden {
+    display: none !important;
+}
+
+#mi-mascota-content:not(.hidden) {
+    display: block !important;
+}
+
+/* Asegurar que las otras pestañas se oculten correctamente */
+.tab-content:not(#mi-mascota) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Estilos para botones de eliminación */
+.btn-danger {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.btn-danger:hover {
+    background-color: #fecaca;
+    border-color: #f87171;
+    color: #b91c1c;
+}
+
+.btn-warning {
+    background-color: #fef3c7;
+    border-color: #fcd34d;
+    color: #d97706;
+}
+
+.btn-warning:hover {
+    background-color: #fde68a;
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+/* Estilos responsivos adicionales */
+@media (max-width: 640px) {
+    .tab-btn {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .tab-content-container {
+        padding: 0.75rem;
+    }
+    
+    /* Ajustar botones en móvil */
+    .grid-cols-2.sm\:grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Estilos para el modal QR */
+.qr-modal {
+    font-family: inherit;
+}
+
+.qr-modal img {
+    border: 2px solid #e5e7eb;
+}
+
+/* Botón QR específico */
+.btn-qr {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+    color: #2563eb;
+    transition: all 0.2s ease;
+}
+
+.btn-qr:hover {
+    background-color: #bfdbfe;
+    border-color: #60a5fa;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Mejorar grid responsivo para 4 botones */
+@media (min-width: 640px) {
+    .grid-cols-2.sm\:grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

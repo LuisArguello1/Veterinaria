@@ -1,5 +1,4 @@
 from django.urls import path
-from apps.autenticacion.views.temp import paleta
 from apps.autenticacion.views.dashboard import Dashboard
 from apps.autenticacion.views.login import LoginView, LogoutView
 from apps.autenticacion.views.profile import ProfileView, ProfileUpdateView, ProfilePasswordChangeView
@@ -22,7 +21,6 @@ urlpatterns = [
   
   # Dashboard principal
   path('dashboard/', Dashboard, name="Dashboard"),
-  path('paleta/', paleta, name="paleta"),
     
   # Perfil de usuario
   path('profile/', ProfileView.as_view(), name='profile'),
