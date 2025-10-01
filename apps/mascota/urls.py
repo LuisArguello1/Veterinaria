@@ -15,7 +15,6 @@ from apps.mascota.views.biometria import (
 
 from apps.mascota.views.delete_mascota import MascotaDeleteView, BiometriaDeleteView
 
-
 from apps.mascota.views.qr_views import (
     mascota_info_publica,
     generar_qr_mascota,
@@ -29,6 +28,13 @@ from apps.mascota.views.mascota_perdida_views import (
     verificar_estado_perdida,
     listar_mascotas_perdidas,
     api_mascotas_perdidas
+)
+
+from apps.mascota.views.carnet import (
+    lista_carnets,
+    detalle_carnet,
+    descargar_carnet_pdf,
+    vista_previa_carnet
 )
 
 
@@ -75,4 +81,11 @@ urlpatterns = [
     path('perdida/<uuid:mascota_uuid>/verificar-estado/', verificar_estado_perdida, name='verificar_estado_perdida'),
     path('mascotas-perdidas/', listar_mascotas_perdidas, name='listar_mascotas_perdidas'),
     path('api/mascotas-perdidas/', api_mascotas_perdidas, name='api_mascotas_perdidas'),
+
+    # Sistema de carnets
+    path('carnets/', lista_carnets, name='lista_carnets'),
+    path('carnet/<int:mascota_id>/', detalle_carnet, name='detalle_carnet'),
+    path('carnet/<int:mascota_id>/pdf/', descargar_carnet_pdf, name='descargar_carnet_pdf'),
+    path('carnet/<int:mascota_id>/preview/', vista_previa_carnet, name='vista_previa_carnet'),
+
 ]

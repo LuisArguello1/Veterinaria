@@ -72,6 +72,14 @@
         </a>
         {% endif %}
 
+        <!-- Carnet -->
+        {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' or request.user.role == 'VET' %}
+        <a href="{% url 'mascota:lista_carnets' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
+            <i class="fas fa-id-card text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <span>Carnets</span>
+        </a>
+        {% endif %}
+
     </div>
   </nav>
 </aside>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .print-break { page-break-after: always; }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .carnet-container {
+            border: 2px solid #2563eb;
+            border-radius: 10px;
+            padding: 30px;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2563eb;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .photo-section {
+            text-align: center;
+        }
+        
+        .photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .photo-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: 3px solid #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px auto;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 5px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #d1d5db;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #4b5563;
+        }
+        
+        .info-value {
+            color: #111827;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .characteristics {
+            grid-column: 1 / -1;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            border-top: 2px solid #2563eb;
+            padding-top: 20px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-perdida {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-casa {
+            background: #f0f9ff;
+            color: #059669;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .actions {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 5px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="actions no-print">
+        <a href="{% url 'mascota:detalle_carnet' mascota.id %}" class="btn btn-secondary">← Volver</a>
+        <button onclick="window.print()" class="btn">🖨️ Imprimir</button>
+    </div>
+
+    <div class="carnet-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>CARNET DE IDENTIFICACIÓN</h1>
+            <p>Sistema PetFaceID - Identificación Biométrica para Mascotas</p>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="content-grid">
+            <!-- Foto de la Mascota -->
+            <div class="photo-section">
+                <div class="section-title">Mascota</div>
+                {% if mascota.foto_perfil %}
+                    <img src="{{ mascota.foto_perfil.url }}" 
+                         alt="Foto de {{ mascota.nombre }}" 
+                         class="photo">
+                {% else %}
+                    <div class="photo-placeholder">
+                        Sin foto
+                    </div>
+                {% endif %}
+                <div style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">{{ mascota.nombre }}</div>
+                <div style="color: #666; font-size: 14px;">{{ mascota.raza|default:"Sin raza especificada" }}</div>
+            </div>
+
+            <!-- Información de la Mascota -->
+            <div>
+                <div class="section-title">Información de la Mascota</div>
+                <div class="info-row">
+                    <span class="info-label">Sexo:</span>
+                    <span class="info-value">{{ mascota.sexo_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Edad:</span>
+                    <span class="info-value">{{ mascota.edad_completa }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Peso:</span>
+                    <span class="info-value">
+                        {% if mascota.peso %}{{ mascota.peso }} kg{% else %}No especificado{% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Color:</span>
+                    <span class="info-value">{{ mascota.color|default:"No especificado" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Estado Corporal:</span>
+                    <span class="info-value">
+                        {% if mascota.estado_corporal %}{{ mascota.get_estado_corporal_display }}{% else %}No especificado{% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Etapa de Vida:</span>
+                    <span class="info-value">{{ mascota.etapa_vida_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha de Nacimiento:</span>
+                    <span class="info-value">
+                        {% if mascota.fecha_nacimiento %}{{ mascota.fecha_nacimiento|date:"d/m/Y" }}{% else %}No especificada{% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Estado:</span>
+                    <span class="info-value">
+                        {% if mascota.reportar_perdida %}
+                            <span class="status-badge status-perdida">⚠️ Reportada como perdida</span>
+                        {% else %}
+                            <span class="status-badge status-casa">✅ En casa</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Foto del Propietario -->
+            <div class="photo-section">
+                <div class="section-title">Propietario</div>
+                {% if propietario.image %}
+                    <img src="{{ propietario.image.url }}" 
+                         alt="Foto de {{ propietario.first_name }}" 
+                         class="photo">
+                {% else %}
+                    <div class="photo-placeholder">
+                        Sin foto
+                    </div>
+                {% endif %}
+                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">
+                    {{ propietario.first_name }} {{ propietario.last_name }}
+                </div>
+                <div style="color: #666; font-size: 14px;">@{{ propietario.username }}</div>
+            </div>
+        </div>
+
+        <!-- Información del Propietario en dos columnas -->
+        <div class="two-column">
+            <div>
+                <div class="section-title">Contacto del Propietario</div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ propietario.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Teléfono:</span>
+                    <span class="info-value">{{ propietario.phone|default:"No especificado" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dirección:</span>
+                    <span class="info-value">{{ propietario.direction|default:"No especificada" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cédula:</span>
+                    <span class="info-value">{{ propietario.dni|default:"No especificada" }}</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">Información del Sistema</div>
+                <div class="info-row">
+                    <span class="info-label">Fecha de Registro:</span>
+                    <span class="info-value">{{ mascota.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Imágenes Biométricas:</span>
+                    <span class="info-value">{{ mascota.imagenes_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Características Especiales -->
+        {% if mascota.caracteristicas_especiales %}
+        <div class="characteristics">
+            <div class="section-title">Características Especiales</div>
+            <p>{{ mascota.caracteristicas_especiales }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Carnet generado el {{ mascota.created_at|date:"d/m/Y" }} | Sistema PetFaceID</p>
+            <p>Este documento certifica la identidad de la mascota registrada en nuestro sistema</p>
+            {% if mascota.uuid %}
+            <p style="font-family: monospace; font-size: 10px; margin-top: 10px;">
+                Código de verificación: {{ mascota.uuid }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Auto-print cuando se carga la página si viene de un enlace de impresión
+        if (window.location.search.includes('print=true')) {
+            window.onload = function() {
+                window.print();
+            };
+        }
+    </script>
+</body>
+</html>
