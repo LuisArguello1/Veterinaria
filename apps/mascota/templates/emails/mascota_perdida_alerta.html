@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 Alerta: {{ mascota.nombre }} reportada como perdida</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .alert-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .mascota-card {
+            border: 2px solid #fecaca;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #fef2f2;
+        }
+        .mascota-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .mascota-foto {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 3px solid #dc2626;
+        }
+        .mascota-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #fee2e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            border: 3px solid #dc2626;
+            font-size: 24px;
+            color: #dc2626;
+        }
+        .mascota-detalles h3 {
+            margin: 0;
+            color: #dc2626;
+            font-size: 20px;
+        }
+        .mascota-detalles p {
+            margin: 5px 0;
+            color: #7f1d1d;
+        }
+        .propietario-info {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .propietario-info h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+            font-size: 16px;
+        }
+        .contacto {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #6b7280;
+        }
+        .contacto i {
+            width: 20px;
+            margin-right: 8px;
+        }
+        .ubicacion {
+            background-color: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .cta {
+            background-color: #dc2626;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .urgente {
+            color: #dc2626;
+            font-weight: 600;
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="alert-icon">🚨</div>
+            <h1>¡MASCOTA PERDIDA!</h1>
+            <p>Se necesita tu ayuda para encontrar a {{ mascota.nombre }}</p>
+        </div>
+        
+        <div class="content">
+            <p class="urgente">¡ATENCIÓN! Una mascota se ha perdido y necesita nuestra ayuda.</p>
+            
+            <div class="mascota-card">
+                <div class="mascota-info">
+                    {% if foto_url %}
+                        <img src="{{ foto_url }}" alt="Foto de {{ mascota.nombre }}" class="mascota-foto">
+                    {% else %}
+                        <div class="mascota-placeholder">🐕</div>
+                    {% endif %}
+                    <div class="mascota-detalles">
+                        <h3>{{ mascota.nombre }}</h3>
+                        <p><strong>Raza:</strong> {{ mascota.raza|default:"No especificada" }}</p>
+                        {% if mascota.color %}
+                        <p><strong>Color:</strong> {{ mascota.color }}</p>
+                        {% endif %}
+                        {% if mascota.edad %}
+                        <p><strong>Edad:</strong> {{ mascota.edad_completa }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if mascota.caracteristicas_especiales %}
+                <div style="margin-top: 15px;">
+                    <strong>Características especiales:</strong>
+                    <p style="font-style: italic;">{{ mascota.caracteristicas_especiales }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if ubicacion_perdida %}
+            <div class="ubicacion">
+                <strong>📍 Última ubicación conocida:</strong>
+                <p>{{ ubicacion_perdida }}</p>
+            </div>
+            {% endif %}
+
+            <div class="propietario-info">
+                <h4>Información del propietario:</h4>
+                <div class="contacto">
+                    <i>👤</i>
+                    <span>{{ contacto_propietario.nombre }}</span>
+                </div>
+                {% if contacto_propietario.email %}
+                <div class="contacto">
+                    <i>✉️</i>
+                    <a href="mailto:{{ contacto_propietario.email }}" style="color: #2563eb;">{{ contacto_propietario.email }}</a>
+                </div>
+                {% endif %}
+                {% if contacto_propietario.telefono %}
+                <div class="contacto">
+                    <i>📞</i>
+                    <a href="tel:{{ contacto_propietario.telefono }}" style="color: #2563eb;">{{ contacto_propietario.telefono }}</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <p style="font-size: 16px; margin-bottom: 15px;">
+                    <strong>Si ves a {{ mascota.nombre }}, por favor contacta inmediatamente al propietario.</strong>
+                </p>
+                <p style="font-size: 14px; color: #6b7280;">
+                    También puedes usar nuestro sistema de reconocimiento facial si tienes una foto clara de la mascota.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>PetFaceID - Sistema de Identificación de Mascotas</strong></p>
+            <p>Este email fue enviado automáticamente como parte de nuestro sistema de alerta de mascotas perdidas.</p>
+            <p>Juntos podemos ayudar a reunir a {{ mascota.nombre }} con su familia.</p>
+        </div>
+    </div>
+</body>
+</html>

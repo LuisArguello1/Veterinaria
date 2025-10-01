@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% if mascota %}Información de la mascota {{ mascota.nombre }}{% else %}Mascota no encontrada{% endif %}">
+    <title>
+        {% if mascota %}
+            Información de {{ mascota.nombre }} - PetFaceID
+        {% else %}
+            Mascota no encontrada - PetFaceID
+        {% endif %}
+    </title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'icons/favicon.ico' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'icons/favicon-16x16.png' %}">
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-600: #1d4ed8;
+            --primary-700: #1e40af;
+            --primary-800: #1e3a8a;
+            --primary-100: #dbeafe;
+            --primary-50: #eff6ff;
+        }
+        
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 50%, var(--primary-800) 100%);
+        }
+        
+        .text-primary-100 { color: var(--primary-100); }
+        .text-primary-600 { color: var(--primary-600); }
+        .text-primary-800 { color: var(--primary-800); }
+        
+        .shadow-primary {
+            box-shadow: 0 10px 25px -3px rgba(29, 78, 216, 0.1), 0 4px 6px -2px rgba(29, 78, 216, 0.05);
+        }
+        
+        .badge-identification {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .pet-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pet-avatar-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        {% if error %}
+        <!-- Error: Mascota no encontrada -->
+        <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="mb-6">
+                <div class="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Mascota no encontrada</h1>
+            <p class="text-gray-600 mb-6">{{ error }}</p>
+            <div class="text-sm text-gray-500">
+                <p>El código QR puede estar dañado o la mascota ya no está registrada.</p>
+            </div>
+        </div>
+        {% else %}
+        <!-- Información de la mascota -->
+        <div class="bg-white rounded-lg shadow-primary overflow-hidden">
+            <!-- Header con foto de perfil -->
+            <div class="bg-primary-gradient px-6 py-8 text-center">
+                <div class="mb-4">
+                    {% if mascota.foto_perfil %}
+                        <img src="{{ mascota.foto_perfil.url }}" 
+                             alt="Foto de {{ mascota.nombre }}" 
+                             class="pet-avatar mx-auto">
+                    {% else %}
+                        <div class="pet-avatar-placeholder mx-auto">
+                            <i class="fas fa-paw text-white text-4xl"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">{{ mascota.nombre }}</h1>
+                <p class="text-primary-100 text-lg">{{ mascota.raza|default:"Sin raza específica" }}</p>
+                
+                <!-- Badge de identificación -->
+                <div class="mt-4 inline-flex items-center px-4 py-2 badge-identification rounded-full">
+                    <i class="fas fa-qrcode text-white mr-2"></i>
+                    <span class="text-white font-medium">ID: {{ mascota.uuid|truncatechars:8 }}</span>
+                </div>
+            </div>
+
+            <!-- Información principal -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Datos básicos -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                            <i class="fas fa-info-circle text-primary-600 mr-2"></i>
+                            Información Básica
+                        </h3>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Nombre:</span>
+                                <span class="font-medium text-gray-900">{{ mascota.nombre }}</span>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Raza:</span>
+                                <span class="font-medium text-gray-900">{{ mascota.raza|default:"No especificada" }}</span>
+                            </div>
+                            
+                            {% if mascota.edad %}
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Edad:</span>
+                                <span class="font-medium text-gray-900">{{ mascota.edad }} año{{ mascota.edad|pluralize }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if mascota.peso %}
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Peso:</span>
+                                <span class="font-medium text-gray-900">{{ mascota.peso }} kg</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Género:</span>
+                                <span class="font-medium text-gray-900">
+                                    {% if mascota.sexo == 'M' %}
+                                        <i class="fas fa-mars text-blue-600 mr-1"></i> Macho
+                                    {% elif mascota.sexo == 'F' %}
+                                        <i class="fas fa-venus text-pink-600 mr-1"></i> Hembra
+                                    {% else %}
+                                        No especificado
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            {% if mascota.color %}
+                            <div class="flex items-center">
+                                <span class="text-gray-600 w-20">Color:</span>
+                                <span class="font-medium text-gray-900">{{ mascota.color }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Información del propietario -->
+                    {% if propietario %}
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                            <i class="fas fa-user text-primary-600 mr-2"></i>
+                            Propietario
+                        </h3>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                {% if propietario.image %}
+                                    <img src="{{ propietario.image.url }}" 
+                                         alt="Foto de {{ propietario.get_full_name }}" 
+                                         class="w-12 h-12 rounded-full object-cover mr-3">
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+                                        <i class="fas fa-user text-gray-600"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-semibold text-gray-900">
+                                        {{ propietario.get_full_name|default:propietario.username }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">Propietario registrado</p>
+                                </div>
+                            </div>
+                            
+                            {% if propietario.email %}
+                            <div class="flex items-center text-sm text-gray-600 mb-2">
+                                <i class="fas fa-envelope w-4 mr-2"></i>
+                                <a href="mailto:{{ propietario.email }}" class="text-primary-600 hover:text-primary-800">
+                                    {{ propietario.email }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if propietario.phone %}
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-phone w-4 mr-2"></i>
+                                <a href="tel:{{ propietario.phone }}" class="text-primary-600 hover:text-primary-800">
+                                    {{ propietario.phone }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Información adicional -->
+                {% if mascota.caracteristicas_especiales %}
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4">
+                        <i class="fas fa-star text-primary-600 mr-2"></i>
+                        Características Especiales
+                    </h3>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-gray-700">{{ mascota.caracteristicas_especiales }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Estado de salud y fecha de registro -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {% if mascota.estado_corporal %}
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">Estado de Salud</h4>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            {% if mascota.estado_corporal == 'excelente' %}bg-green-100 text-green-800
+                            {% elif mascota.estado_corporal == 'bueno' %}bg-blue-100 text-blue-800
+                            {% elif mascota.estado_corporal == 'regular' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <i class="fas fa-heart mr-1"></i>
+                            {{ mascota.estado_corporal|title }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">Registrado</h4>
+                        <p class="text-gray-600">
+                            <i class="fas fa-calendar mr-2"></i>
+                            {{ mascota.created_at|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer con logo -->
+                <div class="border-t border-gray-200 pt-6 text-center">
+                    <div class="flex items-center justify-center mb-2">
+                        <img src="{% static 'img/PetFaceId_logo_2.png' %}" alt="PetFaceID" class="h-8 mr-2">
+                        <span class="text-lg font-bold text-primary-600">PetFaceID</span>
+                    </div>
+                    <p class="text-sm text-gray-500">Sistema de Identificación Biométrica de Mascotas</p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Escanea el código QR para ver esta información actualizada
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Scripts modulares -->
+<script src="{% static 'js/public-info.js' %}"></script>
+
+</body>
+</html>

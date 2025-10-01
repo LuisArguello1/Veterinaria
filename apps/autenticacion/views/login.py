@@ -35,7 +35,6 @@ class LoginView(FormView):
 
         return self.form_invalid(form)
 
-
 class LogoutView(LoginRequiredMixin, RedirectView):
     """Vista para cerrar sesión"""
     url = reverse_lazy('auth:login')
