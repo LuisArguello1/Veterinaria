@@ -1,23 +1,420 @@
-{% extends "layouts/base.html" %}
+{% extends 'layouts/base.html' %}
+{% load static %}
 
-{% block title %} Dashboard {% endblock %}
-
+{% block title %}Dashboard - PetFace ID{% endblock %}
 
 {% block content %}
+<div class="container mx-auto px-4 py-8 dashboard-container">
 
-<!-- Dashboard Content -->
-<div class="space-y-6">
+  <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+    <div class="flex items-center gap-4">
+      <div class="user-avatar">
+        <img src="{{ user.get_image }}" alt="{{ user.get_full_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500">
+      </div>
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Dashboard - PetFace ID</h1>
+        <p class="text-sm text-gray-600">Bienvenido, {{ user.get_full_name|default:user.username }} - {{ user.get_role_display }}</p>
+      </div>
+    </div>
+    <p class="text-sm text-gray-600">Fecha actual: {% now "d/m/Y H:i" %}</p>
+  </div>
 
-    <!-- Header Section -->
-    <div class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-        <div class="relative z-10">
-            <h1 class="text-3xl font-bold mb-2">Bienvenido a PetFace ID</h1>
-            <p class="text-white/90 text-lg">Sistema de gestión veterinaria - Cuidando la salud de tus mascotas</p>
+  <!-- Resumen General -->
+  <div class="mb-8">
+    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Resumen General</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Tarjeta: Total Mascotas -->
+      <div class="bg-white rounded-lg shadow-md p-6 stat-card border-l-4 border-blue-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Total Mascotas</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ total_mascotas }}</h3>
+          </div>
+          <div class="rounded-full bg-blue-100 p-3">
+            <i class="fas fa-paw text-blue-500"></i>
+          </div>
         </div>
+      </div>
+
+      <!-- Tarjeta: Mascotas Perdidas -->
+      <div class="bg-white rounded-lg shadow-md p-6 stat-card border-l-4 border-red-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Mascotas Perdidas</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ mascotas_perdidas }}</h3>
+          </div>
+          <div class="rounded-full bg-red-100 p-3">
+            <i class="fas fa-exclamation-triangle text-red-500"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <p class="text-xs font-medium text-gray-500">
+            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full">{{ lost_percentage|floatformat:1 }}% del total</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Tarjeta: Total Usuarios (solo para admin) -->
+      {% if user.role == 'ADMIN' %}
+      <div class="bg-white rounded-lg shadow-md p-6 stat-card border-l-4 border-purple-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Total Usuarios</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ total_users }}</h3>
+          </div>
+          <div class="rounded-full bg-purple-100 p-3">
+            <i class="fas fa-users text-purple-500"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <p class="text-xs font-medium text-gray-500">
+            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Usuarios activos</span>
+          </p>
+        </div>
+      </div>
+      {% else %}
+      <!-- Tarjeta: Mascotas Activas para usuarios no admin -->
+      <div class="bg-white rounded-lg shadow-md p-6 stat-card border-l-4 border-emerald-500">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Mascotas Activas</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ mascotas_activas }}</h3>
+          </div>
+          <div class="rounded-full bg-emerald-100 p-3">
+            <i class="fas fa-heart text-emerald-500"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <p class="text-xs font-medium text-gray-500">
+            <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full">{{ active_percentage|floatformat:1 }}% del total</span>
+          </p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Grid 2x2 para gráficos -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <!-- Gráfico: Registros de Mascotas por Mes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Registros de Mascotas (Últimos 6 Meses)</h3>
+      <div class="h-64">
+        <canvas id="registrosMascotasChart"></canvas>
+      </div>
     </div>
 
+    <!-- Gráfico: Estado de Mascotas -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Estado de las Mascotas</h3>
+      <div class="h-64">
+        <canvas id="estadoMascotasChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico: Reconocimientos por Día -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Reconocimientos Últimos 7 Días</h3>
+      <div class="h-64">
+        <canvas id="reconocimientosDiasChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Accesos Rápidos -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Accesos Rápidos</h3>
+      <div class="flex flex-wrap gap-3 justify-center">
+        {% if user.role == 'ADMIN' %}
+        <a href="{% url 'auth:users_list' %}" class="flex flex-col items-center p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200 hover:shadow-md transition-all min-w-[80px] max-w-[90px]">
+          <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mb-1">
+            <i class="fas fa-users-cog text-white text-sm"></i>
+          </div>
+          <span class="text-xs font-medium text-purple-700 text-center leading-tight">Usuarios</span>
+        </a>
+        {% endif %}
+        
+        <a href="{% url 'mascota:lista_carnets' %}" class="flex flex-col items-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 hover:shadow-md transition-all min-w-[80px] max-w-[90px]">
+          <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mb-1">
+            <i class="fas fa-id-card text-white text-sm"></i>
+          </div>
+          <span class="text-xs font-medium text-blue-700 text-center leading-tight">Carnets</span>
+        </a>
+        
+        <a href="{% url 'mascota:scanner' %}" class="flex flex-col items-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 hover:shadow-md transition-all min-w-[80px] max-w-[90px]">
+          <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mb-1">
+            <i class="fas fa-qrcode text-white text-sm"></i>
+          </div>
+          <span class="text-xs font-medium text-green-700 text-center leading-tight">Scanner</span>
+        </a>
+        
+        <a href="{% url 'mascota:main_register' %}" class="flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg border border-amber-200 hover:shadow-md transition-all min-w-[80px] max-w-[90px]">
+          <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center mb-1">
+            <i class="fas fa-paw text-white text-sm"></i>
+          </div>
+          <span class="text-xs font-medium text-amber-700 text-center leading-tight">Mascotas</span>
+        </a>
+        
+        <a href="{% url 'auth:profile' %}" class="flex flex-col items-center p-3 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg border border-indigo-200 hover:shadow-md transition-all min-w-[80px] max-w-[90px]">
+          <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center mb-1">
+            <i class="fas fa-user-circle text-white text-sm"></i>
+          </div>
+          <span class="text-xs font-medium text-indigo-700 text-center leading-tight">Perfil</span>
+        </a>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Mascotas Recientes -->
+  {% if user.role == 'ADMIN' or user.role == 'VET' %}
+  <div class="mb-10">
+    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Mascotas Registradas Recientemente</h2>
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-4 py-3 text-left">Mascota</th>
+              <th class="px-4 py-3 text-left">Propietario</th>
+              <th class="px-4 py-3 text-center">Raza</th>
+              <th class="px-4 py-3 text-center">Estado</th>
+              <th class="px-4 py-3 text-center">Fecha Registro</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for mascota in mascotas_recientes %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3">
+                <div class="flex items-center">
+                  {% if mascota.foto_perfil %}
+                  <img src="{{ mascota.foto_perfil.url }}" alt="{{ mascota.nombre }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                  {% else %}
+                  <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-paw text-blue-500"></i>
+                  </div>
+                  {% endif %}
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ mascota.nombre }}</p>
+                    <p class="text-xs text-gray-500">{{ mascota.sexo|capfirst }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <p class="text-sm text-gray-900">{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</p>
+                <p class="text-xs text-gray-500">{{ mascota.propietario.email }}</p>
+              </td>
+              <td class="px-4 py-3 text-sm text-center text-gray-900">{{ mascota.raza|default:"No especificada" }}</td>
+              <td class="px-4 py-3 text-center">
+                {% if mascota.reportar_perdida %}
+                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Perdida</span>
+                {% else %}
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Activa</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-sm text-center text-gray-500">{{ mascota.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-4 py-3 text-sm text-center text-gray-500">No hay mascotas registradas</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Configuración de colores veterinarios
+    const chartColors = {
+      primary: 'rgba(59, 130, 246, 0.7)',
+      primaryBorder: 'rgb(59, 130, 246)',
+      success: 'rgba(16, 185, 129, 0.7)',
+      successBorder: 'rgb(16, 185, 129)',
+      warning: 'rgba(245, 158, 11, 0.7)',
+      warningBorder: 'rgb(245, 158, 11)',
+      danger: 'rgba(239, 68, 68, 0.7)',
+      dangerBorder: 'rgb(239, 68, 68)',
+      purple: 'rgba(139, 92, 246, 0.7)',
+      purpleBorder: 'rgb(139, 92, 246)',
+      emerald: 'rgba(16, 185, 129, 0.7)',
+      emeraldBorder: 'rgb(16, 185, 129)',
+    };
+
+    // Gráfico de Registros de Mascotas por Mes
+    const registrosCtx = document.getElementById('registrosMascotasChart').getContext('2d');
+    new Chart(registrosCtx, {
+      type: 'line',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+          label: 'Mascotas Registradas',
+          data: {{ chart_values|safe }},
+          backgroundColor: chartColors.primary,
+          borderColor: chartColors.primaryBorder,
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: chartColors.primaryBorder,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Registros por mes - {% now "Y" %}',
+            font: {
+              size: 14
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              precision: 0
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                size: window.innerWidth < 768 ? 10 : 12
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Gráfico de Estado de Mascotas
+    const estadoCtx = document.getElementById('estadoMascotasChart').getContext('2d');
+    new Chart(estadoCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Mascotas Activas', 'Mascotas Perdidas'],
+        datasets: [{
+          data: [{{ mascotas_activas }}, {{ mascotas_perdidas }}],
+          backgroundColor: [
+            chartColors.success,
+            chartColors.danger
+          ],
+          borderColor: [
+            chartColors.successBorder,
+            chartColors.dangerBorder
+          ],
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: window.innerWidth < 768 ? 'bottom' : 'right',
+            labels: {
+              font: {
+                size: window.innerWidth < 768 ? 10 : 12
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Estado de las Mascotas',
+            font: {
+              size: 14
+            }
+          }
+        },
+        cutout: '60%',
+      }
+    });
+
+    // Gráfico de Reconocimientos por Día (últimos 7 días)
+    const reconocimientosCtx = document.getElementById('reconocimientosDiasChart').getContext('2d');
+    new Chart(reconocimientosCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ reconocimientos_labels|safe }},
+        datasets: [{
+          label: 'Reconocimientos',
+          data: {{ reconocimientos_data|safe }},
+          backgroundColor: chartColors.emerald,
+          borderColor: chartColors.emeraldBorder,
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Reconocimientos Diarios',
+            font: {
+              size: 14
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              precision: 0
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                size: window.innerWidth < 768 ? 10 : 12
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Evento para redimensionar los gráficos cuando cambia el tamaño de la ventana
+    window.addEventListener('resize', function() {
+      const isMobile = window.innerWidth < 768;
+      
+      // Actualizar leyendas para dispositivos móviles
+      const estadoChart = Chart.getChart('estadoMascotasChart');
+      if (estadoChart) {
+        estadoChart.options.plugins.legend.position = isMobile ? 'bottom' : 'right';
+        estadoChart.options.plugins.legend.labels.font.size = isMobile ? 10 : 12;
+        estadoChart.update();
+      }
+      
+      // Actualizar tamaño de fuente de etiquetas
+      ['registrosMascotasChart', 'reconocimientosDiasChart'].forEach(function(chartId) {
+        const chartInstance = Chart.getChart(chartId);
+        if (chartInstance) {
+          chartInstance.options.scales.x.ticks.font.size = isMobile ? 10 : 12;
+          chartInstance.update();
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
+            
+           
