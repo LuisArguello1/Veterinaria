@@ -148,57 +148,67 @@
 
         {% elif role == 'VET' or role == 'ADMIN' %}
             <!-- Métricas para veterinarios y administradores -->
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-16 h-16 bg-blue-50 rounded-bl-3xl -mr-6 -mt-6 z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600 font-medium">Total Mascotas</p>
-                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ total_mascotas|default:0 }}</p>
+                        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Total Mascotas</p>
+                        <p class="text-2xl font-bold text-blue-600 mt-2">{{ total_mascotas|default:0 }}</p>
                     </div>
-                    <div class="bg-blue-100 p-3 rounded-full">
+                    <div class="bg-blue-100 p-3 rounded-lg shadow-sm">
                         <i class="fas fa-dog text-blue-600 text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500">
-                    +{{ mascotas_nuevas_semana|default:0 }} esta semana
+                <div class="mt-3 pt-3 text-xs text-gray-500 border-t border-gray-100">
+                    <span><i class="fas fa-plus-circle mr-1"></i> {{ mascotas_nuevas_semana|default:0 }} esta semana</span>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-16 h-16 bg-green-50 rounded-bl-3xl -mr-6 -mt-6 z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600 font-medium">Usuarios</p>
-                        <p class="text-2xl font-bold text-green-600 mt-1">{{ total_usuarios|default:0 }}</p>
+                        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Usuarios</p>
+                        <p class="text-2xl font-bold text-green-600 mt-2">{{ total_usuarios|default:0 }}</p>
                     </div>
-                    <div class="bg-green-100 p-3 rounded-full">
+                    <div class="bg-green-100 p-3 rounded-lg shadow-sm">
                         <i class="fas fa-users text-green-600 text-lg"></i>
                     </div>
                 </div>
+                <div class="mt-3 pt-3 text-xs text-gray-500 border-t border-gray-100">
+                    <span><i class="fas fa-info-circle mr-1"></i> Registrados en la plataforma</span>
+                </div>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-16 h-16 bg-purple-50 rounded-bl-3xl -mr-6 -mt-6 z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600 font-medium">Reconocimientos</p>
-                        <p class="text-2xl font-bold text-purple-600 mt-1">{{ reconocimientos_hoy|default:0 }}</p>
+                        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Reconocimientos</p>
+                        <p class="text-2xl font-bold text-purple-600 mt-2">{{ reconocimientos_hoy|default:0 }}</p>
                     </div>
-                    <div class="bg-purple-100 p-3 rounded-full">
+                    <div class="bg-purple-100 p-3 rounded-lg shadow-sm">
                         <i class="fas fa-eye text-purple-600 text-lg"></i>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500">
-                    Hoy
+                <div class="mt-3 pt-3 text-xs text-gray-500 border-t border-gray-100">
+                    <span><i class="fas fa-calendar-day mr-1"></i> Hoy</span>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between">
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-16 h-16 bg-indigo-50 rounded-bl-3xl -mr-6 -mt-6 z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600 font-medium">Entrenadas</p>
-                        <p class="text-2xl font-bold text-indigo-600 mt-1">{{ mascotas_entrenadas|default:0 }}</p>
+                        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Entrenadas</p>
+                        <p class="text-2xl font-bold text-indigo-600 mt-2">{{ mascotas_entrenadas|default:0 }}</p>
                     </div>
-                    <div class="bg-indigo-100 p-3 rounded-full">
+                    <div class="bg-indigo-100 p-3 rounded-lg shadow-sm">
                         <i class="fas fa-fingerprint text-indigo-600 text-lg"></i>
                     </div>
+                </div>
+                <div class="mt-3 pt-3 text-xs text-gray-500 border-t border-gray-100">
+                    <span><i class="fas fa-check-circle mr-1"></i> Con biometría completa</span>
                 </div>
             </div>
         {% endif %}
@@ -374,7 +384,7 @@
 
             {% if role == 'OWNER' or role == 'ADMIN' %}
             <!-- Mi Mascota (Propietarios y Admin) -->
-            <a href="{% url 'mascota:main_register' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-blue-100">
+            <a href="{% url 'mascota:main_register' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-blue-100">
                 <div class="bg-blue-100 p-3 rounded-lg mb-2 group-hover:bg-blue-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-dog text-blue-600 text-lg"></i>
                 </div>
@@ -384,7 +394,7 @@
 
             {% if role == 'VET' or role == 'ADMIN' %}
             <!-- Gestión de Usuarios (Veterinarios y Admin) -->
-            <a href="{% url 'auth:users_list' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-green-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-green-100">
+            <a href="{% url 'auth:users_list' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-green-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-green-100">
                 <div class="bg-green-100 p-3 rounded-lg mb-2 group-hover:bg-green-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-users text-green-600 text-lg"></i>
                 </div>
@@ -393,7 +403,7 @@
             {% endif %}
 
             <!-- Escáner (Todos los roles) -->
-            <a href="{% url 'mascota:scanner' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-purple-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-purple-100">
+            <a href="{% url 'mascota:scanner' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-purple-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-purple-100">
                 <div class="bg-purple-100 p-3 rounded-lg mb-2 group-hover:bg-purple-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-qrcode text-purple-600 text-lg"></i>
                 </div>
@@ -401,7 +411,7 @@
             </a>
 
             <!-- Mi Perfil (Todos los roles) -->
-            <a href="{% url 'auth:profile' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-indigo-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-indigo-100">
+            <a href="{% url 'auth:profile' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-indigo-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-indigo-100">
                 <div class="bg-indigo-100 p-3 rounded-lg mb-2 group-hover:bg-indigo-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-user text-indigo-600 text-lg"></i>
                 </div>
@@ -410,34 +420,34 @@
 
             {% if role == 'OWNER' %}
             <!-- Acciones adicionales para propietarios -->
-            <a href="#" onclick="window.print()" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-orange-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-orange-100">
+            <a href="#" onclick="window.print()" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-orange-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-orange-100">
                 <div class="bg-orange-100 p-3 rounded-lg mb-2 group-hover:bg-orange-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-print text-orange-600 text-lg"></i>
                 </div>
                 <span class="text-sm font-medium text-gray-700 group-hover:text-orange-700 transition-colors duration-300">Imprimir</span>
             </a>
 
-            <a href="{% url 'auth:logout' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-red-50 rounded-lg transition-colors group">
-                <div class="bg-red-100 p-3 rounded-full mb-2 group-hover:bg-red-200 transition-colors">
+            <a href="{% url 'auth:logout' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-red-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-red-100">
+                <div class="bg-red-100 p-3 rounded-lg mb-2 group-hover:bg-red-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-sign-out-alt text-red-600 text-lg"></i>
                 </div>
-                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700">Salir</span>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors duration-300">Salir</span>
             </a>
 
             {% elif role == 'VET' or role == 'ADMIN' %}
             <!-- Acciones adicionales para veterinarios/admin -->
-            <a href="#" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-yellow-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-yellow-100">
+            <a href="#" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-yellow-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-yellow-100">
                 <div class="bg-yellow-100 p-3 rounded-lg mb-2 group-hover:bg-yellow-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-chart-bar text-yellow-600 text-lg"></i>
                 </div>
                 <span class="text-sm font-medium text-gray-700 group-hover:text-yellow-700 transition-colors duration-300">Reportes</span>
             </a>
 
-            <a href="{% url 'auth:logout' %}" class="flex flex-col items-center p-4 bg-gray-50 hover:bg-red-50 rounded-lg transition-colors group">
-                <div class="bg-red-100 p-3 rounded-full mb-2 group-hover:bg-red-200 transition-colors">
+            <a href="{% url 'auth:logout' %}" class="quick-access flex flex-col items-center p-4 bg-gray-50 hover:bg-red-50 rounded-lg transition-all duration-300 group border border-transparent hover:border-red-100">
+                <div class="bg-red-100 p-3 rounded-lg mb-2 group-hover:bg-red-200 transition-all duration-300 shadow-sm">
                     <i class="fas fa-sign-out-alt text-red-600 text-lg"></i>
                 </div>
-                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700">Salir</span>
+                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors duration-300">Salir</span>
             </a>
             {% endif %}
         </div>
