@@ -161,6 +161,138 @@ class Mascota(models.Model):
         from django.urls import reverse
         return reverse('mascota:qr_info', kwargs={'uuid': self.uuid})
     
+    def get_recomendaciones_cuidado(self):
+        """Genera recomendaciones personalizadas de cuidado basadas en los datos de la mascota"""
+        recomendaciones = {
+            'alimentacion': [],
+            'ejercicio': [],
+            'salud': [],
+            'cuidado_general': []
+        }
+        
+        # Recomendaciones por etapa de vida
+        if self.etapa_vida == 'cachorro':
+            recomendaciones['alimentacion'].extend([
+                'Alimentación específica para cachorros con alta cantidad de proteínas',
+                'Comidas pequeñas y frecuentes (3-4 veces al día)',
+                'Asegurar hidratación constante'
+            ])
+            recomendaciones['salud'].extend([
+                'Calendario de vacunación completo (muy importante)',
+                'Desparasitación regular cada 2-4 semanas',
+                'Visitas veterinarias mensuales para seguimiento'
+            ])
+            recomendaciones['ejercicio'].extend([
+                'Juegos cortos y supervisados',
+                'Evitar ejercicio intenso hasta completar desarrollo'
+            ])
+            recomendaciones['cuidado_general'].extend([
+                'Socialización temprana con otros animales y personas',
+                'Entrenamiento básico de comportamiento'
+            ])
+            
+        elif self.etapa_vida == 'joven':
+            recomendaciones['alimentacion'].extend([
+                'Transición gradual a alimento para adultos jóvenes',
+                'Control de porciones para evitar sobrepeso'
+            ])
+            recomendaciones['ejercicio'].extend([
+                'Actividad física regular y estructurada',
+                'Juegos interactivos para estimulación mental'
+            ])
+            recomendaciones['salud'].extend([
+                'Chequeos veterinarios cada 6 meses',
+                'Mantenimiento de calendario de vacunas'
+            ])
+            
+        elif self.etapa_vida == 'adulto':
+            recomendaciones['alimentacion'].extend([
+                'Dieta balanceada según nivel de actividad',
+                'Control de peso para mantener condición corporal óptima'
+            ])
+            recomendaciones['ejercicio'].extend([
+                'Ejercicio regular según la raza y energía',
+                'Actividades que mantengan agilidad mental'
+            ])
+            recomendaciones['salud'].extend([
+                'Chequeos veterinarios anuales',
+                'Monitoreo de signos de envejecimiento temprano'
+            ])
+            
+        elif self.etapa_vida == 'senior':
+            recomendaciones['alimentacion'].extend([
+                'Dieta especializada para mascotas senior',
+                'Suplementos para articulaciones si es necesario',
+                'Alimentos fáciles de digerir'
+            ])
+            recomendaciones['ejercicio'].extend([
+                'Ejercicio suave y controlado',
+                'Paseos cortos pero frecuentes',
+                'Evitar actividades de alto impacto'
+            ])
+            recomendaciones['salud'].extend([
+                'Chequeos veterinarios cada 6 meses',
+                'Exámenes de sangre regulares',
+                'Monitoreo de artritis y otras condiciones de edad'
+            ])
+            recomendaciones['cuidado_general'].extend([
+                'Ambiente cómodo y cálido',
+                'Cama ortopédica para mayor comodidad'
+            ])
+        
+        # Recomendaciones por estado corporal
+        if self.estado_corporal == 'delgado':
+            recomendaciones['alimentacion'].extend([
+                'Aumentar gradualmente la cantidad de alimento',
+                'Alimentos ricos en calorías y nutrientes',
+                'Consultar con veterinario sobre posibles causas'
+            ])
+            recomendaciones['salud'].append('Descartar problemas de salud subyacentes')
+            
+        elif self.estado_corporal == 'obeso':
+            recomendaciones['alimentacion'].extend([
+                'Dieta controlada en calorías',
+                'Alimentos bajos en grasa',
+                'Evitar premios excesivos entre comidas'
+            ])
+            recomendaciones['ejercicio'].extend([
+                'Incrementar gradualmente la actividad física',
+                'Ejercicios de bajo impacto para articulaciones'
+            ])
+            recomendaciones['salud'].extend([
+                'Monitoreo regular del peso',
+                'Chequeos más frecuentes para detectar diabetes o problemas cardíacos'
+            ])
+            
+        elif self.estado_corporal == 'normal':
+            recomendaciones['alimentacion'].append('Mantener la dieta actual que está funcionando bien')
+            recomendaciones['ejercicio'].append('Continuar con el nivel actual de actividad física')
+        
+        # Recomendaciones por sexo
+        if self.sexo == 'hembra':
+            recomendaciones['salud'].extend([
+                'Considerar esterilización para prevenir enfermedades reproductivas',
+                'Estar atento a signos de embarazo si no está esterilizada'
+            ])
+        elif self.sexo == 'macho':
+            recomendaciones['salud'].append('Considerar castración para prevenir problemas de próstata')
+        
+        # Recomendaciones generales siempre importantes
+        recomendaciones['cuidado_general'].extend([
+            'Cepillado regular según tipo de pelaje',
+            'Limpieza dental regular o juguetes dentales',
+            'Revisión y limpieza de oídos',
+            'Corte de uñas cuando sea necesario',
+            'Microchip para identificación',
+            'Mantener al día documentación veterinaria'
+        ])
+        
+        # Filtrar listas vacías y eliminar duplicados
+        for categoria in recomendaciones:
+            recomendaciones[categoria] = list(set(recomendaciones[categoria]))
+            
+        return recomendaciones
+    
     def delete(self, *args, **kwargs):
         """Elimina la mascota y todos sus archivos asociados"""
         # Eliminar todas las imágenes asociadas (esto activará el delete de ImagenMascota)
