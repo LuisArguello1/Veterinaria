@@ -1,0 +1,1 @@
+# apps/mascota/views/__init__.py
