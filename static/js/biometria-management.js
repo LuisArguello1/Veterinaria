@@ -16,13 +16,13 @@ async function entrenarModelo(mascotaId) {
         }
         
         const result = await Swal.fire({
-            title: '¿Entrenar modelo biométrico?',
+            title: '¿Activar reconocimiento facial?',
             text: 'Este proceso puede tardar unos minutos. ¿Deseas continuar?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, entrenar',
+            confirmButtonText: 'Sí, activar',
             cancelButtonText: 'Cancelar'
         });
         
@@ -36,7 +36,7 @@ async function entrenarModelo(mascotaId) {
         try {
             // Mostrar estado de carga
             if (botonEntrenar) {
-                botonEntrenar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Entrenando...';
+                botonEntrenar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Activando...';
                 botonEntrenar.disabled = true;
             }
             
@@ -52,7 +52,7 @@ async function entrenarModelo(mascotaId) {
                 const data = await response.json();
                 
                 if (data.success) {
-                    let mensaje = `Modelo entrenado correctamente en ${data.tiempo}s`;
+                    let mensaje = `Reconocimiento activado correctamente en ${data.tiempo}s`;
                     if (data.confianza) {
                         mensaje += `<br><strong>Confianza:</strong> ${(data.confianza * 100).toFixed(1)}%`;
                     }
@@ -61,7 +61,7 @@ async function entrenarModelo(mascotaId) {
                     }
                     
                     Swal.fire({
-                        title: '¡Entrenamiento exitoso!',
+                        title: 'Activacion de reconocimiento exitoso!',
                         html: mensaje,
                         icon: 'success',
                         confirmButtonColor: '#10b981',
@@ -72,7 +72,7 @@ async function entrenarModelo(mascotaId) {
                     });
                 } else {
                     Swal.fire({
-                        title: 'Error en el entrenamiento',
+                        title: 'Error en la activacion',
                         text: data.error || 'Error al entrenar el modelo',
                         icon: 'error',
                         confirmButtonColor: '#d33'
@@ -90,7 +90,7 @@ async function entrenarModelo(mascotaId) {
         } finally {
             // Restaurar botón
             if (botonEntrenar) {
-                botonEntrenar.innerHTML = '<i class="fas fa-brain mr-1"></i> Entrenar modelo';
+                botonEntrenar.innerHTML = '<i class="fas fa-brain mr-1"></i> Activar reconocimiento';
                 botonEntrenar.disabled = false;
             }
         }

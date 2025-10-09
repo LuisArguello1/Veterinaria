@@ -37,6 +37,12 @@ from apps.mascota.views.carnet import (
     vista_previa_carnet
 )
 
+from apps.mascota.views.registro_view import (
+    registro_mascota_view,
+    predict_from_image_ajax,
+    check_ai_model_status
+)
+
 
 
 app_name='mascota'
@@ -44,6 +50,11 @@ app_name='mascota'
 urlpatterns = [
     # Registro principal de mascota
     path('mascota/', main_register, name='main_register'),
+    
+    # Registro con IA
+    path('registro/', registro_mascota_view, name='registro_mascota'),
+    path('api/predict-image/', predict_from_image_ajax, name='predict_image_ajax'),
+    path('api/check-ai-status/', check_ai_model_status, name='check_ai_status'),
     
     
     # Detalle de mascota

@@ -12,6 +12,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Variable global para el estado de la cámara
+    let scannerCameraActive = false;
+    
+    // Función para verificar y corregir el estado de la cámara
+    function verificarEstadoCamera() {
+        const webcamVideo = document.getElementById('scanner-webcam');
+        const startCameraBtn = document.getElementById('scanner-start-camera');
+        
+        const tieneVideo = webcamVideo && webcamVideo.srcObject;
+        
+        if (scannerCameraActive && !tieneVideo) {
+            // Estado inconsistente: dice que está activa pero no hay video
+            console.log('Corrigiendo estado inconsistente: activa->inactiva');
+            scannerCameraActive = false;
+            if (startCameraBtn) {
+                startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
+                startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+            }
+        } else if (!scannerCameraActive && tieneVideo) {
+            // Estado inconsistente: dice que está inactiva pero hay video
+            console.log('Corrigiendo estado inconsistente: inactiva->activa');
+            scannerCameraActive = true;
+            if (startCameraBtn) {
+                startCameraBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> Detener cámara';
+                startCameraBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+                startCameraBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }
+        }
+        
+        return scannerCameraActive;
+    }
+    
     function initScannerTabs() {
         const tabButtons = document.querySelectorAll('.scan-tab-btn');
         const tabContents = document.querySelectorAll('.scan-tab-content');
@@ -38,12 +71,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Detener cámara si se cambia de pestaña
                 if (target !== 'camera-tab') {
-                    stopScannerCamera();
+                    window.stopScannerCamera();
                 }
             });
         });
     }
     
+    // Función global para detener la cámara (accesible desde otras partes)
+    window.stopScannerCamera = function() {
+        const webcamVideo = document.getElementById('scanner-webcam');
+        const startCameraBtn = document.getElementById('scanner-start-camera');
+        const capturePhotoBtn = document.getElementById('scanner-capture-photo');
+        const cameraOverlay = document.getElementById('scanner-camera-overlay');
+        const cameraSelectContainer = document.getElementById('scanner-camera-select-container');
+        
+        console.log('stopScannerCamera global llamada, estado previo:', scannerCameraActive);
+        
+        if (webcamVideo && webcamVideo.srcObject) {
+            const tracks = webcamVideo.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+            webcamVideo.srcObject = null;
+        }
+        
+        // Marcar cámara como inactiva globalmente
+        scannerCameraActive = false;
+        console.log('Cámara detenida globalmente, nuevo estado:', scannerCameraActive);
+        
+        // Restaurar botón de iniciar cámara
+        if (startCameraBtn) {
+            startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
+            startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+        }
+        
+        // Deshabilitar botón de captura
+        if (capturePhotoBtn) {
+            capturePhotoBtn.disabled = true;
+        }
+        
+        // Ocultar selector de cámaras
+        if (cameraSelectContainer) {
+            cameraSelectContainer.style.display = 'none';
+        }
+        
+        // Mostrar overlay inicial
+        if (cameraOverlay) {
+            cameraOverlay.innerHTML = '<i class="fas fa-video mr-2"></i> Presiona "Iniciar cámara" para comenzar';
+            cameraOverlay.classList.remove('hidden');
+        }
+    };
+
     function initScanner() {
         // Variables de la cámara
         const startCameraBtn = document.getElementById('scanner-start-camera');
@@ -56,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const switchCameraBtn = document.getElementById('scanner-switch-camera');
         let stream = null;
         let currentDeviceId = '';
+        // Eliminamos la variable local cameraActive ya que usamos la global scannerCameraActive
         
         // Variables de subida de archivos
         const fileInput = document.getElementById('scanner-file-input');
@@ -115,6 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Función para iniciar la cámara con un dispositivo específico
         async function startCamera(deviceId = null) {
             try {
+                // Mostrar overlay de inicialización
+                cameraOverlay.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Inicializando cámara...';
                 cameraOverlay.classList.remove('hidden');
                 
                 // Configurar restricciones
@@ -170,16 +250,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 startCameraBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
                 startCameraBtn.classList.add('bg-red-600', 'hover:bg-red-700');
                 
-                // Cambiar comportamiento a detener cámara
-                startCameraBtn.onclick = () => stopScannerCamera();
-                
+                // Ocultar overlay cuando la cámara esté lista
                 cameraOverlay.classList.add('hidden');
+                
+                // Marcar cámara como activa
+                scannerCameraActive = true;
+                console.log('Cámara iniciada, estado:', scannerCameraActive);
                 
                 return true;
             } catch (err) {
                 console.error('Error al acceder a la cámara:', err);
                 alert('No se pudo acceder a la cámara. Por favor, verifica que has concedido permisos.');
-                cameraOverlay.classList.add('hidden');
+                cameraOverlay.innerHTML = '<i class="fas fa-video-slash mr-2"></i> Error al inicializar cámara. Presiona "Iniciar cámara" para reintentar.';
+                scannerCameraActive = false; // Asegurar que el estado sea correcto
                 return false;
             }
         }
@@ -187,7 +270,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inicializar cámara
         if (startCameraBtn && !disabled) {
             startCameraBtn.addEventListener('click', async () => {
-                await startCamera();
+                // Verificar estado antes de decidir qué hacer
+                const estadoActual = verificarEstadoCamera();
+                console.log('Botón clickeado, estado verificado:', estadoActual);
+                
+                if (estadoActual) {
+                    // Si la cámara está activa, detenerla
+                    console.log('Deteniendo cámara...');
+                    stopScannerCamera();
+                } else {
+                    // Si la cámara no está activa, iniciarla
+                    console.log('Iniciando cámara...');
+                    await startCamera();
+                }
             });
         }
         
@@ -236,6 +331,8 @@ document.addEventListener('DOMContentLoaded', function() {
             capturePhotoBtn.addEventListener('click', () => {
                 if (!stream) return;
                 
+                console.log('Capturando foto, estado antes:', scannerCameraActive);
+                
                 // Configurar canvas con dimensiones del video
                 canvas.width = webcamVideo.videoWidth;
                 canvas.height = webcamVideo.videoHeight;
@@ -249,6 +346,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Detener cámara
                 stopScannerCamera();
+                
+                // Verificar estado después de detener
+                setTimeout(() => {
+                    console.log('Estado después de capturar:', scannerCameraActive);
+                }, 100);
                 
                 // Mostrar resultados y procesar reconocimiento
                 processRecognition(imageDataUrl);
@@ -321,26 +423,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Función para detener la cámara
+        // Función para detener la cámara (usa la función global)
         function stopScannerCamera() {
+            // Usar la función global para mantener consistencia
+            window.stopScannerCamera();
+            
+            // También limpiar las variables locales
             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                webcamVideo.srcObject = null;
                 stream = null;
-                
-                // Restaurar botón de iniciar cámara
-                startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
-                startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
-                
-                // Restaurar comportamiento
-                startCameraBtn.onclick = null;
-                
-                // Deshabilitar botón de captura
-                capturePhotoBtn.disabled = true;
-                
-                // Ocultar selector de cámaras
-                cameraSelectContainer.style.display = 'none';
             }
         }
         
