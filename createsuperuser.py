@@ -73,7 +73,7 @@ def create_superuser():
         print(f"   - Es superusuario: {user.is_superuser}")
         print(f"   - Es staff: {user.is_staff}")
         print("\n🔐 Credenciales de acceso:")
-        print(f"   Usuario: {username}")
+        print(f"   Email: {user.email}")
         print(f"   Contraseña: {password}")
         
         return True
