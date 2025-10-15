@@ -55,7 +55,7 @@ def get_user_pets(request):
                 'id': mascota.id,
                 'nombre': mascota.nombre,
                 'raza': mascota.raza or 'No especificada',
-                'especie': 'Canino',  # Asumimos que son perros por defecto
+                'especie': 'Canino',
                 'imagenes_count': ImagenMascota.objects.filter(mascota=mascota).count()
             }
             mascotas_data.append(mascota_data)

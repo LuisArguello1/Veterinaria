@@ -181,15 +181,15 @@ AUTH_USER_MODEL = 'autenticacion.User'
 
 # Configuración de autenticación personalizada
 AUTHENTICATION_BACKENDS = [
-    'apps.autenticacion.backends.EmailBackend',  # Nuestro backend personalizado para autenticar con email
-    'django.contrib.auth.backends.ModelBackend',  # Backend estándar de Django como fallback
+    'apps.autenticacion.backends.EmailBackend',  
+    'django.contrib.auth.backends.ModelBackend',  
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'auth:login'
-LOGIN_REDIRECT_URL = 'auth:Dashboard'  # Redirige al dashboard después del login
-LOGOUT_REDIRECT_URL = 'auth:login'     # Redirige al login después del logout
+LOGIN_REDIRECT_URL = 'auth:Dashboard'  
+LOGOUT_REDIRECT_URL = 'auth:login'    
 
 # Configuracion de guardado de la imagenes y videos en azure
 # STORAGES = {
