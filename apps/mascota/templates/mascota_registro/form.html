@@ -61,7 +61,17 @@
                         <div class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors" id="photo-upload-area">
                             <div class="space-y-1 text-center">
                                 <div id="photo-preview" class="hidden">
-                                    <img id="preview-image" src="" alt="Vista previa" class="mx-auto h-24 w-24 object-cover rounded-lg">
+                                    <img id="preview-image" src="" alt="Vista previa" class="mx-auto h-32 w-32 object-cover rounded-lg border-2 border-gray-200">
+                                    <div class="mt-2 flex justify-center space-x-2">
+                                        <button type="button" id="change-photo-btn" class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors flex items-center">
+                                            <i class="fas fa-sync-alt mr-1"></i>
+                                            Cambiar imagen
+                                        </button>
+                                        <button type="button" id="remove-photo-btn" class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors flex items-center">
+                                            <i class="fas fa-trash mr-1"></i>
+                                            Quitar
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="upload-placeholder">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-1"></i>
@@ -233,33 +243,86 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoPreview = document.getElementById('photo-preview');
     const uploadPlaceholder = document.getElementById('upload-placeholder');
     const predictionsPanel = document.getElementById('predictions-panel');
+    const changePhotoBtn = document.getElementById('change-photo-btn');
+    const removePhotoBtn = document.getElementById('remove-photo-btn');
     
     let currentPredictions = null;
+    
+    // Función para resetear el estado de la imagen
+    function resetImageState() {
+        photoPreview.classList.add('hidden');
+        uploadPlaceholder.classList.remove('hidden');
+        predictBtn.disabled = true;
+        predictionsPanel.classList.add('hidden');
+        fotoInput.value = ''; // Limpiar el input
+        currentPredictions = null;
+        
+        // Resetear el texto del botón de predicción
+        predictBtnText.innerHTML = '<i class="fas fa-brain mr-2"></i>Analizar con IA';
+        
+        // Ocultar las predicciones individuales
+        document.getElementById('breed-prediction').classList.add('hidden');
+        document.getElementById('stage-prediction').classList.add('hidden');
+    }
+    
+    // Función para mostrar la imagen preview
+    function showImagePreview(imageSrc) {
+        previewImage.src = imageSrc;
+        photoPreview.classList.remove('hidden');
+        uploadPlaceholder.classList.add('hidden');
+        predictBtn.disabled = false;
+    }
     
     // Manejar cambio de archivo
     fotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            // Validar que sea una imagen
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona un archivo de imagen válido.');
+                resetImageState();
+                return;
+            }
+            
+            // Validar tamaño (máximo 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La imagen no puede ser mayor a 5MB.');
+                resetImageState();
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                photoPreview.classList.remove('hidden');
-                uploadPlaceholder.classList.add('hidden');
-                predictBtn.disabled = false;
+                showImagePreview(e.target.result);
+                // Ocultar predicciones anteriores cuando se cambia la imagen
+                predictionsPanel.classList.add('hidden');
+                currentPredictions = null;
             };
             reader.readAsDataURL(file);
         } else {
-            photoPreview.classList.add('hidden');
-            uploadPlaceholder.classList.remove('hidden');
-            predictBtn.disabled = true;
-            predictionsPanel.classList.add('hidden');
+            resetImageState();
+        }
+    });
+    
+    // Manejar botón de cambiar imagen
+    changePhotoBtn.addEventListener('click', function() {
+        fotoInput.click(); // Abrir el selector de archivos
+    });
+    
+    // Manejar botón de quitar imagen
+    removePhotoBtn.addEventListener('click', function() {
+        if (confirm('¿Estás seguro de que quieres quitar esta imagen?')) {
+            resetImageState();
         }
     });
     
     // Manejar predicción
     predictBtn.addEventListener('click', function() {
         const file = fotoInput.files[0];
-        if (!file) return;
+        if (!file) {
+            alert('Por favor selecciona una imagen primero.');
+            return;
+        }
         
         predictBtn.disabled = true;
         predictBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analizando...';
@@ -360,6 +423,25 @@ document.addEventListener('DOMContentLoaded', function() {
             stagePanel.classList.remove('hidden');
         }
     }
+    
+    // Validación adicional al enviar el formulario
+    document.getElementById('registro-form').addEventListener('submit', function(e) {
+        const file = fotoInput.files[0];
+        if (!file) {
+            e.preventDefault();
+            alert('Por favor selecciona una foto de tu mascota antes de registrar.');
+            return false;
+        }
+        
+        // Opcional: advertir si no se han hecho predicciones
+        if (!currentPredictions) {
+            const shouldContinue = confirm('No has analizado la imagen con IA. ¿Deseas continuar sin las predicciones automáticas?');
+            if (!shouldContinue) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
 });
 </script>
 

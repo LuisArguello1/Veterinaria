@@ -154,7 +154,7 @@ class BiometriaService:
         # (Esto requiere tener un archivo XML de cascada para mascotas)
         try:
             # Esto es un ejemplo - necesitarías un archivo de cascada adecuado
-            cascade_path = os.path.join(settings.BASE_DIR, 'models', 'haarcascade_frontalface_default.xml')
+            cascade_path = os.path.join(settings.BASE_DIR, 'models', 'dog-cascade_40x40_rev2.xml')
             if os.path.exists(cascade_path):
                 classifier = cv2.CascadeClassifier(cascade_path)
                 detections = classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
@@ -350,7 +350,6 @@ class BiometriaService:
         }
         
         # Si hay suficientes muestras, intentar hacer validación
-        # (en un sistema real, deberías usar validación cruzada)
         if len(y) > 20 and len(np.unique(y)) > 1:
             try:
                 # Predicciones en el conjunto de entrenamiento (no ideal, pero informativo)
