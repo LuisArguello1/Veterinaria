@@ -148,6 +148,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const recognitionResult = document.getElementById('recognition-result');
         const resultLoading = document.getElementById('result-loading');
         const resultSuccess = document.getElementById('result-success');
+        
+        // Variables para predicciones de IA
+        const aiPredictionsPanel = document.getElementById('ai-predictions');
+        const aiPredictionsLoading = document.getElementById('ai-predictions-loading');
+        const aiPredictionsContent = document.getElementById('ai-predictions-content');
         const resultError = document.getElementById('result-error');
         
         // Verificar si están deshabilitados los botones
@@ -459,17 +464,50 @@ document.addEventListener('DOMContentLoaded', function() {
         // Función para procesar reconocimiento
         async function processRecognition(imageData) {
             try {
+                // Obtener referencias a los elementos de UI
+                const recognitionResult = document.getElementById('recognition-result');
+                const resultLoading = document.getElementById('result-loading');
+                const resultSuccess = document.getElementById('result-success');
+                const resultError = document.getElementById('result-error');
+                const aiPredictionsPanel = document.getElementById('ai-predictions');
+                const aiPredictionsLoading = document.getElementById('ai-predictions-loading');
+                const aiPredictionsContent = document.getElementById('ai-predictions-content');
+                
                 // Mostrar sección de resultados
-                recognitionResult.classList.remove('hidden');
-                resultLoading.classList.remove('hidden');
-                resultSuccess.classList.add('hidden');
-                resultError.classList.add('hidden');
+                if (recognitionResult) recognitionResult.classList.remove('hidden');
+                if (resultLoading) resultLoading.classList.remove('hidden');
+                if (resultSuccess) resultSuccess.classList.add('hidden');
+                if (resultError) resultError.classList.add('hidden');
+                
+                // También mostrar panel de predicciones IA
+                if (aiPredictionsPanel) aiPredictionsPanel.classList.remove('hidden');
+                if (aiPredictionsLoading) aiPredictionsLoading.classList.remove('hidden');
+                if (aiPredictionsContent) aiPredictionsContent.classList.add('hidden');
                 
                 // Hacer scroll a la sección de resultados
-                recognitionResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                aiPredictionsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
                 // Comprimir imagen antes de enviar
                 const compressedImageData = await compressImage(imageData, 800, 600, 0.85);
+                
+                // Debug: verificar qué tipo de datos recibimos
+                console.log('Tipo de imagen recibida:', typeof imageData, 
+                            'Es string:', typeof imageData === 'string',
+                            'Longitud:', typeof imageData === 'string' ? imageData.length : 'N/A',
+                            'Es base64:', typeof imageData === 'string' && imageData.startsWith('data:image'));
+                
+                // Convertir base64 a Blob para las predicciones IA
+                const imageBlob = await base64ToBlob(compressedImageData);
+                
+                // Debug: verificar el blob creado
+                console.log('Blob creado:', {
+                    tipo: imageBlob.type,
+                    tamaño: imageBlob.size,
+                    nombre: imageBlob.name || 'Sin nombre'
+                });
+                
+                // Realizar análisis de IA en paralelo (no esperamos a que termine)
+                runAIAnalysis(imageBlob);
                 
                 // Crear FormData para enviar la imagen
                 const formData = new FormData();
@@ -642,6 +680,166 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             img.src = dataUrl;
         });
+    }
+    
+    // Función para convertir base64 a Blob
+    function base64ToBlob(base64Data) {
+        return new Promise((resolve) => {
+            // Separar los datos del encabezado
+            const [header, base64] = base64Data.split(';base64,');
+            const contentType = header.split(':')[1];
+            
+            console.log('Content Type:', contentType); // Para depuración
+            
+            // Decodificar base64
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+            
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            
+            // Crear un Blob con el tipo MIME adecuado
+            const blob = new Blob(byteArrays, { type: contentType });
+            
+            // Añadir nombre de archivo para simular un archivo real
+            blob.name = 'scanned_image.jpg';
+            blob.lastModified = new Date();
+            
+            resolve(blob);
+        });
+    }
+    
+    // Función para realizar análisis de IA
+    function runAIAnalysis(imageBlob) {
+        // Obtener elementos de UI necesarios
+        const aiPredictionsPanel = document.getElementById('ai-predictions');
+        const aiPredictionsLoading = document.getElementById('ai-predictions-loading');
+        const aiPredictionsContent = document.getElementById('ai-predictions-content');
+        
+        console.log('Iniciando análisis de IA con elementos:', {
+            panel: aiPredictionsPanel, 
+            loading: aiPredictionsLoading, 
+            content: aiPredictionsContent
+        });
+        
+        // Verificar que el blob sea válido
+        if (!imageBlob || !(imageBlob instanceof Blob)) {
+            console.error('Error: El objeto recibido no es un Blob válido', imageBlob);
+            
+            if (aiPredictionsLoading && aiPredictionsContent) {
+                aiPredictionsLoading.classList.add('hidden');
+                aiPredictionsContent.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-sm text-red-700">Error: Imagen no válida para análisis.</p>
+                    </div>
+                `;
+                aiPredictionsContent.classList.remove('hidden');
+            }
+            return;
+        }
+        
+        // Asegurarse de que el panel de IA sea visible
+        if (aiPredictionsPanel) {
+            aiPredictionsPanel.classList.remove('hidden');
+        }
+        
+        // Mostrar la animación de carga
+        if (aiPredictionsLoading) {
+            aiPredictionsLoading.classList.remove('hidden');
+        }
+        
+        // Ocultar el contenido hasta que tengamos resultados
+        if (aiPredictionsContent) {
+            aiPredictionsContent.classList.add('hidden');
+        }
+
+        // Verificar token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        console.log('CSRF Token encontrado:', !!csrfToken);
+        
+        // Usar el módulo de predicción de IA
+        if (typeof AIPredictions !== 'undefined') {
+            // Crear una copia del Blob con un nombre de archivo
+            const file = new File([imageBlob], "scanner_image.jpg", {
+                type: imageBlob.type || "image/jpeg",
+                lastModified: new Date()
+            });
+            
+            console.log('Enviando archivo para predicción IA:', {
+                nombre: file.name,
+                tipo: file.type,
+                tamaño: file.size
+            });
+            
+            AIPredictions.predict(
+                file,
+                // Éxito
+                (predictions) => {
+                    console.log('Predicciones recibidas:', predictions);
+                    // Mostrar las predicciones
+                    AIPredictions.renderPredictions(predictions, {
+                        breed: document.getElementById('scanner-breed-prediction'),
+                        stage: document.getElementById('scanner-stage-prediction'),
+                        bodyCondition: document.getElementById('scanner-body-condition-prediction')
+                    });
+                    
+                    // Mostrar panel de contenido y ocultar carga
+                    if (aiPredictionsLoading && aiPredictionsContent) {
+                        aiPredictionsLoading.classList.add('hidden');
+                        aiPredictionsContent.classList.remove('hidden');
+                    }
+                },
+                // Error
+                (error) => {
+                    console.error('Error en análisis de IA:', error);
+                    // Mostrar mensaje de error si los elementos existen
+                    if (aiPredictionsLoading && aiPredictionsContent) {
+                        aiPredictionsLoading.classList.add('hidden');
+                        aiPredictionsContent.innerHTML = `
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-yellow-700">No se pudieron realizar las predicciones de IA.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        aiPredictionsContent.classList.remove('hidden');
+                    }
+                }
+            );
+        } else {
+            // Si el módulo no está disponible, mostrar mensaje
+            console.error('Módulo de IA no disponible');
+            if (aiPredictionsLoading && aiPredictionsContent) {
+                aiPredictionsLoading.classList.add('hidden');
+                aiPredictionsContent.innerHTML = `
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">Módulo de predicción de IA no disponible.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                aiPredictionsContent.classList.remove('hidden');
+            }
+        }
     }
     
     function getCookie(name) {

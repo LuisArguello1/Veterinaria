@@ -90,8 +90,25 @@ def predict_from_image_ajax(request):
                 'error': 'La imagen no puede ser mayor a 5MB'
             })
         
+        # Verificar estado de los modelos antes de predecir
+        models_loaded = (predictor.multitask_model is not None or predictor.body_condition_model is not None)
+        if not models_loaded:
+            return JsonResponse({
+                'success': False,
+                'error': 'Los modelos de IA no están cargados correctamente'
+            })
+        
         # Obtener predicciones
-        result = predictor.predict_from_image_file(image_file)
+        try:
+            result = predictor.predict_from_image_file(image_file)
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            return JsonResponse({
+                'success': False,
+                'error': f'Error en la predicción: {str(e)}',
+                'details': error_traceback
+            })
         
         if result['success']:
             predictions = result['predictions']
@@ -99,39 +116,63 @@ def predict_from_image_ajax(request):
             # Formatear respuesta para el frontend
             response_data = {
                 'success': True,
-                'predictions': {
-                    'breed': {
-                        'predicted': predictions['breed']['predicted'],
-                        'confidence': round(predictions['breed']['confidence'], 3),
-                        'confidence_percentage': round(predictions['breed']['confidence'] * 100, 1),
-                        'confidence_level': predictions['breed']['confidence_level'],
-                        'display_name': _get_breed_display_name(predictions['breed']['predicted']),
-                        'all_probabilities': {
-                            k: {
-                                'probability': round(v, 3),
-                                'percentage': round(v * 100, 1),
-                                'display_name': _get_breed_display_name(k)
-                            }
-                            for k, v in predictions['breed']['all_probabilities'].items()
+                'predictions': {}
+            }
+            
+            # Agregar predicción de raza si está disponible
+            if 'breed' in predictions:
+                response_data['predictions']['breed'] = {
+                    'predicted': predictions['breed']['predicted'],
+                    'confidence': round(predictions['breed']['confidence'], 3),
+                    'confidence_percentage': round(predictions['breed']['confidence'] * 100, 1),
+                    'confidence_level': predictions['breed']['confidence_level'],
+                    'display_name': _get_breed_display_name(predictions['breed']['predicted']),
+                    'all_probabilities': {
+                        k: {
+                            'probability': round(v, 3),
+                            'percentage': round(v * 100, 1),
+                            'display_name': _get_breed_display_name(k)
                         }
-                    },
-                    'stage': {
-                        'predicted': predictions['stage']['predicted'],
-                        'confidence': round(predictions['stage']['confidence'], 3),
-                        'confidence_percentage': round(predictions['stage']['confidence'] * 100, 1),
-                        'confidence_level': predictions['stage']['confidence_level'],
-                        'display_name': predictions['stage']['predicted'].capitalize(),
-                        'all_probabilities': {
-                            k: {
-                                'probability': round(v, 3),
-                                'percentage': round(v * 100, 1),
-                                'display_name': k.capitalize()
-                            }
-                            for k, v in predictions['stage']['all_probabilities'].items()
-                        }
+                        for k, v in predictions['breed']['all_probabilities'].items()
                     }
                 }
-            }
+            
+            # Agregar predicción de etapa si está disponible
+            if 'stage' in predictions:
+                response_data['predictions']['stage'] = {
+                    'predicted': predictions['stage']['predicted'],
+                    'confidence': round(predictions['stage']['confidence'], 3),
+                    'confidence_percentage': round(predictions['stage']['confidence'] * 100, 1),
+                    'confidence_level': predictions['stage']['confidence_level'],
+                    'display_name': predictions['stage']['predicted'].capitalize(),
+                    'all_probabilities': {
+                        k: {
+                            'probability': round(v, 3),
+                            'percentage': round(v * 100, 1),
+                            'display_name': k.capitalize()
+                        }
+                        for k, v in predictions['stage']['all_probabilities'].items()
+                    }
+                }
+            
+            # Agregar predicción de condición corporal si está disponible
+            if 'body_condition' in predictions:
+                response_data['predictions']['body_condition'] = {
+                    'predicted': predictions['body_condition']['predicted'],
+                    'confidence': round(predictions['body_condition']['confidence'], 3),
+                    'confidence_percentage': round(predictions['body_condition']['confidence'] * 100, 1),
+                    'confidence_level': predictions['body_condition']['confidence_level'],
+                    'display_name': predictor.get_body_condition_display_name(predictions['body_condition']['predicted']),
+                    'description': predictor.get_body_condition_description(predictions['body_condition']['predicted']),
+                    'all_probabilities': {
+                        k: {
+                            'probability': round(v, 3),
+                            'percentage': round(v * 100, 1),
+                            'display_name': predictor.get_body_condition_display_name(k)
+                        }
+                        for k, v in predictions['body_condition']['all_probabilities'].items()
+                    }
+                }
             
             return JsonResponse(response_data)
         else:
