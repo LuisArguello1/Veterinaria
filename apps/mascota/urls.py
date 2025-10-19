@@ -43,6 +43,8 @@ from apps.mascota.views.registro_view import (
     check_ai_model_status
 )
 
+from apps.mascota.views.editar_mascota import editar_mascota
+
 
 
 app_name='mascota'
@@ -59,6 +61,9 @@ urlpatterns = [
     
     # Detalle de mascota
     path('mascota/<int:pk>/', MascotaDetailView.as_view(), name='detalle'),
+    
+    # Editar mascota
+    path('mascota/<int:mascota_id>/editar/', editar_mascota, name='editar_mascota'),
     
     # Biometría de mascota
     path('mascota/<int:pk>/biometria/', BiometriaView.as_view(), name='biometria'),

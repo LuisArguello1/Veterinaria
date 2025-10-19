@@ -59,29 +59,27 @@
                         </label>
                         
                         <div class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors" id="photo-upload-area">
-                            <div class="space-y-1 text-center">
+                            <div class="space-y-1 text-center w-full">
                                 <div id="photo-preview" class="hidden">
-                                    <img id="preview-image" src="" alt="Vista previa" class="mx-auto h-32 w-32 object-cover rounded-lg border-2 border-gray-200">
-                                    <div class="mt-2 flex justify-center space-x-2">
-                                        <button type="button" id="change-photo-btn" class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors flex items-center">
-                                            <i class="fas fa-sync-alt mr-1"></i>
-                                            Cambiar imagen
-                                        </button>
-                                        <button type="button" id="remove-photo-btn" class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition-colors flex items-center">
-                                            <i class="fas fa-trash mr-1"></i>
-                                            Quitar
+                                    <img id="preview-image" src="" alt="Vista previa" class="mx-auto h-32 w-32 object-cover rounded-lg shadow-md">
+                                    <div class="mt-2">
+                                        <button type="button" id="change-photo-btn" class="text-sm text-primary-600 hover:text-primary-800 underline">
+                                            <i class="fas fa-sync-alt mr-1"></i>Cambiar imagen
                                         </button>
                                     </div>
                                 </div>
                                 <div id="upload-placeholder">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-1"></i>
-                                    <div class="flex text-sm text-gray-600">
+                                    <div class="flex text-sm text-gray-600 justify-center">
                                         <label for="{{ form.foto_perfil.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
                                             <span>Subir archivo</span>
-                                            {{ form.foto_perfil }}
                                         </label>
                                     </div>
                                     <p class="text-xs text-gray-500">PNG, JPG hasta 5MB</p>
+                                </div>
+                                <!-- Ocultar visualmente el input pero mantenerlo accesible -->
+                                <div class="sr-only">
+                                    {{ form.foto_perfil }}
                                 </div>
                             </div>
                         </div>
@@ -120,6 +118,16 @@
                             <div id="stage-result" class="text-sm text-green-700 font-medium"></div>
                             <div id="stage-confidence" class="text-xs text-green-600"></div>
                             <div id="stage-status" class="text-xs mt-1"></div>
+                        </div>
+                        
+                        <!-- Predicción de condición corporal -->
+                        <div id="body-condition-prediction" class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200 hidden">
+                            <h5 class="font-medium text-blue-800 text-sm flex items-center">
+                                <i class="fas fa-weight text-blue-600 mr-1"></i>Condición Corporal
+                            </h5>
+                            <div id="body-condition-result" class="text-sm text-blue-700 font-medium"></div>
+                            <div id="body-condition-confidence" class="text-xs text-blue-600"></div>
+                            <div id="body-condition-status" class="text-xs mt-1"></div>
                         </div>
                     </div>
                 </div>
@@ -236,6 +244,7 @@
 <!-- JavaScript simplificado para IA -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Elementos DOM
     const fotoInput = document.getElementById('{{ form.foto_perfil.id_for_label }}');
     const predictBtn = document.getElementById('predict-btn');
     const predictBtnText = document.getElementById('predict-btn-text');
@@ -244,85 +253,93 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadPlaceholder = document.getElementById('upload-placeholder');
     const predictionsPanel = document.getElementById('predictions-panel');
     const changePhotoBtn = document.getElementById('change-photo-btn');
-    const removePhotoBtn = document.getElementById('remove-photo-btn');
+    const photoUploadArea = document.getElementById('photo-upload-area');
     
+    // Variables de estado
     let currentPredictions = null;
+    let fileSelected = false;
     
-    // Función para resetear el estado de la imagen
-    function resetImageState() {
-        photoPreview.classList.add('hidden');
-        uploadPlaceholder.classList.remove('hidden');
-        predictBtn.disabled = true;
-        predictionsPanel.classList.add('hidden');
-        fotoInput.value = ''; // Limpiar el input
-        currentPredictions = null;
-        
-        // Resetear el texto del botón de predicción
-        predictBtnText.innerHTML = '<i class="fas fa-brain mr-2"></i>Analizar con IA';
-        
-        // Ocultar las predicciones individuales
-        document.getElementById('breed-prediction').classList.add('hidden');
-        document.getElementById('stage-prediction').classList.add('hidden');
-    }
-    
-    // Función para mostrar la imagen preview
-    function showImagePreview(imageSrc) {
-        previewImage.src = imageSrc;
-        photoPreview.classList.remove('hidden');
-        uploadPlaceholder.classList.add('hidden');
-        predictBtn.disabled = false;
-    }
+    // Inicializar estado
+    resetPhotoUpload();
     
     // Manejar cambio de archivo
     fotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            // Validar que sea una imagen
-            if (!file.type.startsWith('image/')) {
-                alert('Por favor selecciona un archivo de imagen válido.');
-                resetImageState();
-                return;
-            }
-            
-            // Validar tamaño (máximo 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('La imagen no puede ser mayor a 5MB.');
-                resetImageState();
-                return;
-            }
-            
+            // Procesar y mostrar la imagen seleccionada
             const reader = new FileReader();
             reader.onload = function(e) {
-                showImagePreview(e.target.result);
-                // Ocultar predicciones anteriores cuando se cambia la imagen
+                previewImage.src = e.target.result;
+                photoPreview.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
+                predictBtn.disabled = false;
+                fileSelected = true;
+                
+                // Limpiar predicciones anteriores
                 predictionsPanel.classList.add('hidden');
-                currentPredictions = null;
+                
+                // Reiniciar paneles de predicción
+                document.getElementById('breed-prediction').classList.add('hidden');
+                document.getElementById('stage-prediction').classList.add('hidden');
+                document.getElementById('body-condition-prediction').classList.add('hidden');
             };
             reader.readAsDataURL(file);
         } else {
-            resetImageState();
+            resetPhotoUpload();
+        }
+    });
+    
+    // Manejar clic en el área de subida solo cuando el placeholder está visible
+    photoUploadArea.addEventListener('click', function(e) {
+        // Solo activar el input de archivo si se muestra el placeholder y no hay imagen previa
+        if (!photoPreview.classList.contains('hidden')) {
+            return; // Ya hay una imagen, no hacer nada al hacer clic en el área
+        }
+        
+        // Solo activar si el clic no fue en el botón de cambiar
+        if (e.target !== changePhotoBtn && !changePhotoBtn.contains(e.target)) {
+            fotoInput.click();
         }
     });
     
     // Manejar botón de cambiar imagen
-    changePhotoBtn.addEventListener('click', function() {
-        fotoInput.click(); // Abrir el selector de archivos
-    });
+    if (changePhotoBtn) {
+        changePhotoBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            fotoInput.click();
+        });
+    }
     
-    // Manejar botón de quitar imagen
-    removePhotoBtn.addEventListener('click', function() {
-        if (confirm('¿Estás seguro de que quieres quitar esta imagen?')) {
-            resetImageState();
+    function resetPhotoUpload() {
+        // Restablecer elementos visuales
+        photoPreview.classList.add('hidden');
+        uploadPlaceholder.classList.remove('hidden');
+        predictBtn.disabled = true;
+        predictionsPanel.classList.add('hidden');
+        
+        // Restablecer estado interno
+        fileSelected = false;
+        currentPredictions = null;
+        
+        // Limpiar el input de archivo sin activarlo
+        try {
+            fotoInput.value = '';
+        } catch (e) {
+            // En algunos navegadores, esto puede fallar por razones de seguridad
+            console.warn("No se pudo resetear input de archivo:", e);
         }
-    });
+        
+        // Ocultar todos los paneles de predicción
+        document.getElementById('breed-prediction').classList.add('hidden');
+        document.getElementById('stage-prediction').classList.add('hidden');
+        document.getElementById('body-condition-prediction').classList.add('hidden');
+    }
     
     // Manejar predicción
     predictBtn.addEventListener('click', function() {
         const file = fotoInput.files[0];
-        if (!file) {
-            alert('Por favor selecciona una imagen primero.');
-            return;
-        }
+        if (!file) return;
         
         predictBtn.disabled = true;
         predictBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analizando...';
@@ -368,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const confidence = predictions.breed.confidence_percentage;
             
-            if (confidence >= 90) {
+            if (confidence >= 70) {
                 // Confianza alta: mostrar predicción exitosa
                 breedResult.textContent = predictions.breed.display_name;
                 breedConfidence.textContent = `Confianza: ${confidence}%`;
@@ -382,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Confianza baja: mostrar como no reconocido
                 breedResult.textContent = 'No reconocido';
                 breedConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
-                breedStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 90%';
+                breedStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
                 
                 // Cambiar estilo del panel a advertencia
                 breedPanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
@@ -400,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const confidence = predictions.stage.confidence_percentage;
             
-            if (confidence >= 90) {
+            if (confidence >= 70) {
                 // Confianza alta: mostrar predicción exitosa
                 stageResult.textContent = predictions.stage.display_name;
                 stageConfidence.textContent = `Confianza: ${confidence}%`;
@@ -414,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Confianza baja: mostrar como no reconocido
                 stageResult.textContent = 'No reconocido';
                 stageConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
-                stageStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 90%';
+                stageStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
                 
                 // Cambiar estilo del panel a advertencia
                 stagePanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
@@ -422,26 +439,41 @@ document.addEventListener('DOMContentLoaded', function() {
             
             stagePanel.classList.remove('hidden');
         }
-    }
-    
-    // Validación adicional al enviar el formulario
-    document.getElementById('registro-form').addEventListener('submit', function(e) {
-        const file = fotoInput.files[0];
-        if (!file) {
-            e.preventDefault();
-            alert('Por favor selecciona una foto de tu mascota antes de registrar.');
-            return false;
-        }
         
-        // Opcional: advertir si no se han hecho predicciones
-        if (!currentPredictions) {
-            const shouldContinue = confirm('No has analizado la imagen con IA. ¿Deseas continuar sin las predicciones automáticas?');
-            if (!shouldContinue) {
-                e.preventDefault();
-                return false;
+        // Mostrar predicción de condición corporal
+        if (predictions.body_condition) {
+            const bodyConditionPanel = document.getElementById('body-condition-prediction');
+            const bodyConditionResult = document.getElementById('body-condition-result');
+            const bodyConditionConfidence = document.getElementById('body-condition-confidence');
+            const bodyConditionStatus = document.getElementById('body-condition-status');
+            
+            const confidence = predictions.body_condition.confidence_percentage;
+            
+            if (confidence >= 70) {
+                // Confianza alta para condición corporal (umbral más bajo que para raza)
+                bodyConditionResult.textContent = predictions.body_condition.display_name;
+                bodyConditionConfidence.textContent = `Confianza: ${confidence}%`;
+                bodyConditionStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Predicción confiable';
+                
+                // Cambiar color según la condición
+                if (predictions.body_condition.predicted === 'normal') {
+                    bodyConditionPanel.className = 'mb-3 p-3 bg-green-50 rounded-lg border border-green-200';
+                } else if (predictions.body_condition.predicted === 'delgado') {
+                    bodyConditionPanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
+                } else { // obeso
+                    bodyConditionPanel.className = 'mb-3 p-3 bg-red-50 rounded-lg border border-red-200';
+                }
+            } else {
+                // Confianza baja
+                bodyConditionResult.textContent = 'No reconocido';
+                bodyConditionConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
+                bodyConditionStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
+                bodyConditionPanel.className = 'mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200';
             }
+            
+            bodyConditionPanel.classList.remove('hidden');
         }
-    });
+    }
 });
 </script>
 
