@@ -811,7 +811,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="fas fa-exclamation-triangle text-yellow-500"></i>
                                     </div>
                                     <div class="ml-3">
-                                        <p class="text-sm text-yellow-700">No se pudieron realizar las predicciones de IA.</p>
+                                        <p class="text-sm text-yellow-700">No se pudieron realizar las predicciones adicionales de IA.</p>
+                                        <p class="text-xs text-gray-500 mt-1">Esto no afecta al reconocimiento de la mascota.</p>
                                     </div>
                                 </div>
                             </div>
@@ -832,7 +833,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-exclamation-triangle text-yellow-500"></i>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-yellow-700">Módulo de predicción de IA no disponible.</p>
+                                <p class="text-sm text-yellow-700">Análisis adicionales de IA no disponibles.</p>
+                                <p class="text-xs text-gray-500 mt-1">Esto no afecta al reconocimiento principal de mascotas.</p>
                             </div>
                         </div>
                     </div>

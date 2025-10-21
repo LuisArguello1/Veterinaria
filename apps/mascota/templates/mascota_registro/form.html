@@ -87,7 +87,6 @@
                         <!-- Botón para predecir -->
                         <div class="mt-2">
                             <button type="button" id="predict-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-md flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                <i class="fas fa-brain mr-2"></i>
                                 <span id="predict-btn-text">Analizar con IA</span>
                             </button>
                         </div>
@@ -385,23 +384,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const confidence = predictions.breed.confidence_percentage;
             
+            // Siempre mostrar la predicción, independientemente de la confianza
+            breedResult.textContent = predictions.breed.display_name;
+            breedConfidence.textContent = `Confianza: ${confidence}%`;
+            
             if (confidence >= 70) {
-                // Confianza alta: mostrar predicción exitosa
-                breedResult.textContent = predictions.breed.display_name;
-                breedConfidence.textContent = `Confianza: ${confidence}%`;
+                // Confianza alta: indicar que es confiable
                 breedStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Predicción confiable';
-                
-                // Cambiar estilo del panel a éxito
                 breedPanel.className = 'mb-3 p-3 bg-green-50 rounded-lg border border-green-200';
-                
-                // NO completar automáticamente - solo mostrar la predicción
             } else {
-                // Confianza baja: mostrar como no reconocido
-                breedResult.textContent = 'No reconocido';
-                breedConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
-                breedStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
-                
-                // Cambiar estilo del panel a advertencia
+                // Confianza baja: advertir pero mostrar la predicción
+                breedStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Predicción con baja confianza';
                 breedPanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
             }
             
@@ -417,23 +410,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const confidence = predictions.stage.confidence_percentage;
             
+            // Siempre mostrar la predicción, independientemente de la confianza
+            stageResult.textContent = predictions.stage.display_name;
+            stageConfidence.textContent = `Confianza: ${confidence}%`;
+            
             if (confidence >= 70) {
-                // Confianza alta: mostrar predicción exitosa
-                stageResult.textContent = predictions.stage.display_name;
-                stageConfidence.textContent = `Confianza: ${confidence}%`;
+                // Confianza alta: indicar que es confiable
                 stageStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Predicción confiable';
-                
-                // Cambiar estilo del panel a éxito
                 stagePanel.className = 'mb-3 p-3 bg-green-50 rounded-lg border border-green-200';
-                
-                // NO completar automáticamente - solo mostrar la predicción
             } else {
-                // Confianza baja: mostrar como no reconocido
-                stageResult.textContent = 'No reconocido';
-                stageConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
-                stageStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
-                
-                // Cambiar estilo del panel a advertencia
+                // Confianza baja: advertir pero mostrar la predicción
+                stageStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Predicción con baja confianza';
                 stagePanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
             }
             
@@ -449,26 +436,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const confidence = predictions.body_condition.confidence_percentage;
             
+            // Siempre mostrar la predicción, independientemente de la confianza
+            bodyConditionResult.textContent = predictions.body_condition.display_name;
+            bodyConditionConfidence.textContent = `Confianza: ${confidence}%`;
+            
+            // Cambiar color según la condición
+            if (predictions.body_condition.predicted === 'normal') {
+                bodyConditionPanel.className = 'mb-3 p-3 bg-green-50 rounded-lg border border-green-200';
+            } else if (predictions.body_condition.predicted === 'delgado') {
+                bodyConditionPanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
+            } else { // obeso
+                bodyConditionPanel.className = 'mb-3 p-3 bg-red-50 rounded-lg border border-red-200';
+            }
+            
             if (confidence >= 70) {
-                // Confianza alta para condición corporal (umbral más bajo que para raza)
-                bodyConditionResult.textContent = predictions.body_condition.display_name;
-                bodyConditionConfidence.textContent = `Confianza: ${confidence}%`;
+                // Confianza alta: indicar que es confiable
                 bodyConditionStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Predicción confiable';
-                
-                // Cambiar color según la condición
-                if (predictions.body_condition.predicted === 'normal') {
-                    bodyConditionPanel.className = 'mb-3 p-3 bg-green-50 rounded-lg border border-green-200';
-                } else if (predictions.body_condition.predicted === 'delgado') {
-                    bodyConditionPanel.className = 'mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200';
-                } else { // obeso
-                    bodyConditionPanel.className = 'mb-3 p-3 bg-red-50 rounded-lg border border-red-200';
-                }
             } else {
-                // Confianza baja
-                bodyConditionResult.textContent = 'No reconocido';
-                bodyConditionConfidence.textContent = `Confianza: ${confidence}% (insuficiente)`;
-                bodyConditionStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Confianza menor al 70%';
-                bodyConditionPanel.className = 'mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200';
+                // Confianza baja: advertir pero mostrar la predicción
+                bodyConditionStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Predicción con baja confianza';
             }
             
             bodyConditionPanel.classList.remove('hidden');
