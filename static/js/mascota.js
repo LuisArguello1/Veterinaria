@@ -76,6 +76,14 @@ window.stopBiometricCamera = function() {
     biometricCameraActive = false;
     console.log('Estado actualizado biometricCameraActive:', biometricCameraActive);
     
+    // Disparar evento de cambio de estado
+    window.dispatchEvent(new CustomEvent('biometricCameraStateChanged', {
+        detail: { 
+            active: false,
+            timestamp: new Date().getTime()
+        }
+    }));
+    
     // Restaurar botón de iniciar cámara
     if (startCameraBtn) {
         console.log('Actualizando botón de cámara...');
@@ -674,6 +682,44 @@ function initCameraCapture() {
             biometricCameraActive = true;
             console.log('Cámara biométrica iniciada, estado:', biometricCameraActive);
             
+            // Establecer variable global para otros scripts
+            window.biometricCameraActive = true;
+            
+            // Disparar evento de cambio de estado
+            window.dispatchEvent(new CustomEvent('biometricCameraStateChanged', {
+                detail: { 
+                    active: true,
+                    timestamp: new Date().getTime()
+                }
+            }));
+            
+            // Reiniciar completamente el módulo de captura automática después de activar la cámara
+            console.log('Reinicializando módulo de captura automática después de activar la cámara');
+            setTimeout(() => {
+                // Llamar a la función de inicialización con reintento
+                if (typeof initWithRetry === 'function') {
+                    initWithRetry();
+                } else if (typeof window.initWithRetry === 'function') {
+                    window.initWithRetry();
+                } else {
+                    console.log('Función initWithRetry no encontrada, intentando inicializar directamente');
+                    if (window.BiometriaCapturaAutomatica && typeof window.BiometriaCapturaAutomatica.init === 'function') {
+                        window.BiometriaCapturaAutomatica.init();
+                    }
+                }
+                
+                // Asegurarnos de que el botón esté habilitado
+                setTimeout(() => {
+                    const startAutoBtn = document.getElementById('start-auto-capture');
+                    if (startAutoBtn) {
+                        console.log('Habilitando botón de captura automática después de reinicializar');
+                        startAutoBtn.disabled = false;
+                    } else {
+                        console.log('No se encontró el botón de captura automática después de reinicializar');
+                    }
+                }, 300);
+            }, 500); // Pequeño retraso para asegurar que todo esté listo
+            
             // Ocultar overlay cuando la cámara esté lista
             if (cameraOverlay) cameraOverlay.classList.add('hidden');
             return true;
@@ -684,6 +730,7 @@ function initCameraCapture() {
                 cameraOverlay.innerHTML = '<i class="fas fa-video-slash mr-2"></i> Error al inicializar cámara. Presiona "Iniciar cámara" para reintentar.';
             }
             biometricCameraActive = false; // Asegurar que el estado sea correcto
+            window.biometricCameraActive = false; // Actualizar variable global también
             return false;
         }
     }

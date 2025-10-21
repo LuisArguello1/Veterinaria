@@ -137,16 +137,18 @@
                                         </button>
                                         
                                         <!-- Botón de reportar perdida / cancelar perdida -->
-                                        {% if data.mascota.reportar_perdida %}
-                                        <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
-                                            class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
-                                            <i class="fas fa-check-circle mr-1"></i> Cancelar perdida
-                                        </button>
-                                        {% else %}
-                                        <button onclick="reportarMascotaPerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
-                                            class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i> Reportar perdida
-                                        </button>
+                                        {% if dat.mascota.biometria_entrenada %}
+                                            {% if data.mascota.reportar_perdida %}
+                                            <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                                class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
+                                                <i class="fas fa-check-circle mr-1"></i> Cancelar perdida
+                                            </button>
+                                            {% else %}
+                                            <button onclick="reportarMascotaPerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                                class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Reportar perdida
+                                            </button>
+                                            {% endif %}
                                         {% endif %}
                                         
                                         {% if data.biometria_entrenada %}
@@ -431,9 +433,9 @@
                                     </h3>
                                 </div>
                                 <div class="px-4 py-5 sm:p-6">
-                                    {% if reconocimientos %}
+                                    {% if data.reconocimientos %}
                                         <div class="space-y-3">
-                                            {% for rec in reconocimientos %}
+                                            {% for rec in data.reconocimientos %}
                                             <div class="flex items-start space-x-3 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
                                                 <div class="flex-shrink-0 h-10 w-10 overflow-hidden rounded-md bg-gray-200">
                                                     {% if rec.imagen_analizada %}
@@ -544,6 +546,7 @@
                 {% else %}
                 <!-- Contenedor para el selector de mascotas (se rellena vía JS) -->
                 <div id="biometria-selector-container" class="mb-6"></div>
+
                 <!-- Contenedor para el contenido biométrico -->
                 <div id="biometria-content-container">
                     {% include 'biometria_registro/biometria.html' %}
@@ -773,6 +776,7 @@
 <script src="{% static 'js/mascota-perdida.js' %}"></script>
 <script src="{% static 'js/mascota.js' %}"></script>
 <script src="{% static 'js/editar_mascota.js' %}"></script>
+<script src="{% static 'js/biometria_captura.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -799,6 +803,7 @@
 {% endblock %}
 
 {% block extra_head %}
+
 <link rel="stylesheet" href="{% static 'css/mascota.css' %}">
 <link rel="stylesheet" href="{% static 'css/editar_mascota.css' %}">
 
