@@ -78,6 +78,12 @@ def main_register(request):
                     if images.exists():
                         images_by_type[label] = images
                 
+                # Obtenemos los reconocimientos recientes para esta mascota
+                from apps.mascota.models import RegistroReconocimiento
+                reconocimientos = RegistroReconocimiento.objects.filter(
+                    mascota_predicha=mascota
+                ).order_by('-fecha')[:5]  # Limitamos a los 5 más recientes
+                
                 # Datos de esta mascota
                 data = {
                     'id': mascota.id,
@@ -86,7 +92,9 @@ def main_register(request):
                     'biometric_images': mascota.imagenes.filter(tipo='biometrica').count(),
                     'biometria_entrenada': mascota.biometria_entrenada,
                     'tiene_suficientes_imagenes': mascota.tiene_suficientes_imagenes,
-                    'images_by_type': images_by_type
+                    'images_by_type': images_by_type,
+                    'reconocimientos': reconocimientos,
+                    'tiene_reconocimientos': reconocimientos.exists()
                 }
                 mascota_data.append(data)
                 

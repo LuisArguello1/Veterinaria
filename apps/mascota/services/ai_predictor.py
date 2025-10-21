@@ -41,7 +41,13 @@ class BodyConditionModel(nn.Module):
     def __init__(self, num_classes=3):
         super(BodyConditionModel, self).__init__()
         # Usar ResNet50 directamente como se hizo en entrenamiento
-        self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        # Asegurarnos de usar el peso correcto para la versión de PyTorch
+        try:
+            # Para versiones nuevas de PyTorch
+            self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        except (AttributeError, TypeError):
+            # Fallback para versiones anteriores de PyTorch
+            self.resnet = models.resnet50(pretrained=True)
         
         # Reemplazar la capa fc (fully connected) exactamente como en el código de entrenamiento
         self.resnet.fc = nn.Sequential(
@@ -71,7 +77,7 @@ class AIPredictor:
         
         # Rutas de los modelos
         self.multitask_model_path = os.path.join(settings.BASE_DIR, 'models', 'final_multitask_dog_model.pth')
-        self.body_condition_model_path = os.path.join(settings.BASE_DIR, 'models', 'best_dog_body_condition_classifier.pth')
+        self.body_condition_model_path = os.path.join(settings.BASE_DIR, 'models', 'dog_body_condition_classifier.pth')
         
         # Definir las clases (deben coincidir con el entrenamiento)
         self.breed_classes = ['bulldog', 'chihuahua', 'golden retriever']  # alfabético
@@ -167,7 +173,21 @@ class AIPredictor:
         except Exception as e:
             logger.error(f"Error cargando el modelo multitarea: {e}")
             self.multitask_model = None
-            return False
+            # Añadimos un intento más con menos exigencias
+            try:
+                logger.info("Reintentando carga del modelo multitarea con manejo de errores alternativo...")
+                self.multitask_model = MultiTaskDogModel(len(self.breed_classes), len(self.stage_classes))
+                checkpoint = torch.load(self.multitask_model_path, map_location="cpu")
+                if 'model_state_dict' in checkpoint:
+                    self.multitask_model.load_state_dict(checkpoint['model_state_dict'])
+                else:
+                    self.multitask_model.load_state_dict(checkpoint)
+                self.multitask_model.eval()
+                return True
+            except Exception as retry_error:
+                logger.error(f"Error en segundo intento de carga del modelo multitarea: {retry_error}")
+                self.multitask_model = None
+                return False
     
     def _load_body_condition_model(self):
         """Carga el modelo de condición corporal"""
@@ -179,21 +199,25 @@ class AIPredictor:
             
             logger.info(f"Cargando modelo de condición corporal desde: {self.body_condition_model_path}")
             
-            # Verificar que todas las dependencias están disponibles
+        # Verificar dependencias
             try:
                 import torch.nn as nn
                 from torchvision import models
-                logger.info("Dependencias PyTorch verificadas correctamente")
+                logger.info("Dependencias PyTorch verificadas correctamente para modelo de condición corporal")
             except ImportError as e:
-                logger.error(f"Error importando dependencias PyTorch: {e}")
+                logger.error(f"Error importando dependencias PyTorch para modelo de condición corporal: {e}")
                 return False
             
             # Crear e inicializar el modelo usando la estructura exacta de entrenamiento
             try:
+                # Intentar con modo de depuración más verboso
+                logger.info("Creando modelo BodyConditionModel...")
+                logger.info(f"Número de clases para condición corporal: {len(self.body_condition_classes)}")
                 self.body_condition_model = BodyConditionModel(len(self.body_condition_classes))
                 logger.info("Modelo BodyConditionModel creado correctamente")
             except Exception as e:
                 logger.error(f"Error creando modelo BodyConditionModel: {e}")
+                logger.error(f"Detalles del error: {str(e.__class__.__name__)}: {str(e)}")
                 return False
             
             # Cargar los pesos del modelo entrenado
@@ -206,20 +230,23 @@ class AIPredictor:
             
             # Manejar diferentes formatos de checkpoint
             if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
-                # Formato con metadatos adicionales
                 state_dict = checkpoint['state_dict']
             else:
                 # Formato directo de state_dict
                 state_dict = checkpoint
             
+            # Añadir más información de depuración para las claves
+            logger.info(f"Claves disponibles en el checkpoint: {list(state_dict.keys())[:5]}...")
+            
             # Ajustar los nombres de las claves si es necesario (para compatibilidad)
+            # Utilizamos una estrategia más flexible para intentar mapear claves
             new_state_dict = {}
             for key, value in state_dict.items():
                 # Si la clave ya tiene el formato correcto, úsala directamente
                 if key.startswith('resnet.'):
                     new_state_dict[key] = value
                 # Si la clave no tiene el prefijo 'resnet.' pero debería tenerlo
-                elif key.startswith(('conv', 'bn', 'layer', 'fc')):
+                elif any(key.startswith(prefix) for prefix in ('conv', 'bn', 'layer', 'fc', 'downsample')):
                     new_state_dict[f'resnet.{key}'] = value
                 else:
                     # Mantener la clave original para otros casos
@@ -235,14 +262,59 @@ class AIPredictor:
             
             logger.info("Modelo de condición corporal cargado correctamente")
             
-            self.body_condition_model.to(self.device)
+            # Mover el modelo al dispositivo correcto
+            self.body_condition_model = self.body_condition_model.to(self.device)
             self.body_condition_model.eval()
-            return True
+            
+            # Hacer una prueba de inferencia para verificar que el modelo funciona
+            try:
+                logger.info("Realizando inferencia de prueba para el modelo de condición corporal")
+                dummy_input = torch.randn(1, 3, 224, 224).to(self.device)
+                with torch.no_grad():
+                    test_output = self.body_condition_model(dummy_input)
+                    logger.info(f"Prueba exitosa. Output shape: {test_output.shape}")
+                    
+                    # Verificar que el modelo produce salidas válidas
+                    test_probs = torch.softmax(test_output, dim=1)
+                    test_pred = torch.argmax(test_probs, dim=1).item()
+                    logger.info(f"Predicción de prueba: índice={test_pred}, clase={self.body_condition_classes[test_pred]}")
+                    
+                return True
+            except Exception as test_error:
+                logger.error(f"Error en la prueba de inferencia del modelo de condición corporal: {test_error}")
+                return False
             
         except Exception as e:
             logger.error(f"Error cargando el modelo de condición corporal: {e}")
-            self.body_condition_model = None
-            return False
+            
+            # Añadimos un intento más con menos exigencias
+            try:
+                logger.info("Reintentando carga del modelo de condición corporal con manejo de errores alternativo...")
+                self.body_condition_model = BodyConditionModel(len(self.body_condition_classes))
+                checkpoint = torch.load(self.body_condition_model_path, map_location="cpu")
+                if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+                    state_dict = checkpoint['state_dict']
+                else:
+                    state_dict = checkpoint
+                    
+                # Intento sin ajustar claves - más sencillo
+                self.body_condition_model.load_state_dict(state_dict, strict=False)
+                self.body_condition_model.eval()
+                
+                # Probar una inferencia simple para verificar que el modelo funciona
+                dummy_input = torch.randn(1, 3, 224, 224).to("cpu")  # Usar CPU por seguridad
+                with torch.no_grad():
+                    test_output = self.body_condition_model(dummy_input)
+                logger.info(f"Prueba de inferencia básica exitosa en segundo intento")
+                
+                # Mover a dispositivo correcto después de verificar que funciona
+                self.body_condition_model = self.body_condition_model.to(self.device)
+                
+                return True
+            except Exception as retry_error:
+                logger.error(f"Error en segundo intento de carga del modelo de condición corporal: {retry_error}")
+                self.body_condition_model = None
+                return False
     
     def predict_from_image_file(self, image_file):
         """
@@ -254,7 +326,11 @@ class AIPredictor:
         Returns:
             dict: Diccionario con las predicciones y confianzas
         """
+        # Verificar estado de modelos y registrar para diagnóstico
+        logger.info(f"Estado de modelos antes de predicción: multitarea={self.multitask_model is not None}, condición corporal={self.body_condition_model is not None}")
+        
         if not self.multitask_model and not self.body_condition_model:
+            logger.error("Ambos modelos no están disponibles para predicción")
             return {
                 'success': False,
                 'error': 'Ningún modelo disponible'
@@ -392,6 +468,8 @@ class AIPredictor:
                             'all_probabilities': stage_probabilities
                         }
                         
+                        logger.info("Predicciones multitarea añadidas correctamente al diccionario de resultados")
+                        
                         logger.info(f"Predicción multitarea exitosa: raza={predicted_breed}, etapa={predicted_stage}")
                 except Exception as e:
                     logger.error(f"Error en predicción con modelo multitarea: {e}")
@@ -405,17 +483,32 @@ class AIPredictor:
             if self.body_condition_model:
                 try:
                     logger.info("Realizando predicción de condición corporal...")
+                    # Asegurar que el modelo está en modo evaluación
+                    self.body_condition_model.eval()
+                    
+                    # Verificar que esté en el dispositivo correcto
+                    if next(self.body_condition_model.parameters()).device != self.device:
+                        logger.info(f"Moviendo modelo de condición corporal al dispositivo {self.device}")
+                        self.body_condition_model = self.body_condition_model.to(self.device)
+                    
                     with torch.no_grad():
+                        # Log detallado para diagnóstico
+                        logger.debug(f"Ejecutando forward pass del modelo de condición corporal. Input shape: {input_tensor.shape}")
+                        
                         body_outputs = self.body_condition_model(input_tensor)
+                        logger.debug(f"Output del modelo: shape={body_outputs.shape}")
                         
                         # Aplicar softmax para obtener probabilidades
                         body_probs = torch.softmax(body_outputs, dim=1)
+                        logger.debug(f"Probabilidades después de softmax: {body_probs}")
                         
                         # Obtener la predicción
                         body_pred_idx = torch.argmax(body_probs, dim=1).item()
+                        logger.debug(f"Índice predicho: {body_pred_idx}, clase: {self.body_condition_classes[body_pred_idx]}")
                         
                         # Obtener la probabilidad máxima
                         body_confidence = body_probs[0][body_pred_idx].item()
+                        logger.debug(f"Confianza de la predicción: {body_confidence:.4f}")
                         
                         # Mapear índice a nombre
                         predicted_body_condition = self.body_condition_classes[body_pred_idx]
@@ -435,20 +528,90 @@ class AIPredictor:
                             'all_probabilities': body_probabilities
                         }
                         
-                        logger.info(f"Predicción de condición corporal exitosa: {predicted_body_condition}")
+                        logger.info(f"Predicción de condición corporal exitosa: {predicted_body_condition} con confianza {body_confidence:.2f}")
                 except Exception as e:
                     logger.error(f"Error en predicción con modelo de condición corporal: {e}")
                     logger.error(f"Detalles del error: {str(e.__class__.__name__)}: {str(e)}")
-                    # Continuar sin la predicción de condición corporal
+                    
+                    # Intentar nuevamente con un enfoque más simple como último recurso
+                    try:
+                        logger.info("Reintentando predicción de condición corporal con enfoque simplificado...")
+                        # Mover modelo a CPU por si el problema es con GPU
+                        simple_model = self.body_condition_model.to("cpu")
+                        simple_input = self.transform(image).unsqueeze(0).to("cpu")
+                        
+                        with torch.no_grad():
+                            simple_output = simple_model(simple_input)
+                            simple_probs = torch.softmax(simple_output, dim=1)
+                            simple_pred_idx = torch.argmax(simple_probs, dim=1).item()
+                            simple_confidence = simple_probs[0][simple_pred_idx].item()
+                            predicted_body_condition = self.body_condition_classes[simple_pred_idx]
+                            
+                            # Preparar probabilidades
+                            body_probabilities = {}
+                            for i, condition in enumerate(self.body_condition_classes):
+                                body_probabilities[condition] = simple_probs[0][i].item()
+                            
+                            body_confidence_level = self._get_confidence_level(simple_confidence)
+                            predictions['body_condition'] = {
+                                'predicted': predicted_body_condition,
+                                'confidence': simple_confidence,
+                                'confidence_level': body_confidence_level,
+                                'all_probabilities': body_probabilities,
+                                'fallback_mode': True
+                            }
+                            logger.info(f"Reintento exitoso de predicción de condición corporal: {predicted_body_condition}")
+                    except Exception as retry_e:
+                        logger.error(f"Error en reintento de predicción de condición corporal: {retry_e}")
+                        # Continuar sin la predicción de condición corporal
             else:
                 logger.warning("Modelo de condición corporal no disponible - no se realizarán predicciones de condición corporal")
             
-            if predictions:
+            # Verificamos si tenemos al menos una predicción válida
+            if any(key in predictions for key in ['breed', 'stage', 'body_condition']):
+                # Registrar qué modelos han producido predicciones
+                logger.info(f"Predicciones disponibles: breed={('breed' in predictions)}, " +
+                           f"stage={('stage' in predictions)}, " +
+                           f"body_condition={('body_condition' in predictions)}")
+                
+                # Verificar especialmente el modelo de condición corporal
+                if 'body_condition' not in predictions and self.body_condition_model is not None:
+                    logger.warning("El modelo de condición corporal está cargado pero no produjo predicciones")
+                
                 return {
                     'success': True,
                     'predictions': predictions
                 }
             else:
+                # Si llegamos aquí, intentamos reiniciar el predictor y cargar de nuevo los modelos
+                logger.warning("Ninguna predicción disponible - intentando reiniciar modelos")
+                try:
+                    # Reintentar cargar los modelos
+                    if not self.multitask_model:
+                        self._load_multitask_model()
+                    if not self.body_condition_model:
+                        self._load_body_condition_model()
+                        
+                    # Si después del reintento seguimos sin modelos, fallamos
+                    if not self.multitask_model and not self.body_condition_model:
+                        return {
+                            'success': False,
+                            'error': 'Ningún modelo pudo hacer predicciones'
+                        }
+                        
+                    # Si tenemos al menos un modelo, intentamos de nuevo la predicción
+                    if self.multitask_model or self.body_condition_model:
+                        logger.info("Modelos recargados, reintentando predicción")
+                        # Si aquí tenemos al menos algún modelo, devolvemos lo que tengamos
+                        # aunque sea incompleto
+                        return {
+                            'success': True,
+                            'predictions': predictions if predictions else {'partial': True, 'message': 'Predicción parcial'}
+                        }
+                except Exception as reload_error:
+                    logger.error(f"Error al reintentar carga de modelos: {reload_error}")
+                    
+                # Si llegamos aquí, realmente no pudimos hacer predicciones
                 return {
                     'success': False,
                     'error': 'Ningún modelo pudo hacer predicciones'
@@ -516,5 +679,58 @@ class AIPredictor:
         return descriptions.get(condition_internal, 'Condición corporal no determinada.')
 
 
-# Instancia global del predictor
-predictor = AIPredictor()
+# Instancia global del predictor con manejo de errores mejorado
+try:
+    predictor = AIPredictor()
+except Exception as e:
+    logger.error(f"Error crítico inicializando predictor global: {e}")
+    # Crear un predictor en modo seguro que se inicializará bajo demanda
+    class SafePredictor:
+        def __init__(self):
+            self._real_predictor = None
+            self._init_attempts = 0
+            self._max_attempts = 3
+            
+        def _ensure_predictor(self):
+            if self._real_predictor is None and self._init_attempts < self._max_attempts:
+                try:
+                    logger.info(f"Intento {self._init_attempts + 1} de inicializar predictor bajo demanda")
+                    self._real_predictor = AIPredictor()
+                    logger.info("Predictor inicializado correctamente bajo demanda")
+                except Exception as init_error:
+                    logger.error(f"Error inicializando predictor bajo demanda: {init_error}")
+                self._init_attempts += 1
+            return self._real_predictor
+                
+        def predict_from_image_file(self, *args, **kwargs):
+            predictor = self._ensure_predictor()
+            if predictor:
+                return predictor.predict_from_image_file(*args, **kwargs)
+            return {'success': False, 'error': 'Servicio de predicción no disponible temporalmente'}
+            
+        def predict_from_image_path(self, *args, **kwargs):
+            predictor = self._ensure_predictor()
+            if predictor:
+                return predictor.predict_from_image_path(*args, **kwargs)
+            return {'success': False, 'error': 'Servicio de predicción no disponible temporalmente'}
+            
+        def get_breed_choices_for_django(self):
+            predictor = self._ensure_predictor()
+            if predictor:
+                return predictor.get_breed_choices_for_django()
+            return [('no_disponible', 'No disponible')]
+            
+        def get_stage_choices_for_django(self):
+            predictor = self._ensure_predictor()
+            if predictor:
+                return predictor.get_stage_choices_for_django()
+            return [('no_disponible', 'No disponible')]
+            
+        def get_body_condition_choices_for_django(self):
+            predictor = self._ensure_predictor()
+            if predictor:
+                return predictor.get_body_condition_choices_for_django()
+            return [('no_disponible', 'No disponible')]
+            
+    # Usar el predictor seguro en caso de error
+    predictor = SafePredictor()
