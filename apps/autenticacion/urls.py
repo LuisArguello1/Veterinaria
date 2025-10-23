@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from apps.autenticacion.views.dashboard import Dashboard
 from apps.autenticacion.views.login import LoginView, LogoutView
 from apps.autenticacion.views.profile import ProfileView, ProfileUpdateView, ProfilePasswordChangeView
@@ -38,4 +38,6 @@ urlpatterns = [
   path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
   path('users/<int:pk>/password/', ChangePasswordView.as_view(), name='user_password_change'),
   
+  # APIs para integración con chatbot
+  path('api/', include('apps.autenticacion.urls_chatbot')),
 ]

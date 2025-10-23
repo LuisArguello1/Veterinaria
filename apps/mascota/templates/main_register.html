@@ -137,7 +137,7 @@
                                         </button>
                                         
                                         <!-- Botón de reportar perdida / cancelar perdida -->
-                                        {% if dat.mascota.biometria_entrenada %}
+                                        {% if data.mascota.biometria_entrenada %}
                                             {% if data.mascota.reportar_perdida %}
                                             <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
                                                 class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
