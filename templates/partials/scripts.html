@@ -25,3 +25,28 @@
 
 <!-- Carnet Module JavaScript -->
 <script src="{% static 'js/carnet.js' %}"></script>
+
+<!-- Chatbase Script -->
+<script>
+    window.chatbaseConfig = {
+        chatbotId: "uE4U8bl-COYnGV7r6rzx2",
+        // Configuración avanzada para el chatbot
+        customStyles: {
+            // Personalizar el aspecto del chatbot
+            primaryColor: "#0C71C3",  // Color principal del chatbot
+            fontSize: "16px",         // Tamaño de fuente
+            chatWindowHeight: "600px", // Altura de la ventana del chat
+            buttonText: "Asistente Virtual" // Texto del botón
+        },
+        // Posición del botón de chat
+        buttonStyle: "round", // Estilo del botón: "round" o "square"
+        buttonPositionDesktop: "right", // Posición en escritorio
+        buttonPositionMobile: "right", // Posición en móvil
+    }
+</script>
+<script src="https://www.chatbase.co/embed.min.js" id="uE4U8bl-COYnGV7r6rzx2" defer></script>
+
+<!-- Script para la identificación de usuarios en el chatbot -->
+{% if user.is_authenticated %}
+<script src="{% static 'js/chatbot.js' %}"></script>
+{% endif %}
