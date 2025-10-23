@@ -124,13 +124,18 @@
                                     </div>
                                 
                                     <!-- Botones de acción -->
-                                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
-                                        <a href="#" class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
-                                            <i class="fas fa-edit mr-1"></i> Editar información
+                                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-6 gap-2">
+                                        <a href="{% url 'mascota:edit_mascota' data.mascota.pk %}" class="inline-flex items-center justify-center px-3 py-2 border border-primary-300 text-sm font-medium rounded-md shadow-sm text-primary-600 bg-white hover:bg-primary-50 hover:border-primary-400 transition-all duration-200 hover:shadow-md">
+                                            <i class="pi pi-pencil mr-1"></i> Editar
                                         </a>
+                                        
+                                        <a href="{% url 'mascota:historial_list' data.mascota.pk %}" class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400 transition-all duration-200 hover:shadow-md">
+                                            <i class="pi pi-file-medical mr-1"></i> Historial
+                                        </a>
+                                        
                                         <button onclick="generarQR({{ data.mascota.id }})" 
                                             class="inline-flex items-center justify-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md shadow-sm text-blue-600 bg-white hover:bg-blue-50 hover:border-blue-400">
-                                            <i class="fas fa-qrcode mr-1"></i> Código QR
+                                            <i class="fas fa-qrcode mr-1"></i> QR
                                         </button>
                                         
                                         <!-- Botón de reportar perdida / cancelar perdida -->
@@ -473,6 +478,7 @@
 <script src="{% static 'js/mascota-management.js' %}"></script>
 <script src="{% static 'js/mascota-perdida.js' %}"></script>
 <script src="{% static 'js/mascota.js' %}"></script>
+<script src="{% static 'js/mascota-form.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Inicialización de configuración -->

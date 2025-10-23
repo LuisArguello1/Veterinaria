@@ -1,5 +1,7 @@
 from django.urls import path
 from apps.mascota.views.mascota import main_register
+from apps.mascota.views.create_mascota import MascotaCreateView
+from apps.mascota.views.update_mascota import MascotaUpdateView
 from apps.mascota.views.biometria import (
     BiometriaView, 
     upload_biometria_image, 
@@ -15,6 +17,12 @@ from apps.mascota.views.biometria import (
 
 from apps.mascota.views.delete_mascota import MascotaDeleteView, BiometriaDeleteView
 
+from apps.mascota.views.historial_views import (
+    HistorialMedicoListView,
+    HistorialMedicoCreateView,
+    RegistroVacunaCreateView,
+    CartillaVacunacionView,
+)
 
 from apps.mascota.views.qr_views import (
     mascota_info_publica,
@@ -39,6 +47,11 @@ urlpatterns = [
     # Registro principal de mascota
     path('mascota/', main_register, name='main_register'),
     
+    # Crear nueva mascota (solo OWNER y ADMIN)
+    path('mascota/create/', MascotaCreateView.as_view(), name='create_mascota'),
+    
+    # Editar mascota
+    path('mascota/<int:pk>/edit/', MascotaUpdateView.as_view(), name='edit_mascota'),
     
     # Detalle de mascota
     path('mascota/<int:pk>/', MascotaDetailView.as_view(), name='detalle'),
@@ -55,6 +68,12 @@ urlpatterns = [
     # Delete
     path('mascota/<int:pk>/delete/', MascotaDeleteView.as_view(), name='delete_mascota'),
     path('mascota/<int:pk>/delete-biometria/', BiometriaDeleteView.as_view(), name='delete_biometria'),
+    
+    # Historial Médico y Vacunación
+    path('mascota/<int:mascota_pk>/historial/', HistorialMedicoListView.as_view(), name='historial_list'),
+    path('mascota/<int:mascota_pk>/historial/nuevo/', HistorialMedicoCreateView.as_view(), name='historial_create'),
+    path('mascota/<int:mascota_pk>/vacunas/', CartillaVacunacionView.as_view(), name='cartilla_vacunacion'),
+    path('mascota/<int:mascota_pk>/vacunas/registrar/', RegistroVacunaCreateView.as_view(), name='registrar_vacuna'),
 
     # Escáner de reconocimiento
     path('scanner/', ScannerView.as_view(), name='scanner'),

@@ -18,7 +18,7 @@ class RegisterView(FormView):
     def dispatch(self, request, *args, **kwargs):
         # Si ya está autenticado, no debe ver /register
         if request.user.is_authenticated:
-            return redirect('dashboard')  # usa el name real de tu dashboard
+            return redirect('Dashboard')  # usa el name real de tu dashboard
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

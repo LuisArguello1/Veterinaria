@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from apps.mascota.models import Mascota
+from apps.mascota.forms import MascotaCreateForm
 from django.utils.decorators import method_decorator
 from django.views.generic import View, DetailView, FormView, ListView, TemplateView
 
@@ -15,6 +16,9 @@ def main_register(request):
         
         # Verificar si se debe activar automáticamente la pestaña de biometría
         biometria_id = request.GET.get('biometria_id')
+        
+        # Crear una instancia del formulario de registro
+        form = MascotaCreateForm()
         
         # Si el usuario tiene al menos una mascota, las pasamos al template
         if mascotas_queryset.exists():
@@ -36,7 +40,8 @@ def main_register(request):
                 'mascota_count': len(mascotas),  # len() porque mascotas ya es una lista después del slice
                 'active_biometria_id': biometria_id,  # Para activar automáticamente la pestaña
                 'mascotas_con_biometria': mascotas_con_biometria,
-                'todas_mascotas_entrenadas': todas_mascotas_entrenadas
+                'todas_mascotas_entrenadas': todas_mascotas_entrenadas,
+                'form': form  # Agregamos el formulario al contexto
             }
             
             # Para cada mascota, preparamos los datos adicionales
@@ -67,11 +72,17 @@ def main_register(request):
         else:
             # Si no tiene mascotas, mostramos un mensaje y seguimos sin mascota en el contexto
             messages.info(request, "No tiene mascotas registradas. Por favor, registre una nueva mascota.")
-            return render(request, 'main_register.html', {'mascota_count': 0})
+            return render(request, 'main_register.html', {
+                'mascota_count': 0,
+                'form': form  # Agregamos el formulario al contexto
+            })
             
     except Exception as e:
         messages.error(request, f"Error al cargar los datos de la mascota: {str(e)}")
-        return render(request, 'main_register.html', {'mascota_count': 0})
+        return render(request, 'main_register.html', {
+            'mascota_count': 0,
+            'form': form  # Agregamos el formulario al contexto
+        })
 
 
 

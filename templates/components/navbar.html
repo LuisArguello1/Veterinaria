@@ -18,9 +18,23 @@
       
       <div>
         <!-- Acciones del usuario -->
-        <div class="ml-2 md:ml-3 lg:ml-4 flex items-center">
+        <div class="ml-2 md:ml-3 lg:ml-4 flex items-center gap-2">
           {% if request.user.is_authenticated %}
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
+              
+              <!-- Icono de Notificaciones -->
+              <div class="relative">
+                <a href="{% url 'auth:notifications' %}" 
+                   class="p-2.5 rounded-lg hover:bg-primary-700 transition-colors text-primary-200 hover:text-white hover:shadow-md flex items-center" 
+                   title="Notificaciones"
+                   id="notification-bell">
+                  <i class="pi pi-bell text-lg"></i>
+                  <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg hidden">
+                    0
+                  </span>
+                </a>
+              </div>
+              
               <!-- Enlace al perfil -->
               <a href="{% url 'auth:profile' %}" class="group flex items-center gap-3 hover:bg-primary-700 py-1.5 px-3 rounded-lg transition-all duration-200" title="Ver mi perfil">
                 <div class="w-9 h-9 bg-gradient-to-br from-secondary-500 to-secondary-700 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg ring-2 ring-secondary-300/20">
@@ -43,7 +57,7 @@
               </a>
               
               <!-- Botón de cierre de sesión -->
-              <a href="{% url 'auth:logout' %}" class="ml-2 p-2.5 rounded-lg hover:bg-primary-700 transition-colors text-primary-200 hover:text-white hover:shadow-md" title="Cerrar sesión">
+              <a href="{% url 'auth:logout' %}" class="p-2.5 rounded-lg hover:bg-primary-700 transition-colors text-primary-200 hover:text-white hover:shadow-md" title="Cerrar sesión">
                 <i class="fas fa-sign-out-alt"></i>
               </a>
             </div>

@@ -11,6 +11,15 @@ from apps.autenticacion.views.users import (
   ChangePasswordView
 )
 from apps.autenticacion.views.register import RegisterView
+from apps.autenticacion.views.notifications import (
+    NotificationListView,
+    NotificationMarkAsReadView,
+    NotificationMarkAllAsReadView,
+    NotificationArchiveView,
+    NotificationDeleteView,
+    NotificationCountView,
+    NotificationRecentView,
+)
 
 app_name='auth'
 
@@ -37,4 +46,15 @@ urlpatterns = [
   path('users/<int:pk>/edit/', UserUpdateView.as_view(), name='user_edit'),
   path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
   path('users/<int:pk>/password/', ChangePasswordView.as_view(), name='user_password_change'),
+  
+  # Sistema de notificaciones
+  path('notifications/', NotificationListView.as_view(), name='notifications'),
+  path('notifications/<int:pk>/read/', NotificationMarkAsReadView.as_view(), name='notification_mark_read'),
+  path('notifications/read-all/', NotificationMarkAllAsReadView.as_view(), name='notification_mark_all_read'),
+  path('notifications/<int:pk>/archive/', NotificationArchiveView.as_view(), name='notification_archive'),
+  path('notifications/<int:pk>/delete/', NotificationDeleteView.as_view(), name='notification_delete'),
+  
+  # API de notificaciones
+  path('api/notifications/count/', NotificationCountView.as_view(), name='api_notification_count'),
+  path('api/notifications/recent/', NotificationRecentView.as_view(), name='api_notification_recent'),
 ]

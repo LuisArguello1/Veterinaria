@@ -1,0 +1,314 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .evento-card {
+        animation: slideInLeft 0.5s ease-out;
+        transition: all 0.3s ease;
+    }
+    
+    .evento-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .timeline-dot {
+        transition: all 0.3s ease;
+    }
+    
+    .evento-card:hover .timeline-dot {
+        transform: scale(1.2);
+    }
+    
+    .stat-card {
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Breadcrumbs -->
+    {% if breadcrumb_list %}
+    <nav class="flex items-center space-x-2 text-sm text-gray-600">
+        {% for item in breadcrumb_list %}
+            {% if item.url %}
+                <a href="{{ item.url }}" class="hover:text-primary-600 transition-colors flex items-center gap-1">
+                    <i class="pi pi-home text-xs"></i>
+                    {{ item.label }}
+                </a>
+                <i class="pi pi-chevron-right text-xs"></i>
+            {% else %}
+                <span class="text-primary-600 font-medium">{{ item.label }}</span>
+            {% endif %}
+        {% endfor %}
+    </nav>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-xl p-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="pi pi-file-medical text-4xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold mb-1">Historial Médico</h1>
+                    <p class="text-white/90">{{ mascota.nombre }} - Expediente completo</p>
+                </div>
+            </div>
+            
+            {% if user.role == 'VET' or user.role == 'ADMIN' %}
+            <div class="flex gap-3">
+                <a href="{% url 'mascota:registrar_vacuna' mascota.pk %}" 
+                   class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all">
+                    <i class="pi pi-shield"></i>
+                    Registrar Vacuna
+                </a>
+                <a href="{% url 'mascota:historial_create' mascota.pk %}" 
+                   class="bg-white text-green-600 hover:bg-green-50 px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg">
+                    <i class="pi pi-plus-circle"></i>
+                    Nuevo Evento
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="stat-card bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="pi pi-list text-2xl text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Total Eventos</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_eventos }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="pi pi-shield text-2xl text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Vacunas Aplicadas</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ vacunas_aplicadas }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="pi pi-calendar text-2xl text-orange-600"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Próximas Citas</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ proximas_citas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acceso rápido -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'mascota:cartilla_vacunacion' mascota.pk %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all">
+                <i class="pi pi-book"></i>
+                Cartilla de Vacunación
+            </a>
+            <a href="?tipo=vacuna" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all">
+                <i class="pi pi-shield"></i>
+                Ver Vacunas
+            </a>
+            <a href="?tipo=consulta" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
+                <i class="pi pi-calendar"></i>
+                Ver Consultas
+            </a>
+            <a href="?tipo=cirugia" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all">
+                <i class="pi pi-heart"></i>
+                Ver Cirugías
+            </a>
+        </div>
+    </div>
+
+    <!-- Timeline de Eventos -->
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i class="pi pi-history text-primary-600"></i>
+            Historial de Eventos
+        </h2>
+        
+        {% if eventos %}
+        <div class="space-y-4 relative">
+            <!-- Línea vertical del timeline -->
+            <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            
+            {% for evento in eventos %}
+            <div class="evento-card relative pl-16">
+                <!-- Punto del timeline -->
+                <div class="timeline-dot absolute left-0 w-12 h-12 rounded-full flex items-center justify-center shadow-md
+                            {% if evento.tipo_evento == 'vacuna' %}bg-green-100 text-green-600
+                            {% elif evento.tipo_evento == 'consulta' %}bg-blue-100 text-blue-600
+                            {% elif evento.tipo_evento == 'cirugia' %}bg-red-100 text-red-600
+                            {% elif evento.tipo_evento == 'desparasitacion' %}bg-yellow-100 text-yellow-600
+                            {% elif evento.tipo_evento == 'emergencia' %}bg-red-100 text-red-600
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    <i class="pi 
+                             {% if evento.tipo_evento == 'vacuna' %}pi-shield
+                             {% elif evento.tipo_evento == 'consulta' %}pi-calendar
+                             {% elif evento.tipo_evento == 'cirugia' %}pi-heart
+                             {% elif evento.tipo_evento == 'desparasitacion' %}pi-sun
+                             {% elif evento.tipo_evento == 'emergencia' %}pi-exclamation-triangle
+                             {% else %}pi-file{% endif %} text-xl"></i>
+                </div>
+                
+                <!-- Contenido del evento -->
+                <div class="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors border-l-4
+                            {% if evento.tipo_evento == 'vacuna' %}border-green-500
+                            {% elif evento.tipo_evento == 'consulta' %}border-blue-500
+                            {% elif evento.tipo_evento == 'cirugia' %}border-red-500
+                            {% else %}border-gray-400{% endif %}">
+                    
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ evento.titulo }}</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                       {% if evento.tipo_evento == 'vacuna' %}bg-green-100 text-green-800
+                                       {% elif evento.tipo_evento == 'consulta' %}bg-blue-100 text-blue-800
+                                       {% elif evento.tipo_evento == 'cirugia' %}bg-red-100 text-red-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ evento.get_tipo_evento_display }}
+                            </span>
+                        </div>
+                        <span class="text-sm text-gray-600 flex items-center gap-1">
+                            <i class="pi pi-calendar-times text-xs"></i>
+                            {{ evento.fecha_evento|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    
+                    {% if evento.descripcion %}
+                    <p class="text-gray-700 mb-3">{{ evento.descripcion }}</p>
+                    {% endif %}
+                    
+                    {% if evento.medicamentos %}
+                    <div class="mb-3 bg-white rounded p-3">
+                        <p class="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                            <i class="pi pi-medkit text-xs"></i>
+                            Medicamentos:
+                        </p>
+                        <p class="text-sm text-gray-600">{{ evento.medicamentos }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center gap-4 text-sm text-gray-600">
+                            {% if evento.veterinario %}
+                            <span class="flex items-center gap-1">
+                                <i class="pi pi-user-doctor text-xs"></i>
+                                Dr. {{ evento.veterinario.get_full_name }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if evento.fecha_proxima %}
+                            <span class="flex items-center gap-1 text-orange-600 font-medium">
+                                <i class="pi pi-bell text-xs"></i>
+                                Próxima: {{ evento.fecha_proxima|date:"d/m/Y" }}
+                            </span>
+                            {% endif %}
+                            
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                       {% if evento.estado == 'completado' %}bg-green-100 text-green-800
+                                       {% elif evento.estado == 'pendiente' %}bg-yellow-100 text-yellow-800
+                                       {% elif evento.estado == 'cancelado' %}bg-red-100 text-red-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ evento.get_estado_display }}
+                            </span>
+                        </div>
+                        
+                        {% if evento.archivo_adjunto %}
+                        <a href="{{ evento.archivo_adjunto.url }}" target="_blank" 
+                           class="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
+                            <i class="pi pi-paperclip"></i>
+                            Ver archivo
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-8 pt-6 border-t border-gray-200">
+            <nav class="inline-flex rounded-md shadow-sm">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-l-md text-gray-700 hover:bg-gray-50">
+                    <i class="pi pi-chevron-left"></i>
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-white border-t border-b border-gray-300 text-gray-700">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-r-md text-gray-700 hover:bg-gray-50">
+                    <i class="pi pi-chevron-right"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="pi pi-inbox text-5xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay eventos registrados</h3>
+            <p class="text-gray-600 mb-6">Aún no se han registrado eventos médicos para {{ mascota.nombre }}</p>
+            
+            {% if user.role == 'VET' or user.role == 'ADMIN' %}
+            <a href="{% url 'mascota:historial_create' mascota.pk %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-md">
+                <i class="pi pi-plus-circle"></i>
+                Registrar Primer Evento
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

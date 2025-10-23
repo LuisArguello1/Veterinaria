@@ -1,0 +1,265 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+    
+    .notification-card {
+        animation: slideInRight 0.4s ease-out;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-card:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .notification-unread {
+        border-left: 4px solid #3b82f6;
+        background: linear-gradient(to right, #eff6ff, #ffffff);
+    }
+    
+    .notification-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .notification-card:hover .notification-icon {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    .badge-pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    .btn-action {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Breadcrumbs -->
+    {% if breadcrumb_list %}
+    <nav class="flex items-center space-x-2 text-sm text-gray-600">
+        {% for item in breadcrumb_list %}
+            {% if item.url %}
+                <a href="{{ item.url }}" class="hover:text-primary-600 transition-colors flex items-center gap-1">
+                    <i class="pi pi-home text-xs"></i>
+                    {{ item.label }}
+                </a>
+                <i class="pi pi-chevron-right text-xs"></i>
+            {% else %}
+                <span class="text-primary-600 font-medium">{{ item.label }}</span>
+            {% endif %}
+        {% endfor %}
+    </nav>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="bg-white/20 rounded-full p-4 relative">
+                    <i class="pi pi-bell text-4xl"></i>
+                    {% if total_no_leidas > 0 %}
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center badge-pulse">
+                            {{ total_no_leidas }}
+                        </span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold mb-1">Notificaciones</h1>
+                    <p class="text-white/90">
+                        {% if total_no_leidas > 0 %}
+                            Tienes {{ total_no_leidas }} notificación{{ total_no_leidas|pluralize:"es" }} sin leer
+                        {% else %}
+                            No tienes notificaciones pendientes
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if total_no_leidas > 0 %}
+            <form method="post" action="{% url 'auth:notification_mark_all_read' %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-action bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+                    <i class="pi pi-check-circle"></i>
+                    Marcar todas como leídas
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4 flex flex-wrap gap-3">
+        <a href="{% url 'auth:notifications' %}" 
+           class="px-4 py-2 rounded-lg font-medium transition-all {% if not request.GET.estado and not request.GET.tipo %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <i class="pi pi-list mr-2"></i>Todas
+        </a>
+        <a href="?estado=no_leidas" 
+           class="px-4 py-2 rounded-lg font-medium transition-all {% if request.GET.estado == 'no_leidas' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <i class="pi pi-circle-fill mr-2 text-xs"></i>No leídas
+        </a>
+        <a href="?tipo=REMINDER" 
+           class="px-4 py-2 rounded-lg font-medium transition-all {% if request.GET.tipo == 'REMINDER' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <i class="pi pi-bell mr-2"></i>Recordatorios
+        </a>
+        <a href="?tipo=WARNING" 
+           class="px-4 py-2 rounded-lg font-medium transition-all {% if request.GET.tipo == 'WARNING' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <i class="pi pi-exclamation-triangle mr-2"></i>Advertencias
+        </a>
+    </div>
+
+    <!-- Lista de Notificaciones -->
+    <div class="space-y-3">
+        {% for notificacion in notificaciones %}
+        <div class="notification-card bg-white rounded-lg shadow-sm overflow-hidden {% if not notificacion.leida %}notification-unread{% endif %}">
+            
+            <div class="p-6 flex items-start gap-4">
+                
+                <!-- Icono -->
+                <div class="notification-icon flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
+                            {% if notificacion.tipo == 'INFO' %}bg-blue-100 text-blue-600
+                            {% elif notificacion.tipo == 'SUCCESS' %}bg-green-100 text-green-600
+                            {% elif notificacion.tipo == 'WARNING' %}bg-orange-100 text-orange-600
+                            {% elif notificacion.tipo == 'ERROR' %}bg-red-100 text-red-600
+                            {% elif notificacion.tipo == 'REMINDER' %}bg-purple-100 text-purple-600
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    <i class="pi {{ notificacion.icono }} text-xl"></i>
+                </div>
+                
+                <!-- Contenido -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            {{ notificacion.titulo }}
+                            {% if not notificacion.leida %}
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Nueva
+                                </span>
+                            {% endif %}
+                        </h3>
+                        <span class="text-sm text-gray-500 flex items-center gap-1">
+                            <i class="pi pi-clock text-xs"></i>
+                            Hace {{ notificacion.tiempo_transcurrido }}
+                        </span>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-3">{{ notificacion.mensaje }}</p>
+                    
+                    <!-- Acciones -->
+                    <div class="flex items-center gap-2">
+                        {% if notificacion.url_accion %}
+                        <a href="{{ notificacion.url_accion }}" 
+                           class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium text-sm">
+                            <i class="pi pi-arrow-right"></i>
+                            {{ notificacion.texto_accion|default:"Ver más" }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if not notificacion.leida %}
+                        <form method="post" action="{% url 'auth:notification_mark_read' notificacion.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1">
+                                <i class="pi pi-check"></i>
+                                Marcar leída
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <form method="post" action="{% url 'auth:notification_delete' notificacion.pk %}" class="inline ml-auto">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+                                <i class="pi pi-trash"></i>
+                                Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+            <div class="max-w-sm mx-auto">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="pi pi-inbox text-5xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay notificaciones</h3>
+                <p class="text-gray-600">
+                    {% if request.GET.estado or request.GET.tipo %}
+                        No se encontraron notificaciones con los filtros aplicados.
+                    {% else %}
+                        No tienes notificaciones en este momento.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="flex justify-center mt-8">
+        <nav class="inline-flex rounded-md shadow-sm">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-l-md text-gray-700 hover:bg-gray-50">
+                <i class="pi pi-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-white border-t border-b border-gray-300 text-gray-700">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-r-md text-gray-700 hover:bg-gray-50">
+                <i class="pi pi-chevron-right"></i>
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Confirmación antes de eliminar
+    document.querySelectorAll('form[action*="delete"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta notificación?')) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from apps.mascota.models import Mascota, ImagenMascota, ModeloGlobal, EmbeddingStore, RegistroReconocimiento
+from apps.mascota.models_historial import HistorialMedico, Vacuna, RegistroVacuna
 
 # Registro de modelos para el panel administrativo
 
@@ -144,3 +145,103 @@ class RegistroReconocimientoAdmin(admin.ModelAdmin):
     mascota_predicha_nombre.short_description = 'Mascota'
     confianza_percent.short_description = 'Confianza'
     preview_imagen.short_description = 'Imagen'
+
+
+# Administración de Historial Médico
+@admin.register(HistorialMedico)
+class HistorialMedicoAdmin(admin.ModelAdmin):
+    list_display = ('mascota', 'tipo_evento', 'titulo', 'fecha_evento', 'fecha_proxima', 'estado', 'veterinario')
+    list_filter = ('tipo_evento', 'estado', 'fecha_evento', 'recordatorio_enviado')
+    search_fields = ('mascota__nombre', 'titulo', 'descripcion', 'medicamentos')
+    readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('mascota', 'veterinario', 'tipo_evento', 'titulo', 'descripcion')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_evento', 'fecha_proxima', 'estado')
+        }),
+        ('Detalles Médicos', {
+            'fields': ('medicamentos', 'costo', 'notas', 'archivo_adjunto')
+        }),
+        ('Recordatorios', {
+            'fields': ('dias_anticipacion_recordatorio', 'recordatorio_enviado'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    date_hierarchy = 'fecha_evento'
+    
+    actions = ['enviar_recordatorios']
+    
+    def enviar_recordatorios(self, request, queryset):
+        """Acción para enviar recordatorios manualmente"""
+        count = 0
+        for evento in queryset.filter(recordatorio_enviado=False, fecha_proxima__isnull=False):
+            if evento.enviar_recordatorio_si_corresponde():
+                count += 1
+        
+        self.message_user(request, f'{count} recordatorios enviados')
+    enviar_recordatorios.short_description = 'Enviar recordatorios seleccionados'
+
+
+@admin.register(Vacuna)
+class VacunaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'frecuencia_meses', 'edad_minima_meses', 'obligatoria', 'apta_para')
+    list_filter = ('obligatoria', 'apta_para_perros', 'apta_para_gatos')
+    search_fields = ('nombre', 'descripcion')
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre', 'descripcion')
+        }),
+        ('Periodicidad', {
+            'fields': ('frecuencia_meses', 'edad_minima_meses', 'obligatoria')
+        }),
+        ('Aplicabilidad', {
+            'fields': ('apta_para_perros', 'apta_para_gatos', 'apta_para_otras')
+        }),
+    )
+    
+    def apta_para(self, obj):
+        especies = []
+        if obj.apta_para_perros:
+            especies.append('Perros')
+        if obj.apta_para_gatos:
+            especies.append('Gatos')
+        if obj.apta_para_otras:
+            especies.append('Otras')
+        return ', '.join(especies) if especies else 'Ninguna'
+    apta_para.short_description = 'Apta para'
+
+
+@admin.register(RegistroVacuna)
+class RegistroVacunaAdmin(admin.ModelAdmin):
+    list_display = ('mascota', 'vacuna', 'fecha_aplicacion', 'fecha_proxima', 'veterinario', 'recordatorio_enviado')
+    list_filter = ('recordatorio_enviado', 'fecha_aplicacion', 'vacuna')
+    search_fields = ('mascota__nombre', 'vacuna__nombre', 'lote')
+    readonly_fields = ('created_at',)
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('mascota', 'vacuna', 'veterinario')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_aplicacion', 'fecha_proxima')
+        }),
+        ('Detalles', {
+            'fields': ('lote', 'notas', 'recordatorio_enviado')
+        }),
+        ('Metadata', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    date_hierarchy = 'fecha_aplicacion'
+

@@ -1,20 +1,372 @@
 {% load static %}
 
-<!-- Contenido de Registro Normal - Diseño Profesional -->
+<!-- Formulario de Registro de Mascota - Solo para OWNER y ADMIN -->
 <div class="registro-normal-content content-max-width">
-    <!-- Contenedor con estilo armonizado -->
-    <div class="bg-primary-50 p-5 rounded-lg">
-        <div class="alert alert-info mb-4" role="alert">
-            Aquí va el formulario para el registro de la mascota
+    <form method="post" action="{% url 'mascota:create_mascota' %}" enctype="multipart/form-data" id="mascota-form" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Alerta informativa -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6 animate-fadeIn">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="pi pi-info-circle text-blue-400 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        Complete la información básica de su mascota. Los campos marcados con 
+                        <span class="text-red-500 font-bold">*</span> son obligatorios.
+                        Podrá agregar imágenes biométricas y más detalles después del registro.
+                    </p>
+                </div>
+            </div>
         </div>
         
-        <!-- Espacio reservado para contenido futuro -->
-        <div class="h-40 flex items-center justify-center border border-dashed border-primary-300 rounded-lg bg-white">
-            <p class="text-gray-500">
-                <i class="fas fa-clipboard-list mr-2 text-primary-400"></i>Formulario de registro
-            </p>
+        <!-- Errores del formulario (si existen) -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-md mb-6 animate-shake">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="pi pi-exclamation-triangle text-red-400 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Error en el formulario</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        {{ form.non_field_errors }}
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+        {% endif %}
+        
+        <!-- Sección 1: Información Básica -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-slideUp">
+            <div class="border-b border-gray-200 bg-gradient-to-r from-primary-50 to-primary-100 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="pi pi-id-card text-primary-600 mr-3 text-xl"></i>
+                    <span>Información Básica</span>
+                </h3>
+            </div>
+            
+            <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre (obligatorio) -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-tag text-primary-500 mr-1"></i>
+                        {{ form.nombre.label }}
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.nombre.help_text }}</p>
+                    {% endif %}
+                    {% if form.nombre.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.nombre.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Raza/Especie -->
+                <div>
+                    <label for="{{ form.raza.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-bolt text-primary-500 mr-1"></i>
+                        {{ form.raza.label }}
+                    </label>
+                    {{ form.raza }}
+                    {% if form.raza.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.raza.help_text }}</p>
+                    {% endif %}
+                    {% if form.raza.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.raza.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Sexo -->
+                <div>
+                    <label for="{{ form.sexo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-circle text-primary-500 mr-1"></i>
+                        {{ form.sexo.label }}
+                    </label>
+                    {{ form.sexo }}
+                    {% if form.sexo.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.sexo.help_text }}</p>
+                    {% endif %}
+                    {% if form.sexo.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.sexo.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Fecha de Nacimiento -->
+                <div>
+                    <label for="{{ form.fecha_nacimiento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-calendar text-primary-500 mr-1"></i>
+                        {{ form.fecha_nacimiento.label }}
+                    </label>
+                    {{ form.fecha_nacimiento }}
+                    {% if form.fecha_nacimiento.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.fecha_nacimiento.help_text }}</p>
+                    {% endif %}
+                    {% if form.fecha_nacimiento.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.fecha_nacimiento.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Peso -->
+                <div>
+                    <label for="{{ form.peso.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-chart-line text-primary-500 mr-1"></i>
+                        {{ form.peso.label }}
+                    </label>
+                    {{ form.peso }}
+                    {% if form.peso.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.peso.help_text }}</p>
+                    {% endif %}
+                    {% if form.peso.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.peso.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección 2: Características Físicas -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-slideUp" style="animation-delay: 0.1s;">
+            <div class="border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="pi pi-palette text-green-600 mr-3 text-xl"></i>
+                    <span>Características Físicas</span>
+                </h3>
+            </div>
+            
+            <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Color -->
+                <div>
+                    <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-palette text-primary-500 mr-1"></i>
+                        {{ form.color.label }}
+                    </label>
+                    {{ form.color }}
+                    {% if form.color.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.color.help_text }}</p>
+                    {% endif %}
+                    {% if form.color.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.color.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Etapa de Vida -->
+                <div>
+                    <label for="{{ form.etapa_vida.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-clock text-primary-500 mr-1"></i>
+                        {{ form.etapa_vida.label }}
+                    </label>
+                    {{ form.etapa_vida }}
+                    {% if form.etapa_vida.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.etapa_vida.help_text }}</p>
+                    {% endif %}
+                    {% if form.etapa_vida.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.etapa_vida.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Estado Corporal -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.estado_corporal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-heart text-primary-500 mr-1"></i>
+                        {{ form.estado_corporal.label }}
+                    </label>
+                    {{ form.estado_corporal }}
+                    {% if form.estado_corporal.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.estado_corporal.help_text }}</p>
+                    {% endif %}
+                    {% if form.estado_corporal.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.estado_corporal.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Características Especiales -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.caracteristicas_especiales.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-list text-primary-500 mr-1"></i>
+                        {{ form.caracteristicas_especiales.label }}
+                    </label>
+                    {{ form.caracteristicas_especiales }}
+                    {% if form.caracteristicas_especiales.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.caracteristicas_especiales.help_text }}</p>
+                    {% endif %}
+                    {% if form.caracteristicas_especiales.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="pi pi-times-circle mr-1"></i>
+                        {{ form.caracteristicas_especiales.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección 3: Foto de Perfil -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-slideUp" style="animation-delay: 0.2s;">
+            <div class="border-b border-gray-200 bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="pi pi-image text-purple-600 mr-3 text-xl"></i>
+                    <span>Foto de Perfil</span>
+                </h3>
+            </div>
+            
+            <div class="px-6 py-6">
+                <!-- Foto de Perfil -->
+                <div>
+                    <label for="{{ form.foto_perfil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="pi pi-camera text-primary-500 mr-1"></i>
+                        {{ form.foto_perfil.label }}
+                    </label>
+                    <div class="mt-2 flex items-center space-x-4">
+                        <div id="foto-preview" class="hidden">
+                            <img id="foto-preview-img" src="" alt="Vista previa" class="h-32 w-32 object-cover rounded-lg border-2 border-gray-200">
+                        </div>
+                        <div class="flex-1">
+                            {{ form.foto_perfil }}
+                            {% if form.foto_perfil.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.foto_perfil.help_text }}</p>
+                            {% endif %}
+                            {% if form.foto_perfil.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center">
+                                <i class="pi pi-times-circle mr-1"></i>
+                                {{ form.foto_perfil.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6 animate-slideUp" style="animation-delay: 0.3s;">
+            <button type="button" onclick="resetForm()" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                <i class="pi pi-refresh mr-2"></i>
+                Limpiar Formulario
+            </button>
+            
+            <button type="submit" class="inline-flex items-center justify-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:scale-105">
+                <i class="pi pi-check-circle mr-2"></i>
+                Registrar Mascota
+            </button>
+        </div>
+    </form>
 </div>
+
+<!-- Estilos adicionales para animaciones -->
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideUp {
+    animation: slideUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.animate-shake {
+    animation: shake 0.5s ease-out;
+}
+
+/* Mejorar el estilo de los campos de formulario */
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #3b82f6;
+    ring-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+
+<!-- Script para vista previa de la imagen -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fotoInput = document.getElementById('{{ form.foto_perfil.id_for_label }}');
+    const fotoPreview = document.getElementById('foto-preview');
+    const fotoPreviewImg = document.getElementById('foto-preview-img');
+    
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreviewImg.src = e.target.result;
+                    fotoPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fotoPreview.classList.add('hidden');
+            }
+        });
+    }
+});
+
+function resetForm() {
+    if (confirm('¿Está seguro de que desea limpiar el formulario? Se perderán todos los datos ingresados.')) {
+        document.getElementById('mascota-form').reset();
+        document.getElementById('foto-preview').classList.add('hidden');
+    }
+}
+</script>
+
 
 
