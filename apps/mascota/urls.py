@@ -39,6 +39,21 @@ from apps.mascota.views.mascota_perdida_views import (
     api_mascotas_perdidas
 )
 
+from apps.mascota.views.carnet import (
+    lista_carnets,
+    detalle_carnet,
+    descargar_carnet_pdf,
+    vista_previa_carnet
+)
+
+from apps.mascota.views.registro_view import (
+    registro_mascota_view,
+    predict_from_image_ajax,
+    check_ai_model_status
+)
+
+from apps.mascota.views.editar_mascota import editar_mascota
+
 
 
 app_name='mascota'
@@ -53,8 +68,16 @@ urlpatterns = [
     # Editar mascota
     path('mascota/<int:pk>/edit/', MascotaUpdateView.as_view(), name='edit_mascota'),
     
+    # Registro con IA
+    path('registro/', registro_mascota_view, name='registro_mascota'),
+    path('api/predict-image/', predict_from_image_ajax, name='predict_image_ajax'),
+    path('api/check-ai-status/', check_ai_model_status, name='check_ai_status'),
+    
     # Detalle de mascota
     path('mascota/<int:pk>/', MascotaDetailView.as_view(), name='detalle'),
+    
+    # Editar mascota
+    path('mascota/<int:mascota_id>/editar/', editar_mascota, name='editar_mascota'),
     
     # Biometría de mascota
     path('mascota/<int:pk>/biometria/', BiometriaView.as_view(), name='biometria'),
@@ -94,4 +117,11 @@ urlpatterns = [
     path('perdida/<uuid:mascota_uuid>/verificar-estado/', verificar_estado_perdida, name='verificar_estado_perdida'),
     path('mascotas-perdidas/', listar_mascotas_perdidas, name='listar_mascotas_perdidas'),
     path('api/mascotas-perdidas/', api_mascotas_perdidas, name='api_mascotas_perdidas'),
+
+    # Sistema de carnets
+    path('carnets/', lista_carnets, name='lista_carnets'),
+    path('carnet/<int:mascota_id>/', detalle_carnet, name='detalle_carnet'),
+    path('carnet/<int:mascota_id>/pdf/', descargar_carnet_pdf, name='descargar_carnet_pdf'),
+    path('carnet/<int:mascota_id>/preview/', vista_previa_carnet, name='vista_previa_carnet'),
+
 ]

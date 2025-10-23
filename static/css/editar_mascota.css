@@ -1,0 +1,166 @@
+/* Estilos para el modal de edición */
+#editarMascotaModal {
+    z-index: 9999;
+}
+
+/* Animaciones suaves para el modal */
+#editarMascotaModal {
+    transition: opacity 0.3s ease-out;
+}
+
+#editarMascotaModal > div {
+    animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-origin: center top;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Estilos mejorados para los campos del formulario */
+#editarMascotaForm input,
+#editarMascotaForm select,
+#editarMascotaForm textarea {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#editarMascotaForm input:focus,
+#editarMascotaForm select:focus,
+#editarMascotaForm textarea:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+#editarMascotaForm input:hover,
+#editarMascotaForm select:hover,
+#editarMascotaForm textarea:hover {
+    border-color: #9CA3AF;
+    transform: translateY(-1px);
+}
+
+/* Estilos para los labels con iconos */
+#editarMascotaForm label i {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Estilo especial para campos requeridos */
+#editarMascotaForm input[required] {
+    border-left: 4px solid #EF4444;
+}
+
+#editarMascotaForm input[required]:focus {
+    border-left: 4px solid #EF4444;
+}
+
+/* Mejoras para el input de archivo */
+#edit_foto_perfil {
+    cursor: pointer;
+}
+
+#edit_foto_perfil::-webkit-file-upload-button {
+    cursor: pointer;
+}
+
+/* Estilos para la vista previa de foto */
+#current-photo-preview {
+    transition: all 0.3s ease;
+}
+
+#current-photo-preview:hover {
+    background-color: #F9FAFB;
+}
+
+/* Botones mejorados */
+#guardar-cambios-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Scrollbar personalizado para el contenido del modal */
+.max-h-\[80vh\]::-webkit-scrollbar {
+    width: 6px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+    #editarMascotaModal > div {
+        margin: 8px;
+        width: calc(100% - 16px);
+        top: 8px;
+    }
+    
+    #editarMascotaForm .md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+        gap: 4;
+    }
+    
+    #editarMascotaForm .md\\:col-span-2 {
+        grid-column: span 1;
+    }
+    
+    .px-6 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    #editarMascotaModal > div {
+        margin: 4px;
+        width: calc(100% - 8px);
+    }
+    
+    .flex.space-x-4 {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .flex.space-x-4 button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Efectos de hover para las etiquetas */
+#editarMascotaForm label:hover i {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Gradientes sutiles para mejor apariencia */
+#editarMascotaModal .bg-gradient-to-r {
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}

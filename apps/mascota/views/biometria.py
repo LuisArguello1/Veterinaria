@@ -55,7 +55,7 @@ def get_user_pets(request):
                 'id': mascota.id,
                 'nombre': mascota.nombre,
                 'raza': mascota.raza or 'No especificada',
-                'especie': 'Canino',  # Asumimos que son perros por defecto
+                'especie': 'Canino',
                 'imagenes_count': ImagenMascota.objects.filter(mascota=mascota).count()
             }
             mascotas_data.append(mascota_data)
@@ -560,10 +560,9 @@ class ScannerView(View):
             mascotas_entrenadas > 0
         )
             
-        # Obtener últimos reconocimientos (solo de mascotas que aún existen)
+        # Obtener últimos reconocimientos (incluidos los fallidos)
         context['ultimos_reconocimientos'] = RegistroReconocimiento.objects.filter(
-            usuario=request.user,
-            mascota_predicha__isnull=False  # Solo reconocimientos con mascota válida
+            usuario=request.user
         ).select_related('mascota_predicha').order_by('-fecha')[:5]
             
         return render(request, self.template_name, context)
@@ -626,23 +625,18 @@ def upload_image_for_recognition(request):
                 f.write(chunk)
     
     try:
-        # Reconocer mascota
-        resultado = reconocer_mascota(filename)
+        # Reconocer mascota (pasar el usuario directamente)
+        resultado = reconocer_mascota(filename, usuario=request.user)
         
         # Si hay un error
         if 'error' in resultado:
             return JsonResponse({'success': False, 'error': resultado['error']}, status=400)
-            
-        # Obtener mascota reconocida
-        if resultado['exito'] and resultado.get('mascota'):
-            # Actualizar el registro con el usuario
-            registro = RegistroReconocimiento.objects.get(id=resultado['registro_id'])
-            registro.usuario = request.user
-            registro.save()
-            
+        
+        # Si el reconocimiento fue exitoso
+        if resultado.get('exito', False):
             # Los datos ya vienen completos desde reconocer_mascota()
             # Verificar si la mascota está reportada como perdida
-            mascota_obj = Mascota.objects.get(id=resultado['mascota']['id'])
+            mascota_obj = Mascota.objects.get(id=resultado['mascota_id'])
             
             # Asegurar que el UUID esté incluido en los datos de la mascota
             mascota_data = resultado['mascota'].copy()
@@ -661,6 +655,7 @@ def upload_image_for_recognition(request):
                 'mascota_perdida': mascota_obj.reportar_perdida  # Agregar información de si está perdida
             })
         else:
+            # Si no se identificó ninguna mascota
             return JsonResponse({
                 'success': True,
                 'reconocimiento': {

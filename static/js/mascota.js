@@ -1,7 +1,121 @@
 /**
  * Script para la gestión de mascotas y datos biométricos
  * Maneja las pestañas y el slider horizontal, así como la captura y subida de imágenes biométricas
+ * 
+ * VERSIÓN ACTUALIZADA - NO INTERCEPTA FORMULARIOS DE REGISTRO
  */
+
+// Variable global para el estado de la cámara biométrica
+let biometricCameraActive = false;
+
+// Función para verificar y corregir el estado de la cámara biométrica
+function verificarEstadoCameraBiometrica() {
+    const webcamVideo = document.getElementById('webcam');
+    const startCameraBtn = document.getElementById('start-camera');
+    
+    const tieneVideo = webcamVideo && webcamVideo.srcObject;
+    
+    if (biometricCameraActive && !tieneVideo) {
+        // Estado inconsistente: dice que está activa pero no hay video
+        console.log('Corrigiendo estado inconsistente biométrico: activa->inactiva');
+        biometricCameraActive = false;
+        if (startCameraBtn) {
+            startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
+            startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+        }
+    } else if (!biometricCameraActive && tieneVideo) {
+        // Estado inconsistente: dice que está inactiva pero hay video
+        console.log('Corrigiendo estado inconsistente biométrico: inactiva->activa');
+        biometricCameraActive = true;
+        if (startCameraBtn) {
+            startCameraBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> Detener cámara';
+            startCameraBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+            startCameraBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        }
+    }
+    
+    return biometricCameraActive;
+}
+
+// Función global para detener la cámara biométrica (accesible desde otras partes)
+window.stopBiometricCamera = function() {
+    console.log('=== INICIANDO stopBiometricCamera ===');
+    console.log('Estado inicial biometricCameraActive:', biometricCameraActive);
+    
+    const webcamVideo = document.getElementById('webcam');
+    const startCameraBtn = document.getElementById('start-camera');
+    const capturePhotoBtn = document.getElementById('capture-photo');
+    const cameraOverlay = document.getElementById('camera-overlay');
+    const cameraSelectContainer = document.getElementById('camera-select-container');
+    
+    console.log('Elementos encontrados:', {
+        webcamVideo: !!webcamVideo,
+        startCameraBtn: !!startCameraBtn,
+        capturePhotoBtn: !!capturePhotoBtn,
+        cameraOverlay: !!cameraOverlay,
+        cameraSelectContainer: !!cameraSelectContainer,
+        hasVideoSrc: !!(webcamVideo && webcamVideo.srcObject)
+    });
+    
+    if (webcamVideo && webcamVideo.srcObject) {
+        console.log('Deteniendo tracks del video...');
+        const tracks = webcamVideo.srcObject.getTracks();
+        console.log('Tracks encontrados:', tracks.length);
+        tracks.forEach(track => {
+            console.log('Deteniendo track:', track.kind, track.readyState);
+            track.stop();
+        });
+        webcamVideo.srcObject = null;
+        console.log('Video srcObject limpiado');
+    } else {
+        console.log('No hay video o srcObject para detener');
+    }
+    
+    // Marcar cámara como inactiva globalmente
+    biometricCameraActive = false;
+    console.log('Estado actualizado biometricCameraActive:', biometricCameraActive);
+    
+    // Disparar evento de cambio de estado
+    window.dispatchEvent(new CustomEvent('biometricCameraStateChanged', {
+        detail: { 
+            active: false,
+            timestamp: new Date().getTime()
+        }
+    }));
+    
+    // Restaurar botón de iniciar cámara
+    if (startCameraBtn) {
+        console.log('Actualizando botón de cámara...');
+        startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
+        startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+        console.log('Botón actualizado');
+    } else {
+        console.log('startCameraBtn no encontrado');
+    }
+    
+    // Deshabilitar botón de captura
+    if (capturePhotoBtn) {
+        capturePhotoBtn.disabled = true;
+        console.log('Botón de captura deshabilitado');
+    }
+    
+    // Ocultar selector de cámaras
+    if (cameraSelectContainer) {
+        cameraSelectContainer.style.display = 'none';
+        console.log('Selector de cámaras ocultado');
+    }
+    
+    // Mostrar overlay inicial
+    if (cameraOverlay) {
+        cameraOverlay.innerHTML = '<i class="fas fa-video mr-2"></i> Presiona "Iniciar cámara" para comenzar';
+        cameraOverlay.classList.remove('hidden');
+        console.log('Overlay restaurado');
+    }
+    
+    console.log('=== stopBiometricCamera COMPLETADO ===');
+};
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log('Inicializando funcionalidades de mascota.js...');
@@ -340,8 +454,15 @@ function initCameraCapture() {
         currentMascotaId: window.currentMascotaId,
         urlId: new URLSearchParams(window.location.search).get('id')
     });
-    // Elementos del DOM
+    
+    // Verificar si ya está inicializada para evitar múltiples listeners
     const startCameraBtn = document.getElementById('start-camera');
+    if (startCameraBtn && startCameraBtn._biometricInitialized) {
+        console.log('Captura de cámara ya inicializada, saltando...');
+        return;
+    }
+    
+    // Elementos del DOM
     const capturePhotoBtn = document.getElementById('capture-photo');
     const savePhotoBtn = document.getElementById('save-photo');
     const discardPhotoBtn = document.getElementById('discard-photo');
@@ -360,6 +481,7 @@ function initCameraCapture() {
     let stream = null;
     let photoTaken = false;
     let currentDeviceId = '';
+    let buttonClickInProgress = false; // Para evitar clicks múltiples
     
     // Si no existen los elementos esenciales, salir
     if (!startCameraBtn || !webcamVideo) {
@@ -420,13 +542,22 @@ function initCameraCapture() {
     
     // Manejar cambio de cámara desde el selector
     if (cameraSelect) {
-        cameraSelect.addEventListener('change', () => {
+        cameraSelect.addEventListener('change', async () => {
             currentDeviceId = cameraSelect.value;
             
             // Si la cámara ya está iniciada, reiniciarla con la nueva selección
-            if (stream) {
-                stopCamera();
-                startCamera(currentDeviceId);
+            if (stream && biometricCameraActive) {
+                console.log('Cambiando de cámara, reiniciando...');
+                // Detener usando la función global pero sin cambiar el estado (es solo un cambio de dispositivo)
+                const webcamVideo = document.getElementById('webcam');
+                if (webcamVideo && webcamVideo.srcObject) {
+                    const tracks = webcamVideo.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    webcamVideo.srcObject = null;
+                }
+                stream = null;
+                // Reiniciar con el nuevo dispositivo
+                await startCamera(currentDeviceId);
             }
         });
     }
@@ -451,17 +582,37 @@ function initCameraCapture() {
             currentDeviceId = cameraSelect.value;
             
             // Si la cámara ya está iniciada, reiniciarla con la nueva selección
-            if (stream) {
-                stopCamera();
-                startCamera(currentDeviceId);
+            if (stream && biometricCameraActive) {
+                console.log('Cambiando de cámara rápidamente, reiniciando...');
+                // Detener usando la función global pero sin cambiar el estado (es solo un cambio de dispositivo)
+                const webcamVideo = document.getElementById('webcam');
+                if (webcamVideo && webcamVideo.srcObject) {
+                    const tracks = webcamVideo.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    webcamVideo.srcObject = null;
+                }
+                stream = null;
+                // Reiniciar con el nuevo dispositivo
+                await startCamera(currentDeviceId);
             }
         });
     }
     
     // Función para iniciar la cámara
     async function startCamera(deviceId = null) {
+        console.log('=== startCamera llamada ===', {
+            deviceId,
+            currentState: biometricCameraActive,
+            hasStream: !!stream,
+            stackTrace: new Error().stack
+        });
+        
         try {
-            if (cameraOverlay) cameraOverlay.classList.remove('hidden');
+            // Mostrar overlay de inicialización
+            if (cameraOverlay) {
+                cameraOverlay.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Inicializando cámara...';
+                cameraOverlay.classList.remove('hidden');
+            }
             
             // Si ya hay un stream activo, detenerlo primero
             if (stream) {
@@ -525,58 +676,121 @@ function initCameraCapture() {
                 startCameraBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> Detener cámara';
                 startCameraBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
                 startCameraBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                
-                // Cambiar comportamiento a detener cámara
-                startCameraBtn.onclick = stopCamera;
             }
             
+            // Marcar cámara como activa
+            biometricCameraActive = true;
+            console.log('Cámara biométrica iniciada, estado:', biometricCameraActive);
+            
+            // Establecer variable global para otros scripts
+            window.biometricCameraActive = true;
+            
+            // Disparar evento de cambio de estado
+            window.dispatchEvent(new CustomEvent('biometricCameraStateChanged', {
+                detail: { 
+                    active: true,
+                    timestamp: new Date().getTime()
+                }
+            }));
+            
+            // Reiniciar completamente el módulo de captura automática después de activar la cámara
+            console.log('Reinicializando módulo de captura automática después de activar la cámara');
+            setTimeout(() => {
+                // Llamar a la función de inicialización con reintento
+                if (typeof initWithRetry === 'function') {
+                    initWithRetry();
+                } else if (typeof window.initWithRetry === 'function') {
+                    window.initWithRetry();
+                } else {
+                    console.log('Función initWithRetry no encontrada, intentando inicializar directamente');
+                    if (window.BiometriaCapturaAutomatica && typeof window.BiometriaCapturaAutomatica.init === 'function') {
+                        window.BiometriaCapturaAutomatica.init();
+                    }
+                }
+                
+                // Asegurarnos de que el botón esté habilitado
+                setTimeout(() => {
+                    const startAutoBtn = document.getElementById('start-auto-capture');
+                    if (startAutoBtn) {
+                        console.log('Habilitando botón de captura automática después de reinicializar');
+                        startAutoBtn.disabled = false;
+                    } else {
+                        console.log('No se encontró el botón de captura automática después de reinicializar');
+                    }
+                }, 300);
+            }, 500); // Pequeño retraso para asegurar que todo esté listo
+            
+            // Ocultar overlay cuando la cámara esté lista
             if (cameraOverlay) cameraOverlay.classList.add('hidden');
             return true;
         } catch (err) {
             console.error('Error al acceder a la cámara:', err);
             alert('No se pudo acceder a la cámara. Por favor, verifica que has concedido permisos.');
-            if (cameraOverlay) cameraOverlay.classList.add('hidden');
+            if (cameraOverlay) {
+                cameraOverlay.innerHTML = '<i class="fas fa-video-slash mr-2"></i> Error al inicializar cámara. Presiona "Iniciar cámara" para reintentar.';
+            }
+            biometricCameraActive = false; // Asegurar que el estado sea correcto
+            window.biometricCameraActive = false; // Actualizar variable global también
             return false;
         }
     }
     
     // Iniciar cámara cuando se haga clic en el botón
     if (startCameraBtn) {
-        startCameraBtn.addEventListener('click', () => {
-            startCamera(currentDeviceId);
+        console.log('Agregando event listener al botón de cámara biométrica');
+        startCameraBtn.addEventListener('click', async (event) => {
+            // Prevenir propagación para evitar múltiples ejecuciones
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Evitar clicks múltiples
+            if (buttonClickInProgress) {
+                console.log('Click ignorado - operación en progreso');
+                return;
+            }
+            
+            buttonClickInProgress = true;
+            
+            try {
+                console.log('Estado actual de cámara biométrica:', biometricCameraActive);
+                
+                if (biometricCameraActive) {
+                    // Si la cámara está activa, detenerla
+                    console.log('Deteniendo cámara biométrica...');
+                    window.stopBiometricCamera();
+                } else {
+                    // Si la cámara no está activa, iniciarla
+                    console.log('Iniciando cámara biométrica...');
+                    await startCamera(currentDeviceId);
+                }
+            } finally {
+                // Liberar el lock después de un pequeño delay
+                setTimeout(() => {
+                    buttonClickInProgress = false;
+                }, 500);
+            }
         });
+        
+        // Marcar como inicializado para evitar múltiples listeners
+        startCameraBtn._biometricInitialized = true;
+        console.log('Botón de cámara biométrica marcado como inicializado');
     }
     
-    // Función para detener la cámara
+    // Función para detener la cámara (simplificada - usa la función global)
     function stopCamera() {
-        if (stream) {
-            try {
-                stream.getTracks().forEach(track => track.stop());
-                if (webcamVideo) webcamVideo.srcObject = null;
-                stream = null;
-                
-                // Restaurar botón de iniciar cámara
-                if (startCameraBtn) {
-                    startCameraBtn.innerHTML = '<i class="fas fa-play mr-2"></i> Iniciar cámara';
-                    startCameraBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                    startCameraBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
-                    
-                    // Restaurar comportamiento para que vuelva a iniciar la cámara
-                    startCameraBtn.onclick = () => { startCamera(currentDeviceId); };
-                }
-                
-                // Deshabilitar botón de captura
-                if (capturePhotoBtn) capturePhotoBtn.disabled = true;
-            } catch (err) {
-                console.error('Error al detener la cámara:', err);
-            }
-        }
+        console.log('stopCamera local llamada');
+        // Usar la función global
+        window.stopBiometricCamera();
+        // Limpiar variable local
+        stream = null;
     }
     
     // Función para capturar foto
     if (capturePhotoBtn) {
         capturePhotoBtn.addEventListener('click', () => {
             if (!stream || !webcamVideo || !canvas) return;
+            
+            console.log('Capturando foto biométrica, estado antes:', biometricCameraActive);
             
             try {
                 // Configurar canvas con dimensiones del video
@@ -593,9 +807,9 @@ function initCameraCapture() {
                 if (capturedImage) {
                     capturedImage.src = imageDataUrl;
                     
-                    // Mostrar imagen y ocultar placeholder
+                    // Mostrar solo la imagen capturada, mantener canvas oculto
                     capturedImage.classList.remove('hidden');
-                    canvas.classList.remove('hidden');
+                    // El canvas debe mantenerse oculto para evitar imagen doble
                     if (placeholder) placeholder.classList.add('hidden');
                 }
                 
@@ -1555,36 +1769,13 @@ async function loadBiometricContentForMascota(mascotaId) {
  * Inicializa funcionalidades adicionales
  */
 function initAdditionalFeatures() {
-    // Manejo de formularios
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', (e) => {
-            // Prevenir envío por defecto para demostración
-            e.preventDefault();
-            console.log('Formulario enviado (modo demostración)');
-        });
-    });
+    // FUNCIÓN TEMPORALMENTE DESHABILITADA PARA EVITAR CONFLICTOS CON EL FORMULARIO
+    // La funcionalidad de upload de archivos se mantiene en otras funciones específicas
     
-    // Manejo de upload de archivos
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
-        const uploadBtn = input.nextElementSibling;
-        if (uploadBtn && uploadBtn.tagName === 'BUTTON') {
-            uploadBtn.addEventListener('click', () => {
-                input.click();
-            });
-            
-            input.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    const fileName = e.target.files[0].name;
-                    uploadBtn.innerHTML = `<i class="fas fa-check text-green-500 mr-2"></i>${fileName}`;
-                    uploadBtn.classList.add('bg-green-100', 'text-green-700');
-                }
-            });
-        }
-    });
+    console.log('initAdditionalFeatures: Función deshabilitada - formularios funcionan normalmente');
     
-    console.log('Funcionalidades adicionales inicializadas');
+    // Si necesitas funcionalidades específicas de upload, se pueden agregar aquí
+    // pero SIN interceptar el evento submit de formularios
 }
 
 /**

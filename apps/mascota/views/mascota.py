@@ -5,10 +5,38 @@ from apps.mascota.models import Mascota
 from apps.mascota.forms import MascotaCreateForm
 from django.utils.decorators import method_decorator
 from django.views.generic import View, DetailView, FormView, ListView, TemplateView
+from apps.mascota.forms.simple_registro_form import SimpleMascotaRegistroForm
 
 
 @login_required
 def main_register(request):
+    # Verificar el número actual de mascotas del usuario
+    total_mascotas_usuario = Mascota.objects.filter(propietario=request.user).count()
+    
+    # Manejar POST para registro de nueva mascota
+    if request.method == 'POST':
+        # Verificar límite antes de procesar el formulario
+        if total_mascotas_usuario >= 2:
+            messages.error(request, 'Has alcanzado el límite máximo de 2 mascotas por usuario.')
+            return redirect('mascota:main_register')
+            
+        form = SimpleMascotaRegistroForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Guardar la mascota
+            mascota = form.save(commit=False)
+            mascota.propietario = request.user
+            mascota.save()
+            
+            messages.success(request, f'¡{mascota.nombre} ha sido registrada exitosamente!')
+            return redirect('mascota:main_register')
+        else:
+            # Si hay errores, los mostramos
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = SimpleMascotaRegistroForm()
+    
     # Obtenemos todas las mascotas del usuario
     try:
         # Primero hacemos todas las operaciones ORM sin slice
@@ -41,7 +69,8 @@ def main_register(request):
                 'active_biometria_id': biometria_id,  # Para activar automáticamente la pestaña
                 'mascotas_con_biometria': mascotas_con_biometria,
                 'todas_mascotas_entrenadas': todas_mascotas_entrenadas,
-                'form': form  # Agregamos el formulario al contexto
+                'form': form,  # Agregamos el formulario al contexto
+                'total_mascotas_usuario': total_mascotas_usuario  # Agregar el total para validaciones
             }
             
             # Para cada mascota, preparamos los datos adicionales
@@ -54,6 +83,12 @@ def main_register(request):
                     if images.exists():
                         images_by_type[label] = images
                 
+                # Obtenemos los reconocimientos recientes para esta mascota
+                from apps.mascota.models import RegistroReconocimiento
+                reconocimientos = RegistroReconocimiento.objects.filter(
+                    mascota_predicha=mascota
+                ).order_by('-fecha')[:5]  # Limitamos a los 5 más recientes
+                
                 # Datos de esta mascota
                 data = {
                     'id': mascota.id,
@@ -62,11 +97,14 @@ def main_register(request):
                     'biometric_images': mascota.imagenes.filter(tipo='biometrica').count(),
                     'biometria_entrenada': mascota.biometria_entrenada,
                     'tiene_suficientes_imagenes': mascota.tiene_suficientes_imagenes,
-                    'images_by_type': images_by_type
+                    'images_by_type': images_by_type,
+                    'reconocimientos': reconocimientos,
+                    'tiene_reconocimientos': reconocimientos.exists()
                 }
                 mascota_data.append(data)
                 
             context['mascota_data'] = mascota_data
+            context['form'] = form  # Agregar el formulario al contexto
             
             return render(request, 'main_register.html', context)
         else:
@@ -74,14 +112,16 @@ def main_register(request):
             messages.info(request, "No tiene mascotas registradas. Por favor, registre una nueva mascota.")
             return render(request, 'main_register.html', {
                 'mascota_count': 0,
-                'form': form  # Agregamos el formulario al contexto
+                'form': form,  # Agregamos el formulario al contexto
+                'total_mascotas_usuario': total_mascotas_usuario
             })
             
     except Exception as e:
         messages.error(request, f"Error al cargar los datos de la mascota: {str(e)}")
         return render(request, 'main_register.html', {
             'mascota_count': 0,
-            'form': form  # Agregamos el formulario al contexto
+            'form': form,  # Agregamos el formulario al contexto
+            'total_mascotas_usuario': total_mascotas_usuario
         })
 
 

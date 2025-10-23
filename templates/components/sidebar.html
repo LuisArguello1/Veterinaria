@@ -50,7 +50,7 @@
 
         <!-- Notificaciones -->
         <a href="{% url 'auth:notifications' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group relative">
-            <i class="pi pi-bell text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <i class="fas fa-bell text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
             <span>Notificaciones</span>
             <span id="sidebar-notification-badge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold hidden">0</span>
         </a>
@@ -76,6 +76,22 @@
         <a href="{% url 'mascota:scanner' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
             <i class="fas fa-qrcode text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
             <span>Escaner</span>
+        </a>
+        {% endif %}
+
+        <!-- Carnet -->
+        {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' or request.user.role == 'VET' %}
+        <a href="{% url 'mascota:lista_carnets' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
+            <i class="fas fa-id-card text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <span>Carnets</span>
+        </a>
+        {% endif %}
+
+        <!-- Historial Médico -->
+        {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' or request.user.role == 'VET' %}
+        <a href="{% url 'mascota:lista_carnets' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group" id="historial-medico-link">
+            <i class="fas fa-file-medical-alt text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <span>Historial Médico</span>
         </a>
         {% endif %}
 

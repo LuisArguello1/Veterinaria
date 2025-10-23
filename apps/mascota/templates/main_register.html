@@ -26,9 +26,12 @@
                     <i class="fas fa-paw mr-1 sm:mr-2"></i>
                     <span class="text-sm sm:text-base">Mi Mascota</span>
                 </button>
-                <button type="button" class="tab-btn py-3 px-3 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center mr-3 sm:mr-6" data-target="registro-normal">
+                <button type="button" class="tab-btn py-3 px-3 border-b-2 border-transparent font-medium {% if total_mascotas_usuario >= 2 %}text-gray-400 cursor-not-allowed{% else %}text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} flex items-center mr-3 sm:mr-6" data-target="registro-normal" {% if total_mascotas_usuario >= 2 %}disabled title="Límite máximo de 2 mascotas alcanzado"{% endif %}>
                     <i class="fas fa-clipboard-list mr-1 sm:mr-2"></i>
                     <span class="text-sm sm:text-base">Registro Normal</span>
+                    {% if total_mascotas_usuario >= 2 %}
+                        <i class="fas fa-lock ml-1 text-xs"></i>
+                    {% endif %}
                 </button>
                 <button type="button" class="tab-btn py-3 px-3 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center" data-target="datos-biometricos">
                     <i class="fas fa-fingerprint mr-1 sm:mr-2"></i>
@@ -139,16 +142,18 @@
                                         </button>
                                         
                                         <!-- Botón de reportar perdida / cancelar perdida -->
-                                        {% if data.mascota.reportar_perdida %}
-                                        <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
-                                            class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
-                                            <i class="fas fa-check-circle mr-1"></i> Cancelar perdida
-                                        </button>
-                                        {% else %}
-                                        <button onclick="reportarMascotaPerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
-                                            class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i> Reportar perdida
-                                        </button>
+                                        {% if dat.mascota.biometria_entrenada %}
+                                            {% if data.mascota.reportar_perdida %}
+                                            <button onclick="cancelarReportePerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                                class="inline-flex items-center justify-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-green-50 hover:border-green-400">
+                                                <i class="fas fa-check-circle mr-1"></i> Cancelar perdida
+                                            </button>
+                                            {% else %}
+                                            <button onclick="reportarMascotaPerdida({{ data.mascota.id }}, '{{ data.mascota.nombre }}')" 
+                                                class="inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md shadow-sm text-orange-600 bg-white hover:bg-orange-50 hover:border-orange-400">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Reportar perdida
+                                            </button>
+                                            {% endif %}
                                         {% endif %}
                                         
                                         {% if data.biometria_entrenada %}
@@ -209,6 +214,105 @@
                                             </div>
                                             {% endif %}
                                         </dl>
+                                    </div>
+                                </div>
+                                
+                                <!-- Recomendaciones de cuidado personalizadas -->
+                                <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+                                    <div class="border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50 px-4 py-3 sm:px-6">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900 flex items-center">
+                                            <i class="fas fa-heart text-green-500 mr-2"></i> Recomendaciones de Cuidado
+                                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Personalizado
+                                            </span>
+                                        </h3>
+                                        <p class="text-sm text-gray-600 mt-1">Cuidados específicos basados en las características de {{ data.mascota.nombre }}</p>
+                                    </div>
+                                    <div class="px-4 py-5 sm:p-6">
+                                        {% with recomendaciones=data.mascota.get_recomendaciones_cuidado %}
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <!-- Alimentación -->
+                                            {% if recomendaciones.alimentacion %}
+                                            <div class="bg-orange-50 rounded-lg p-4 border border-orange-100">
+                                                <h4 class="font-semibold text-orange-800 mb-3 flex items-center">
+                                                    <i class="fas fa-utensils text-orange-600 mr-2"></i> Alimentación
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    {% for recom in recomendaciones.alimentacion %}
+                                                    <li class="text-sm text-orange-700 flex items-start">
+                                                        <i class="fas fa-check-circle text-orange-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                                        <span>{{ recom }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Ejercicio -->
+                                            {% if recomendaciones.ejercicio %}
+                                            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                                                <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                                                    <i class="fas fa-running text-blue-600 mr-2"></i> Ejercicio
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    {% for recom in recomendaciones.ejercicio %}
+                                                    <li class="text-sm text-blue-700 flex items-start">
+                                                        <i class="fas fa-check-circle text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                                        <span>{{ recom }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Salud -->
+                                            {% if recomendaciones.salud %}
+                                            <div class="bg-red-50 rounded-lg p-4 border border-red-100">
+                                                <h4 class="font-semibold text-red-800 mb-3 flex items-center">
+                                                    <i class="fas fa-heartbeat text-red-600 mr-2"></i> Salud
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    {% for recom in recomendaciones.salud %}
+                                                    <li class="text-sm text-red-700 flex items-start">
+                                                        <i class="fas fa-check-circle text-red-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                                        <span>{{ recom }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Cuidado General -->
+                                            {% if recomendaciones.cuidado_general %}
+                                            <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                                                <h4 class="font-semibold text-purple-800 mb-3 flex items-center">
+                                                    <i class="fas fa-spa text-purple-600 mr-2"></i> Cuidado General
+                                                </h4>
+                                                <ul class="space-y-2">
+                                                    {% for recom in recomendaciones.cuidado_general %}
+                                                    <li class="text-sm text-purple-700 flex items-start">
+                                                        <i class="fas fa-check-circle text-purple-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                                        <span>{{ recom }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Nota informativa -->
+                                        <div class="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <div class="flex items-start">
+                                                <i class="fas fa-info-circle text-gray-400 mr-3 mt-0.5"></i>
+                                                <div>
+                                                    <p class="text-sm text-gray-600">
+                                                        <strong>Nota importante:</strong> Estas recomendaciones son generales basadas en las características de {{ data.mascota.nombre }}. 
+                                                        Siempre consulte con un veterinario para obtener consejos específicos sobre la salud y cuidado de su mascota.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
                                     </div>
                                 </div>
                                 
@@ -281,7 +385,7 @@
                                                             <i class="fas fa-check-circle text-green-400"></i>
                                                         </div>
                                                         <div class="ml-3">
-                                                            <h3 class="text-sm font-medium text-green-800">Entrenamiento completado</h3>
+                                                            <h3 class="text-sm font-medium text-green-800">Reconocimiento completado</h3>
                                                             <div class="mt-2 text-sm text-green-700">
                                                                 <p>La biometría de esta mascota está activa y lista para ser reconocida.</p>
                                                             </div>
@@ -295,12 +399,12 @@
                                                             <i class="fas fa-exclamation-circle text-yellow-400"></i>
                                                         </div>
                                                         <div class="ml-3">
-                                                            <h3 class="text-sm font-medium text-yellow-800">Listo para entrenar</h3>
+                                                            <h3 class="text-sm font-medium text-yellow-800">Listo para activar</h3>
                                                             <div class="mt-2 text-sm text-yellow-700">
-                                                                <p>Has subido suficientes imágenes. Puedes entrenar el modelo ahora.</p>
+                                                                <p>Has subido suficientes imágenes. Puedes activar el reconocimiento facial ahora.</p>
                                                                 <div class="mt-3">
                                                                     <button type="button" onclick="entrenarModelo({{ data.mascota.id }})" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                                                                        <i class="fas fa-brain mr-1"></i> Entrenar modelo
+                                                                        <i class="fas fa-brain mr-1"></i> Activar Reconocimiento
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -316,7 +420,7 @@
                                                     <div class="ml-3">
                                                         <h3 class="text-sm font-medium text-blue-800">Requiere más imágenes</h3>
                                                         <div class="mt-2 text-sm text-blue-700">
-                                                            <p>Necesitas subir más imágenes para completar el entrenamiento biométrico.</p>
+                                                            <p>Necesitas subir más imágenes para completar el reconocimiento facial.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -334,9 +438,9 @@
                                     </h3>
                                 </div>
                                 <div class="px-4 py-5 sm:p-6">
-                                    {% if reconocimientos %}
+                                    {% if data.reconocimientos %}
                                         <div class="space-y-3">
-                                            {% for rec in reconocimientos %}
+                                            {% for rec in data.reconocimientos %}
                                             <div class="flex items-start space-x-3 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
                                                 <div class="flex-shrink-0 h-10 w-10 overflow-hidden rounded-md bg-gray-200">
                                                     {% if rec.imagen_analizada %}
@@ -402,7 +506,12 @@
                     <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
                         <i class="fas fa-clipboard-list text-primary-600"></i>
                     </div>
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Formulario de Registro</h2>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-800 flex items-center">
+                        Formulario de Registro
+                        <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            <i class="fas fa-robot mr-1"></i>Con IA
+                        </span>
+                    </h2>
                 </div>
                 {% include 'mascota_registro/form.html' %}
             </div>
@@ -426,7 +535,7 @@
                             <i class="fas fa-check-circle text-green-500 text-xl"></i>
                         </div>
                         <div class="ml-3">
-                            <h3 class="text-green-800 font-medium text-lg">¡Perfecto! Todas tus mascotas tienen biometría entrenada</h3>
+                            <h3 class="text-green-800 font-medium text-lg">¡Perfecto! Todas tus mascotas tienen Reconocimiento activado</h3>
                             <p class="text-green-700 mt-2">
                                 Tienes <strong>{{ mascotas_con_biometria }}</strong> mascota{{ mascotas_con_biometria|pluralize }} con reconocimiento facial activo.
                             </p>
@@ -442,6 +551,7 @@
                 {% else %}
                 <!-- Contenedor para el selector de mascotas (se rellena vía JS) -->
                 <div id="biometria-selector-container" class="mb-6"></div>
+
                 <!-- Contenedor para el contenido biométrico -->
                 <div id="biometria-content-container">
                     {% include 'biometria_registro/biometria.html' %}
@@ -465,11 +575,203 @@
         </div>
     </div>
 </div>
-</div> <!-- Cierre del contenedor mx-auto max-w-7xl -->
+
+<!-- Modal para editar mascota -->
+<div id="editarMascotaModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm">
+    <div class="relative top-4 mx-auto p-0 border-0 w-11/12 md:w-4/5 lg:w-3/5 xl:w-1/2 max-w-4xl shadow-2xl rounded-xl bg-white">
+        <!-- Header del modal con gradiente -->
+        <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-t-xl px-6 py-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    <div class="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                        <i class="fas fa-edit text-white"></i>
+                    </div>
+                    Editar Información de <span id="edit-mascota-name" class="font-extrabold ml-2"></span>
+                </h3>
+                <button onclick="cerrarModalEditar()" class="text-white hover:text-gray-200 transition-colors duration-200 p-2 hover:bg-white hover:bg-opacity-20 rounded-full">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+            
+        <!-- Contenido del modal -->
+        <div class="px-6 py-6 max-h-[80vh] overflow-y-auto">
+            <form id="editarMascotaForm" enctype="multipart/form-data">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nombre -->
+                    <div class="md:col-span-2">
+                        <label for="edit_nombre" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-paw text-primary-500 mr-2"></i>
+                            Nombre <span class="text-red-500 ml-1">*</span>
+                        </label>
+                        <input type="text" id="edit_nombre" name="nombre" required 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                        
+                    <!-- Raza -->
+                    <div>
+                        <label for="edit_raza" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-dog text-orange-500 mr-2"></i>
+                            Raza
+                        </label>
+                        <input type="text" id="edit_raza" name="raza" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                        
+                    <!-- Sexo -->
+                    <div>
+                        <label for="edit_sexo" class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-venus-mars text-purple-500 mr-2"></i>
+                            Sexo
+                        </label>
+                        <select id="edit_sexo" name="sexo" 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 bg-white">
+                            <option value="">Seleccionar...</option>
+                            <option value="macho">Macho</option>
+                            <option value="hembra">Hembra</option>
+                        </select>
+                    </div>
+                        
+                    <!-- Edad -->
+                    <div>
+                        <label for="edit_edad" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-birthday-cake text-pink-500 mr-2"></i>
+                            Edad
+                        </label>
+                        <input type="number" id="edit_edad" name="edad" min="0" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                    
+                    <!-- Unidad de edad -->
+                    <div>
+                        <label for="edit_edad_unidad" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-clock text-blue-500 mr-2"></i>
+                            Unidad
+                        </label>
+                        <select id="edit_edad_unidad" name="edad_unidad" 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 bg-white">
+                            <option value="años">Años</option>
+                            <option value="meses">Meses</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Peso -->
+                    <div>
+                        <label for="edit_peso" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-weight text-green-500 mr-2"></i>
+                            Peso (kg)
+                        </label>
+                        <input type="number" step="0.1" id="edit_peso" name="peso" min="0" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                    
+                    <!-- Color -->
+                    <div>
+                        <label for="edit_color" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-palette text-yellow-500 mr-2"></i>
+                            Color
+                        </label>
+                        <input type="text" id="edit_color" name="color" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                        
+                    <!-- Etapa de vida -->
+                    <div>
+                        <label for="edit_etapa_vida" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-calendar-alt text-indigo-500 mr-2"></i>
+                            Etapa de Vida
+                        </label>
+                        <select id="edit_etapa_vida" name="etapa_vida" 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 bg-white">
+                            <option value="">Seleccionar...</option>
+                            <option value="cachorro">Cachorro</option>
+                            <option value="joven">Joven</option>
+                            <option value="adulto">Adulto</option>
+                            <option value="senior">Senior</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Estado corporal -->
+                    <div>
+                        <label for="edit_estado_corporal" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-heartbeat text-red-500 mr-2"></i>
+                            Estado Corporal
+                        </label>
+                        <select id="edit_estado_corporal" name="estado_corporal" 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 bg-white">
+                            <option value="">Seleccionar...</option>
+                            <option value="delgado">Delgado</option>
+                            <option value="normal">Normal</option>
+                            <option value="obeso">Obeso</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Fecha de nacimiento -->
+                    <div>
+                        <label for="edit_fecha_nacimiento" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-calendar text-teal-500 mr-2"></i>
+                            Fecha de Nacimiento
+                        </label>
+                        <input type="date" id="edit_fecha_nacimiento" name="fecha_nacimiento" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300">
+                    </div>
+                        
+                    <!-- Características especiales -->
+                    <div class="md:col-span-2">
+                        <label for="edit_caracteristicas_especiales" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-clipboard-list text-gray-600 mr-2"></i>
+                            Características Especiales
+                        </label>
+                        <textarea id="edit_caracteristicas_especiales" name="caracteristicas_especiales" rows="4" 
+                                  placeholder="Describe características especiales de la mascota..."
+                                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 resize-none"></textarea>
+                    </div>
+                    
+                    <!-- Foto de perfil -->
+                    <div class="md:col-span-2">
+                        <label for="edit_foto_perfil" class=" text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-camera text-violet-500 mr-2"></i>
+                            Foto de Perfil
+                        </label>
+                        <div class="relative">
+                            <input type="file" id="edit_foto_perfil" name="foto_perfil" accept="image/*" 
+                                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 hover:border-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                        </div>
+                        <div id="current-photo-preview" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                            <p class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                <i class="fas fa-image text-gray-500 mr-2"></i>
+                                Foto actual:
+                            </p>
+                            <img id="current-photo-img" src="" alt="Foto actual" class="h-24 w-24 object-cover rounded-lg shadow-sm border border-gray-200">
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                
+                <!-- Botones del modal -->
+                <div class="bg-gray-50 px-6 py-4 rounded-b-xl border-t border-gray-200">
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="cerrarModalEditar()" 
+                                class="px-6 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 flex items-center">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" id="guardar-cambios-btn" 
+                                class="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-700 border-2 border-transparent rounded-lg hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i>
+                            <span id="guardar-btn-text">Guardar Cambios</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div> 
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Scripts modulares organizados -->
 <script src="{% static 'js/utils.js' %}"></script>
 <script src="{% static 'js/app-config.js' %}"></script>
 <script src="{% static 'js/mascota-tabs.js' %}"></script>
@@ -479,19 +781,37 @@
 <script src="{% static 'js/mascota-perdida.js' %}"></script>
 <script src="{% static 'js/mascota.js' %}"></script>
 <script src="{% static 'js/mascota-form.js' %}"></script>
+<script src="{% static 'js/editar_mascota.js' %}"></script>
+<script src="{% static 'js/biometria_captura.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Inicialización de configuración -->
 <script>
     // Inicializar configuración de la aplicación
     document.addEventListener('DOMContentLoaded', function() {
         window.configUtils.init({
             activeBiometriaId: {% if active_biometria_id %}'{{ active_biometria_id }}'{% else %}null{% endif %}
         });
+        
+        // Validación para deshabilitar pestaña de registro si se alcanzó el límite
+        {% if total_mascotas_usuario >= 2 %}
+        const registroTab = document.querySelector('[data-target="registro-normal"]');
+        if (registroTab) {
+            registroTab.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Has alcanzado el límite máximo de 2 mascotas por usuario.');
+                return false;
+            });
+        }
+        {% endif %}
     });
 </script>
 {% endblock %}
 
 {% block extra_head %}
+
 <link rel="stylesheet" href="{% static 'css/mascota.css' %}">
+<link rel="stylesheet" href="{% static 'css/editar_mascota.css' %}">
+
+
 {% endblock %}

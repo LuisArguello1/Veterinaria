@@ -1,0 +1,242 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ mascota.nombre }} - Detalle{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .info-card {
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    .action-button {
+        transition: all 0.3s ease;
+    }
+    
+    .action-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Breadcrumbs -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-600 bg-white px-4 py-3 rounded-lg shadow-sm">
+        <a href="{% url 'auth:Dashboard' %}" class="hover:text-primary-600 transition-colors flex items-center gap-1">
+            <i class="fas fa-home text-xs"></i>
+            Dashboard
+        </a>
+        <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+        <a href="{% url 'mascota:main_register' %}" class="hover:text-primary-600 transition-colors">
+            Mis Mascotas
+        </a>
+        <i class="fas fa-chevron-right text-xs text-gray-400"></i>
+        <span class="text-primary-600 font-medium">{{ mascota.nombre }}</span>
+    </nav>
+
+    <!-- Header con foto de perfil -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white shadow-lg">
+        <div class="flex items-center gap-6">
+            <div class="w-32 h-32 rounded-full overflow-hidden bg-white shadow-xl flex-shrink-0 border-4 border-white/30">
+                {% if mascota.foto %}
+                    <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600">
+                        <i class="fas fa-dog text-white text-5xl"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-4xl font-bold">{{ mascota.nombre }}</h1>
+                    {% if mascota.biometria_activa %}
+                        <span class="px-3 py-1 bg-green-500 text-white text-sm rounded-full flex items-center gap-1">
+                            <i class="fas fa-check-circle"></i>
+                            Biometría Activa
+                        </span>
+                    {% endif %}
+                </div>
+                <p class="text-white/90 text-lg">{{ mascota.raza|default:"Raza no especificada" }}</p>
+                <div class="flex items-center gap-4 mt-3 text-sm">
+                    <span class="flex items-center gap-1">
+                        <i class="fas fa-venus-mars"></i>
+                        {{ mascota.get_sexo_display }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i class="fas fa-calendar"></i>
+                        {{ mascota.edad }} año{{ mascota.edad|pluralize }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i class="fas fa-weight"></i>
+                        {{ mascota.peso }} kg
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{% url 'mascota:historial_list' mascota.pk %}" 
+           class="action-button bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl shadow-lg text-center">
+            <i class="fas fa-file-medical-alt text-4xl mb-3"></i>
+            <h3 class="font-bold text-lg">Historial Médico</h3>
+            <p class="text-sm text-white/80 mt-1">Ver expediente completo</p>
+        </a>
+        
+        <a href="{% url 'mascota:cartilla_vacunacion' mascota.pk %}" 
+           class="action-button bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-xl shadow-lg text-center">
+            <i class="fas fa-syringe text-4xl mb-3"></i>
+            <h3 class="font-bold text-lg">Cartilla de Vacunación</h3>
+            <p class="text-sm text-white/80 mt-1">Vacunas y calendario</p>
+        </a>
+        
+        <a href="{% url 'mascota:detalle_carnet' mascota.pk %}" 
+           class="action-button bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-xl shadow-lg text-center">
+            <i class="fas fa-id-card text-4xl mb-3"></i>
+            <h3 class="font-bold text-lg">Carnet Digital</h3>
+            <p class="text-sm text-white/80 mt-1">Ver y descargar</p>
+        </a>
+    </div>
+
+    <!-- Botones de acceso rápido al historial -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'mascota:cartilla_vacunacion' mascota.pk %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all font-medium shadow-sm">
+                <i class="fas fa-book"></i>
+                Cartilla de Vacunación
+            </a>
+            <a href="{% url 'mascota:historial_list' mascota.pk %}?tipo=vacuna" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium shadow-sm">
+                <i class="fas fa-shield-alt"></i>
+                Ver Vacunas
+            </a>
+            <a href="{% url 'mascota:historial_list' mascota.pk %}?tipo=consulta" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-sm">
+                <i class="fas fa-stethoscope"></i>
+                Ver Consultas
+            </a>
+            <a href="{% url 'mascota:historial_list' mascota.pk %}?tipo=cirugia" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium shadow-sm">
+                <i class="fas fa-heart"></i>
+                Ver Cirugías
+            </a>
+        </div>
+    </div>
+
+    <!-- Información detallada -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Información Básica -->
+        <div class="info-card bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-info-circle text-primary-600"></i>
+                Información Básica
+            </h2>
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Especie/Raza:</span>
+                    <span class="text-gray-900">{{ mascota.raza|default:"No especificada" }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Sexo:</span>
+                    <span class="text-gray-900">{{ mascota.get_sexo_display }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Fecha de Nacimiento:</span>
+                    <span class="text-gray-900">{{ mascota.fecha_nacimiento|date:"d/m/Y" }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Edad:</span>
+                    <span class="text-gray-900">{{ mascota.edad }} año{{ mascota.edad|pluralize }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Peso:</span>
+                    <span class="text-gray-900">{{ mascota.peso }} kg</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600 font-medium">Color:</span>
+                    <span class="text-gray-900">{{ mascota.color|default:"No especificado" }}</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-600 font-medium">Etapa de Vida:</span>
+                    <span class="text-gray-900">{{ mascota.get_etapa_vida_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado Corporal y Características -->
+        <div class="info-card bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-heartbeat text-red-600"></i>
+                Estado y Características
+            </h2>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Estado Corporal</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ mascota.get_estado_corporal_display }}</p>
+                </div>
+                
+                {% if mascota.caracteristicas_especiales %}
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-2 font-medium">Características Especiales:</p>
+                    <p class="text-gray-900">{{ mascota.caracteristicas_especiales }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Registro:</p>
+                    <p class="text-gray-900 text-sm">{{ mascota.fecha_registro|date:"d/m/Y H:i" }}</p>
+                </div>
+                
+                {% if mascota.biometria_activa %}
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1 flex items-center gap-2">
+                        <i class="fas fa-fingerprint"></i>
+                        Estado Biométrico:
+                    </p>
+                    <p class="text-green-700 font-bold">Reconocimiento Activado</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ mascota.imagenes_biometria }} imágenes registradas</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Propietario -->
+    <div class="info-card bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-user text-primary-600"></i>
+            Propietario
+        </h2>
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center shadow-md">
+                <span class="text-white font-bold text-xl">{{ mascota.propietario.username|slice:":2"|upper }}</span>
+            </div>
+            <div>
+                <p class="text-lg font-bold text-gray-900">{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</p>
+                <p class="text-gray-600">{{ mascota.propietario.email }}</p>
+                <p class="text-sm text-gray-500">Teléfono: {{ mascota.propietario.telefono|default:"No especificado" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de volver -->
+    <div class="flex items-center justify-center pb-6">
+        <a href="{% url 'mascota:main_register' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-all shadow-md hover:shadow-lg border border-gray-200">
+            <i class="fas fa-arrow-left"></i>
+            <span>Volver a Mis Mascotas</span>
+        </a>
+    </div>
+
+</div>
+{% endblock %}

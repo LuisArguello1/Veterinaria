@@ -30,7 +30,7 @@
         <!-- Panel de estadísticas -->
         <div class="bg-white rounded-lg shadow-sm p-4 mb-5 border border-primary-100">
             <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                <i class="fas fa-chart-pie text-primary-500 mr-2"></i> Estado del Entrenamiento
+                <i class="fas fa-chart-pie text-primary-500 mr-2"></i> Estado del Reconocimiento
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -51,10 +51,10 @@
                 <!-- Estado del modelo -->
                 <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
                     <div class="flex justify-between items-center">
-                        <span class="text-gray-600 text-sm">Estado del modelo</span>
+                        <span class="text-gray-600 text-sm">Estado del reconocimiento</span>
                         <span class="text-gray-800 font-bold">
                             {% if mascota.biometria_entrenada %}
-                                <span class="text-green-600">Entrenado</span>
+                                <span class="text-green-600">Activado</span>
                             {% else %}
                                 <span class="text-yellow-600">Pendiente</span>
                             {% endif %}
@@ -62,7 +62,7 @@
                     </div>
                     <div class="text-xs text-gray-500 mt-1">
                         {% if mascota.biometria_entrenada %}
-                            Último entrenamiento: {{ mascota.updated_at|date:"d/m/Y H:i" }}
+                            Último reconocimiento: {{ mascota.updated_at|date:"d/m/Y H:i" }}
                         {% else %}
                             Se requieren al menos 20 imágenes
                         {% endif %}
@@ -101,8 +101,8 @@
                 <div>
                     <div id="video-container" class="relative h-64 w-full bg-black rounded-md overflow-hidden mb-3">
                         <video id="webcam" class="h-full w-full object-cover" autoplay playsinline></video>
-                        <div id="camera-overlay" class="absolute inset-0 items-center justify-center text-white bg-black bg-opacity-75 hidden">
-                            <i class="fas fa-spinner fa-spin mr-2"></i> Inicializando cámara...
+                        <div id="camera-overlay" class="absolute inset-0 flex items-center justify-center text-white bg-black bg-opacity-75">
+                            <i class="fas fa-video mr-2"></i> Presiona "Iniciar cámara" para comenzar
                         </div>
                     </div>
                     
@@ -131,6 +131,75 @@
                         </button>
                     </div>
                     
+                    <!-- Nuevo panel de captura automática -->
+                    <div class="mt-3 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2 flex items-center">
+                            <i class="fas fa-bolt text-blue-600 mr-1"></i> Captura automática
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label for="auto-capture-count" class="block text-xs font-medium text-gray-700 mb-1">Número de fotos:</label>
+                                <div class="flex items-center">
+                                    <input id="auto-capture-count" type="number" min="1" max="20" value="5" 
+                                        class="block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500"
+                                        title="El número máximo depende de la cantidad de imágenes ya cargadas">
+                                    <!-- La información sobre el límite restante se añadirá aquí dinámicamente -->
+                                </div>
+                            </div>
+                            <div>
+                                <label for="auto-capture-interval" class="block text-xs font-medium text-gray-700 mb-1">Intervalo (segundos):</label>
+                                <div class="flex items-center">
+                                    <input id="auto-capture-interval" type="number" min="1" max="10" value="2" 
+                                        class="block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <button id="start-auto-capture" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
+                                <i class="fas fa-bolt mr-2"></i> Iniciar captura automática
+                            </button>
+                            
+                            <script>
+                            // Script de activación directa
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Verificador periódico de estado de cámara
+                                function checkCameraAndEnableButton() {
+                                    const btn = document.getElementById('start-auto-capture');
+                                    if (btn && window.biometricCameraActive === true) {
+                                        console.log('Script directo: Habilitando botón de captura automática');
+                                        btn.disabled = false;
+                                    }
+                                }
+                                
+                                // Comprobar cada segundo
+                                setInterval(checkCameraAndEnableButton, 1000);
+                                
+                                // También habilitarlo si se detecta el evento de cámara activa
+                                window.addEventListener('biometricCameraStateChanged', function(event) {
+                                    if (event.detail && event.detail.active) {
+                                        const btn = document.getElementById('start-auto-capture');
+                                        if (btn) {
+                                            setTimeout(function() {
+                                                btn.disabled = false;
+                                                console.log('Botón habilitado por evento de cámara');
+                                            }, 500);
+                                        }
+                                    }
+                                });
+                            });
+                            </script>
+                        </div>
+                        <div id="auto-capture-progress" class="mt-3 hidden">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="auto-capture-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-xs text-gray-600">
+                                <span>Capturando...</span>
+                                <span id="auto-capture-count-display">0/0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="text-sm text-gray-600">
                         <p><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Consejos para buenas fotos:</p>
                         <ul class="list-disc pl-5 mt-1 text-xs space-y-1">
@@ -143,9 +212,9 @@
                 </div>
                 
                 <div>
-                    <div id="preview-container" class="h-64 w-full bg-gray-100 rounded-md overflow-hidden flex items-center justify-center mb-3 border-2 border-dashed border-gray-300">
+                    <div id="preview-container" class="h-64 w-full bg-gray-100 rounded-md overflow-hidden flex items-center justify-center mb-3 border-2 border-dashed border-gray-300 relative">
                         <canvas id="canvas" class="hidden"></canvas>
-                        <img id="captured-image" class="max-h-full max-w-full hidden">
+                        <img id="captured-image" class="absolute inset-0 w-full h-full object-cover rounded-md hidden">
                         <div id="placeholder" class="text-gray-400 text-center p-4">
                             <i class="fas fa-image text-3xl mb-2"></i>
                             <p>La foto capturada aparecerá aquí</p>
@@ -159,6 +228,19 @@
                         <button id="discard-photo" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md flex items-center justify-center" disabled>
                             <i class="fas fa-trash mr-2"></i> Descartar
                         </button>
+                    </div>
+                    
+                    <!-- Miniaturas de capturas automáticas -->
+                    <div id="auto-capture-thumbnails" class="hidden mt-4">
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">Imágenes capturadas:</h5>
+                        <div class="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 bg-gray-50 rounded-md">
+                            <!-- Las miniaturas se agregarán aquí dinámicamente -->
+                        </div>
+                        <div class="flex justify-end mt-2">
+                            <button id="save-all-photos" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-md flex items-center justify-center">
+                                <i class="fas fa-save mr-1"></i> Guardar todas
+                            </button>
+                        </div>
                     </div>
                     
                     <form id="upload-form" class="hidden">
@@ -178,7 +260,7 @@
         <!-- Sección de subida de archivos -->
         <div class="bg-white rounded-lg shadow-sm p-4 mb-5 border border-primary-100">
             <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                <i class="fas fa-upload text-primary-500 mr-2"></i> Subida de imágenes
+                <i class="fas fa-upload text-primary-500 mr-2"></i> Subida de imágenes (Recomendado, mayor velocidad)
             </h3>
             
             <form id="file-upload-form" action="{% url 'mascota:upload_biometria' %}" method="post" enctype="multipart/form-data" class="mb-4">
@@ -256,3 +338,4 @@
         {% endif %}
     </div>
 </div>
+

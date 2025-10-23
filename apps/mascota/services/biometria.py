@@ -154,7 +154,7 @@ class BiometriaService:
         # (Esto requiere tener un archivo XML de cascada para mascotas)
         try:
             # Esto es un ejemplo - necesitarías un archivo de cascada adecuado
-            cascade_path = os.path.join(settings.BASE_DIR, 'models', 'haarcascade_frontalface_default.xml')
+            cascade_path = os.path.join(settings.BASE_DIR, 'models', 'dog-cascade_40x40_rev2.xml')
             if os.path.exists(cascade_path):
                 classifier = cv2.CascadeClassifier(cascade_path)
                 detections = classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
@@ -350,7 +350,6 @@ class BiometriaService:
         }
         
         # Si hay suficientes muestras, intentar hacer validación
-        # (en un sistema real, deberías usar validación cruzada)
         if len(y) > 20 and len(np.unique(y)) > 1:
             try:
                 # Predicciones en el conjunto de entrenamiento (no ideal, pero informativo)
@@ -656,12 +655,13 @@ def procesar_imagen_mascota(imagen_mascota_id):
         return None
 
 
-def reconocer_mascota(ruta_imagen):
+def reconocer_mascota(ruta_imagen, usuario=None):
     """
     Reconoce una mascota a partir de una imagen
     
     Args:
         ruta_imagen: Ruta a la imagen a analizar
+        usuario: Usuario que realiza el reconocimiento (opcional)
         
     Returns:
         dict: Información del reconocimiento (mascota_id, confianza, etc.)
@@ -736,11 +736,12 @@ def reconocer_mascota(ruta_imagen):
         # Crear registro
         registro = RegistroReconocimiento(
             confianza=confianza,
-            tiempo_procesamiento=tiempo_total
+            tiempo_procesamiento=tiempo_total,
+            usuario=usuario if usuario else None
         )
         
-        # Umbral de confianza del 70%
-        umbral_confianza = 0.70  # 70% o más
+        # Umbral de confianza del 30% (modificado desde 70%)
+        umbral_confianza = 0.30  # 30% o más
         exito = confianza >= umbral_confianza
         
         # Log para debugging
@@ -777,11 +778,11 @@ def reconocer_mascota(ruta_imagen):
         if exito:
             mensaje = f"¡Mascota identificada exitosamente! Confianza: {confianza:.1%}"
         else:
-            if confianza >= 0.80:
-                mensaje = f"No se puede identificar la mascota. Confianza del {confianza:.1%} (se requiere 70% o más para una identificación segura)."
-            elif confianza >= 0.60:
-                mensaje = f"No se puede identificar la mascota. Confianza insuficiente: {confianza:.1%} (se requiere 70% o más)."
-            elif confianza >= 0.30:
+            if confianza >= 0.25:
+                mensaje = f"No se puede identificar la mascota. Confianza del {confianza:.1%} (se requiere 30% o más para una identificación segura)."
+            elif confianza >= 0.15:
+                mensaje = f"No se puede identificar la mascota. Confianza insuficiente: {confianza:.1%} (se requiere 30% o más)."
+            elif confianza >= 0.10:
                 mensaje = f"No se puede identificar la mascota. La imagen puede ser de una mascota no registrada o la calidad es insuficiente ({confianza:.1%})."
             else:
                 mensaje = f"No se puede identificar la mascota. Esta imagen no corresponde a ninguna mascota registrada en el sistema ({confianza:.1%})."
