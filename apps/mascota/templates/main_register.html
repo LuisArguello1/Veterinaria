@@ -522,8 +522,8 @@
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Captura de Datos Biométricos</h2>
                 </div>
                 
+                <!-- Mensaje informativo cuando las mascotas tienen biometría entrenada -->
                 {% if todas_mascotas_entrenadas %}
-                <!-- Mensaje cuando todas las mascotas ya tienen biometría -->
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6">
                     <div class="flex">
                         <div class="flex-shrink-0">
@@ -533,6 +533,7 @@
                             <h3 class="text-green-800 font-medium text-lg">¡Perfecto! Todas tus mascotas tienen Reconocimiento activado</h3>
                             <p class="text-green-700 mt-2">
                                 Tienes <strong>{{ mascotas_con_biometria }}</strong> mascota{{ mascotas_con_biometria|pluralize }} con reconocimiento facial activo.
+                                Puedes seguir agregando más imágenes para mejorar la precisión del reconocimiento.
                             </p>
                             <div class="mt-3 flex flex-wrap gap-2">
                                 <a href="{% url 'mascota:scanner' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
@@ -543,7 +544,8 @@
                         </div>
                     </div>
                 </div>
-                {% else %}
+                {% endif %}
+                
                 <!-- Contenedor para el selector de mascotas (se rellena vía JS) -->
                 <div id="biometria-selector-container" class="mb-6"></div>
 
@@ -551,7 +553,6 @@
                 <div id="biometria-content-container">
                     {% include 'biometria_registro/biometria.html' %}
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

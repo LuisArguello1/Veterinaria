@@ -142,8 +142,8 @@ class Mascota(models.Model):
     
     @property
     def tiene_suficientes_imagenes(self):
-        """Verifica si la mascota tiene suficientes imágenes para entrenamiento (mínimo 20)"""
-        return self.imagenes.count() >= 20
+        """Verifica si la mascota tiene suficientes imágenes para entrenamiento (mínimo 5)"""
+        return self.imagenes.count() >= 5
     
     def save(self, *args, **kwargs):
         """Genera UUID automáticamente si no existe"""

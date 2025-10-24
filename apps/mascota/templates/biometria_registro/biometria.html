@@ -10,7 +10,7 @@
                 <i class="fas fa-info-circle mr-2 text-lg"></i>
                 <div>
                     <strong>Información importante:</strong>
-                    <p class="mt-1 text-sm">Para el reconocimiento facial de tu mascota, necesitamos al menos <strong>20 fotografías</strong> desde diferentes ángulos. Cuantas más fotos proporciones, más preciso será el reconocimiento.</p>
+                    <p class="mt-1 text-sm">Para el reconocimiento facial de tu mascota, necesitamos al menos <strong>5 fotografías</strong> desde diferentes ángulos. Se recomienda subir entre 10-20 fotos para mayor precisión. ¡Puedes seguir agregando más fotos después de entrenar el modelo!</p>
                 </div>
             </div>
         </div>
@@ -42,8 +42,21 @@
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                         {% with progress=mascota.imagenes_count|default:0 %}
-                        <div class="bg-primary-600 h-2.5 rounded-full" style="width: {% if progress >= 20 %}100%{% else %}{{ progress|floatformat:0 }}%{% endif %}"></div>
+                        {% if progress >= 5 %}
+                        <div class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: {% widthratio progress 20 100 %}%"></div>
+                        {% else %}
+                        <div class="bg-yellow-500 h-2.5 rounded-full transition-all duration-300" style="width: {% widthratio progress 20 100 %}%"></div>
+                        {% endif %}
                         {% endwith %}
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        {% if mascota.imagenes_count < 5 %}
+                            Necesitas al menos 5 imágenes para entrenar
+                        {% elif mascota.imagenes_count < 20 %}
+                            ¡Listo para entrenar! Puedes seguir agregando hasta 20
+                        {% else %}
+                            ¡Límite alcanzado! 20/20 imágenes
+                        {% endif %}
                     </div>
                 </div>
         {% endif %}
@@ -62,9 +75,9 @@
                     </div>
                     <div class="text-xs text-gray-500 mt-1">
                         {% if mascota.biometria_entrenada %}
-                            Último reconocimiento: {{ mascota.updated_at|date:"d/m/Y H:i" }}
+                            Último entrenamiento: {{ mascota.updated_at|date:"d/m/Y H:i" }}
                         {% else %}
-                            Se requieren al menos 20 imágenes
+                            Se requieren al menos 5 imágenes
                         {% endif %}
                     </div>
                 </div>
@@ -327,11 +340,41 @@
                 {% endif %}
             </div>
             
-            {% if mascota.tiene_suficientes_imagenes and not mascota.biometria_entrenada %}
-                <div class="mt-5 flex justify-center">
-                    <button id="train-model-btn" class="bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-6 rounded-md flex items-center justify-center">
+            {% if mascota.tiene_suficientes_imagenes %}
+                <div class="mt-5 flex flex-col items-center">
+                    {% if mascota.biometria_entrenada %}
+                    <!-- Banner informativo para re-entrenamiento -->
+                    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md text-center max-w-2xl">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            <strong>Reconocimiento facial activado.</strong> 
+                            Tienes <strong>{{ mascota.imagenes_count }}</strong> imágenes. 
+                            Puedes agregar más (hasta 20) y re-entrenar para mejorar la precisión.
+                        </p>
+                    </div>
+                    <button id="train-model-btn" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-8 rounded-md flex items-center justify-center shadow-lg transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-sync-alt mr-2"></i> Re-entrenar modelo biométrico
+                    </button>
+                    <p class="text-center text-xs text-gray-500 mt-2">
+                        Re-entrena el modelo después de agregar nuevas imágenes
+                    </p>
+                    {% else %}
+                    <!-- Banner informativo para primer entrenamiento -->
+                    <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-md text-center max-w-2xl">
+                        <p class="text-sm text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            <strong>¡Listo para entrenar!</strong> 
+                            Tienes <strong>{{ mascota.imagenes_count }}</strong> imágenes. 
+                            Puedes entrenar ahora o agregar más para mejor precisión.
+                        </p>
+                    </div>
+                    <button id="train-model-btn" class="bg-gradient-to-r from-secondary-600 to-primary-600 hover:from-secondary-700 hover:to-primary-700 text-white py-3 px-8 rounded-md flex items-center justify-center shadow-lg transform hover:scale-105 transition-all duration-200">
                         <i class="fas fa-brain mr-2"></i> Entrenar modelo biométrico
                     </button>
+                    <p class="text-center text-xs text-gray-500 mt-2">
+                        Este proceso puede tardar unos minutos
+                    </p>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
