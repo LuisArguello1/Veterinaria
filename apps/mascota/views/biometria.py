@@ -26,6 +26,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.views.generic import View, DetailView, FormView, ListView, TemplateView
 from django.db.models import Count
 
+
 from ..models import Mascota, ImagenMascota, ModeloGlobal, EmbeddingStore, RegistroReconocimiento
 from ..services.biometria import (
     procesar_imagen_mascota, 
@@ -169,14 +170,14 @@ def upload_biometria_image(request):
         # Verificar límite de imágenes actual
         current_images = mascota.imagenes.filter(is_biometrica=True).count()
         
-        # Validar que no se excedan las 20 imágenes total
+        # Validar que no se excedan las 20 imágenes máximas
         if len(files) > 20:
             return JsonResponse({
                 'success': False, 
                 'error': 'Solo puedes subir un máximo de 20 imágenes por vez.'
             }, status=400)
             
-        # Validar que no se exceda el límite total considerando las imágenes existentes
+        # Validar que no se exceda el límite total de 20 imágenes considerando las imágenes existentes
         if current_images + len(files) > 20:
             remaining = 20 - current_images
             return JsonResponse({
@@ -194,7 +195,7 @@ def upload_biometria_image(request):
             # Verificar límite durante el proceso
             current_count = mascota.imagenes.filter(is_biometrica=True).count()
             if current_count >= 20:
-                break  # Ya se alcanzó el límite, detener
+                break  # Ya se alcanzó el límite máximo de 20, detener
                 
             # Verificar que sea una imagen
             if not file.content_type.startswith('image/'):
@@ -211,6 +212,12 @@ def upload_biometria_image(request):
             imagenes_creadas.append(imagen.id)
             count += 1
             
+        # Si la biometría ya estaba entrenada, marcarla como no entrenada
+        # porque ahora hay nuevas imágenes y necesita re-entrenamiento
+        if imagenes_creadas and mascota.biometria_entrenada:
+            mascota.biometria_entrenada = False
+            mascota.save()
+        
         # Procesar todas las imágenes en un hilo separado para no bloquear la respuesta
         if imagenes_creadas:
             import threading
@@ -233,7 +240,8 @@ def upload_biometria_image(request):
             'message': f'{count} imágenes subidas correctamente',
             'images_count': final_count,
             'images_remaining': max(0, 20 - final_count),
-            'limit_reached': final_count >= 20
+            'limit_reached': final_count >= 20,
+            'can_train': final_count >= 5  # Puede entrenar con mínimo 5 imágenes
         })
         
     except Mascota.DoesNotExist:
@@ -291,6 +299,12 @@ def upload_biometria_base64(request):
         imagen.imagen.save(filename, ContentFile(imagen_data))
         imagen.save()
         
+        # Si la biometría ya estaba entrenada, marcarla como no entrenada
+        # porque ahora hay una nueva imagen y necesita re-entrenamiento
+        if mascota.biometria_entrenada:
+            mascota.biometria_entrenada = False
+            mascota.save()
+        
         # Procesar imagen en segundo plano
         try:
             procesar_imagen_mascota(imagen.id)
@@ -306,7 +320,8 @@ def upload_biometria_base64(request):
             'imagen_id': imagen.id,
             'images_count': new_images_count,
             'images_remaining': max(0, 20 - new_images_count),
-            'limit_reached': new_images_count >= 20
+            'limit_reached': new_images_count >= 20,
+            'can_train': new_images_count >= 5  # Puede entrenar con mínimo 5 imágenes
         })
         
     except Mascota.DoesNotExist:
@@ -325,9 +340,17 @@ def delete_imagen(request, pk):
         # Verificar que la imagen pertenece al usuario
         if imagen.mascota.propietario != request.user:
             return JsonResponse({'success': False, 'error': 'No tienes permiso para eliminar esta imagen'}, status=403)
-            
+        
+        mascota = imagen.mascota
+        
         # Eliminar imagen
         imagen.delete()
+        
+        # Si la biometría estaba entrenada, marcarla como no entrenada
+        # porque el dataset cambió y necesita re-entrenamiento
+        if mascota.biometria_entrenada:
+            mascota.biometria_entrenada = False
+            mascota.save()
         
         return JsonResponse({'success': True, 'message': 'Imagen eliminada correctamente'})
         
@@ -378,12 +401,12 @@ def train_model(request, pk):
         if mascota.propietario != request.user:
             return JsonResponse({'success': False, 'error': 'No tienes permiso para entrenar esta mascota'}, status=403)
             
-        # Verificar que hay suficientes imágenes
+        # Verificar que hay suficientes imágenes (mínimo 5)
         images_count = mascota.imagenes.filter(is_biometrica=True).count()
-        if images_count < 20:
+        if images_count < 5:
             return JsonResponse({
                 'success': False, 
-                'error': f'Se necesitan al menos 20 imágenes para entrenar (tienes {images_count})'
+                'error': f'Se necesitan al menos 5 imágenes para entrenar (tienes {images_count})'
             }, status=400)
             
         # Verificar que hay embeddings disponibles
