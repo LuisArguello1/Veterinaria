@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 
-from apps.autenticacion.models import User
+from apps.autenticacion.models import User, UserFaceEmbedding
 from apps.autenticacion.forms.users_form import (
     VeterinarianEditForm, OwnerEditForm
 )
@@ -26,6 +26,26 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Mi Perfil'
+        
+        # Obtener información de biometría facial
+        try:
+            face_embedding = UserFaceEmbedding.objects.get(
+                user=self.request.user,
+                is_active=True
+            )
+            context['has_biometry'] = True
+            context['biometry_active'] = face_embedding.allow_login
+            context['biometry_stats'] = {
+                'successful_logins': face_embedding.successful_logins,
+                'failed_attempts': face_embedding.failed_attempts,
+                'registered_at': face_embedding.created_at,
+                'last_login': face_embedding.last_successful_login
+            }
+        except UserFaceEmbedding.DoesNotExist:
+            context['has_biometry'] = False
+            context['biometry_active'] = False
+            context['biometry_stats'] = None
+        
         # Breadcrumbs
         context['breadcrumb_list'] = [
             {'label': 'Dashboard', 'url': reverse_lazy('auth:Dashboard')},
