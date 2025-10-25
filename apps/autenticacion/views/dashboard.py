@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
-from apps.autenticacion.models import User
+from apps.autenticacion.models import User, UserFaceEmbedding
 from apps.mascota.models import Mascota, ImagenMascota, RegistroReconocimiento
 import json
 
@@ -101,6 +101,53 @@ def Dashboard(request):
         reconocimientos_labels.append(day_date.strftime('%d/%m'))
         reconocimientos_data.append(count)
     
+    # Obtener estadísticas de reconocimiento facial del usuario
+    facial_stats = {
+        'has_biometry': False,
+        'is_active': False,
+        'successful_logins': 0,
+        'failed_attempts': 0,
+        'total_attempts': 0,
+        'success_rate': 0,
+        'last_login': None,
+        'registered_at': None
+    }
+    
+    try:
+        face_embedding = UserFaceEmbedding.objects.get(user=user, is_active=True)
+        total_attempts = face_embedding.successful_logins + face_embedding.failed_attempts
+        success_rate = (face_embedding.successful_logins / total_attempts * 100) if total_attempts > 0 else 0
+        
+        facial_stats = {
+            'has_biometry': True,
+            'is_active': face_embedding.allow_login,
+            'successful_logins': face_embedding.successful_logins,
+            'failed_attempts': face_embedding.failed_attempts,
+            'total_attempts': total_attempts,
+            'success_rate': round(success_rate, 1),
+            'last_login': face_embedding.last_successful_login,
+            'registered_at': face_embedding.created_at
+        }
+    except UserFaceEmbedding.DoesNotExist:
+        pass
+    
+    # Obtener mascotas perdidas para mostrar en cards con info de biometría
+    if user.role in ['ADMIN', 'VET', 'OWNER']:
+        mascotas_perdidas_cards = Mascota.objects.filter(
+            reportar_perdida=True
+        ).select_related('propietario').prefetch_related('imagenes')[:6]
+    else:
+        mascotas_perdidas_cards = user.mascotas.filter(
+            reportar_perdida=True
+        ).prefetch_related('imagenes')[:6]
+    
+    # Agregar información de biometría a cada mascota
+    for mascota in mascotas_perdidas_cards:
+        num_imagenes = mascota.imagenes.filter(is_biometrica=True).count()
+        mascota.tiene_biometria = num_imagenes >= 5
+        mascota.num_imagenes_biometricas = num_imagenes
+        mascota.puede_ser_reconocida = mascota.biometria_entrenada
+    
     # Breadcrumbs
     breadcrumb_list = [
         {'name': 'Dashboard', 'url': '#', 'is_active': True}
@@ -131,6 +178,12 @@ def Dashboard(request):
         # Datos adicionales
         'mascotas_recientes': mascotas_recientes,
         'breadcrumb_list': breadcrumb_list,
+        
+        # Estadísticas de reconocimiento facial
+        'facial_stats': facial_stats,
+        
+        # Mascotas perdidas en cards
+        'mascotas_perdidas_cards': mascotas_perdidas_cards,
     }
     
     return render(request, 'layouts/dashboard.html', context)

@@ -32,5 +32,7 @@ if settings.DEBUG:
         path("__reload__/", include("django_browser_reload.urls")),
     ]
     
-    # Servir archivos media en desarrollo
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # ⚠️ NO servir archivos media localmente - se sirven desde Azure Storage
+    # Los archivos media se gestionan automáticamente por django-storages
+    # Si necesitas servir archivos estáticos en desarrollo:
+    # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
