@@ -163,9 +163,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static",]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Configuración de archivos de medios
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ⚠️ IMPORTANTE: No configurar MEDIA_URL ni MEDIA_ROOT cuando se usa Azure Storage
+# Azure Storage maneja automáticamente las URLs de los archivos media
+# MEDIA_URL y MEDIA_ROOT se ignoran cuando STORAGES["default"] usa AzureStorage
 
 # Configuración de cache para archivos estáticos y media
 STATIC_FILE_MAX_AGE = 60 * 60 * 24 * 30  # 30 días en segundos
@@ -191,24 +191,29 @@ LOGIN_URL = 'auth:login'
 LOGIN_REDIRECT_URL = 'auth:Dashboard'  
 LOGOUT_REDIRECT_URL = 'auth:login'    
 
-# Configuracion de guardado de la imagenes y videos en azure
-# STORAGES = {
-#     "default": {
-#         "BACKEND": "storages.backends.azure_storage.AzureStorage",
-#         "OPTIONS": {
-#             'timeout': 20,
-#             'expiration_secs':500,
-#         },
-#     },
-#     "staticfiles": {
-#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-#     },
-# }
+# Configuración de Azure Storage para archivos media (imágenes, videos, modelos)
+AZURE_ACCOUNT_NAME = env('AZURE_ACCOUNT_NAME')
+AZURE_ACCOUNT_KEY = env('AZURE_ACCOUNT_KEY')
+AZURE_CONTAINER = env('AZURE_CONTAINER')
 
-#Variables de entorno para azure
-# AZURE_CONTAINER=env('AZURE_CONTAINER')
-# AZURE_ACCOUNT_NAME=env('AZURE_ACCOUNT_NAME')
-# AZURE_ACCOUNT_KEY=env('AZURE_ACCOUNT_KEY')
+# Configuración de STORAGES para Django >= 4.2
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "account_name": AZURE_ACCOUNT_NAME,
+            "account_key": AZURE_ACCOUNT_KEY,
+            "azure_container": AZURE_CONTAINER,
+            "timeout": 20,  # Timeout en segundos para operaciones
+            "expiration_secs": 3600,  # Tiempo de expiración de URLs firmadas (1 hora)
+            "overwrite_files": False,  # No sobrescribir archivos existentes
+            "location": "",  # Subcarpeta dentro del contenedor (vacío = raíz)
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 #Configuración de envío de correos
 # Para producción (descomentar y configurar en .env)
