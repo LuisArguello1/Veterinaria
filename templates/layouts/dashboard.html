@@ -94,6 +94,103 @@
     </div>
   </div>
 
+  <!-- Tarjeta de Reconocimiento Facial (Compacta y Armoniosa) -->
+  <div class="mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-user-lock text-blue-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800">Reconocimiento Facial para Usuario</h3>
+            <p class="text-sm text-gray-500">Seguridad biométrica</p>
+          </div>
+        </div>
+        
+        {% if facial_stats.has_biometry %}
+          {% if facial_stats.is_active %}
+            <span class="flex items-center gap-2 text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Activo
+            </span>
+          {% else %}
+            <span class="flex items-center gap-2 text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-medium">
+              <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+              Desactivado
+            </span>
+          {% endif %}
+        {% else %}
+          <span class="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">
+            No configurado
+          </span>
+        {% endif %}
+      </div>
+      
+      {% if facial_stats.has_biometry %}
+        <!-- Estadísticas en grid compacto -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="bg-blue-50 rounded-lg p-3 text-center">
+            <p class="text-2xl font-bold text-blue-600">{{ facial_stats.successful_logins }}</p>
+            <p class="text-xs text-gray-600">Logins Exitosos</p>
+          </div>
+          <div class="bg-red-50 rounded-lg p-3 text-center">
+            <p class="text-2xl font-bold text-red-600">{{ facial_stats.failed_attempts }}</p>
+            <p class="text-xs text-gray-600">Intentos Fallidos</p>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-3 text-center">
+            <p class="text-2xl font-bold text-purple-600">{{ facial_stats.total_attempts }}</p>
+            <p class="text-xs text-gray-600">Total Intentos</p>
+          </div>
+          <div class="bg-emerald-50 rounded-lg p-3 text-center">
+            <p class="text-2xl font-bold text-emerald-600">{{ facial_stats.success_rate }}%</p>
+            <p class="text-xs text-gray-600">Tasa de Éxito</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between text-xs text-gray-500 mb-3 pb-3 border-b">
+          <span><i class="fas fa-calendar mr-1"></i> Registrado: {{ facial_stats.registered_at|date:"d/m/Y" }}</span>
+          {% if facial_stats.last_login %}
+            <span><i class="fas fa-clock mr-1"></i> Último uso: {{ facial_stats.last_login|date:"d/m/Y H:i" }}</span>
+          {% endif %}
+        </div>
+        
+        <a href="{% url 'auth:facial_biometry_register' %}" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+          <i class="fas fa-cog mr-2"></i>
+          Administrar Biometría
+        </a>
+      {% else %}
+        <!-- Usuario sin biometría - compacto -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+          <p class="text-sm text-gray-700 mb-3">
+            Configura el reconocimiento facial para acceder de forma rápida y segura.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-shield-alt text-blue-500"></i>
+              <span>Máxima seguridad</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-bolt text-emerald-500"></i>
+              <span>Acceso instantáneo</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-user-check text-purple-500"></i>
+              <span>Único e intransferible</span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="{% url 'auth:facial_biometry_register' %}" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+          <i class="fas fa-user-plus mr-2"></i>
+          Configurar Ahora
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- Grid 2x2 para gráficos -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
     <!-- Gráfico: Registros de Mascotas por Mes -->
@@ -222,6 +319,141 @@
         </table>
       </div>
     </div>
+  </div>
+  {% endif %}
+
+  <!-- Sección de Mascotas Perdidas -->
+  {% if mascotas_perdidas_cards %}
+  <div class="mb-10">
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-red-600"></i>
+          </div>
+          Mascotas Reportadas como Perdidas
+        </h2>
+        <p class="text-sm text-gray-600 ml-13">
+          <i class="fas fa-info-circle mr-1"></i>
+          Si encuentras alguna mascota, usa reconocimiento facial para mascota y reportarla
+        </p>
+      </div>
+      <span class="bg-red-100 text-red-800 px-4 py-2 rounded-lg text-sm font-bold shadow-sm ml-13 md:ml-0">
+        <i class="fas fa-paw mr-1"></i>
+        {{ mascotas_perdidas }} perdidas
+      </span>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for mascota in mascotas_perdidas_cards %}
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-red-200 hover:shadow-2xl hover:border-red-300 transition-all duration-300 transform hover:-translate-y-1">
+        <!-- Imagen de la mascota con overlay -->
+        <div class="relative h-56 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden group">
+          {% if mascota.foto_perfil %}
+            <img src="{{ mascota.foto_perfil.url }}" alt="{{ mascota.nombre }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          {% else %}
+            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
+              <i class="fas fa-paw text-red-200 text-7xl"></i>
+            </div>
+          {% endif %}
+          
+          <!-- Badge PERDIDA -->
+          <div class="absolute top-3 right-3 bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1 animate-pulse">
+            <i class="fas fa-exclamation-circle"></i>
+            PERDIDA
+          </div>
+          
+          <!-- Estado de Biometría -->
+          <div class="absolute top-3 left-3">
+            {% if mascota.biometria_entrenada %}
+              <div class="bg-green-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1" title="Puede ser reconocida por IA">
+                <i class="fas fa-robot"></i>
+                <span>Reconocimiento Activo</span>
+              </div>
+            {% else %}
+              <div class="bg-gray-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1" title="Sin reconocimiento biométrico">
+                <i class="fas fa-ban"></i>
+                <span>Reconocimiento Inactivo</span>
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Nombre sobre la imagen -->
+          <div class="absolute bottom-3 left-3 right-3">
+            <h3 class="text-xl font-bold text-white drop-shadow-lg">{{ mascota.nombre }}</h3>
+            {% if mascota.raza %}
+              <p class="text-sm text-white/90 drop-shadow">{{ mascota.raza }}</p>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Información de la mascota -->
+        <div class="p-5">
+          <!-- Info compacta en grid -->
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-{% if mascota.sexo == 'macho' %}mars{% else %}venus{% endif %} text-{% if mascota.sexo == 'macho' %}blue{% else %}pink{% endif %}-600"></i>
+              </div>
+              <span class="text-gray-700 font-medium">{{ mascota.get_sexo_display|default:"N/E" }}</span>
+            </div>
+            
+            {% if mascota.color %}
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-palette text-purple-600"></i>
+              </div>
+              <span class="text-gray-700 font-medium truncate">{{ mascota.color }}</span>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Propietario -->
+          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 mb-3 border border-emerald-200">
+            <p class="text-xs text-emerald-700 font-semibold mb-1 flex items-center gap-1">
+              <i class="fas fa-user"></i>
+              CONTACTO DEL PROPIETARIO
+            </p>
+            <p class="text-sm font-bold text-gray-800">{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</p>
+            {% if mascota.propietario.phone %}
+              <p class="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                <i class="fas fa-phone text-emerald-600"></i>
+                {{ mascota.propietario.phone }}
+              </p>
+            {% endif %}
+            {% if mascota.propietario.email %}
+              <p class="text-xs text-gray-500 truncate mt-1">{{ mascota.propietario.email }}</p>
+            {% endif %}
+          </div>
+          
+          <!-- Alerta de ayuda -->
+          <div class="bg-amber-50 border-l-4 border-amber-400 rounded p-3 mb-4">
+            <p class="text-xs text-amber-800 font-medium flex items-start gap-2">
+              <i class="fas fa-search-location text-amber-600 mt-0.5 flex-shrink-0"></i>
+              <span>
+                {% if mascota.biometria_entrenada %}
+                  <strong>¿La viste?</strong> Usa el <strong>scanner</strong> para confirmar y reportar como encontrada.
+                {% endif %}
+              </span>
+            </p>
+          </div>
+          
+          <!-- Botones de acción -->
+          <div class="flex gap-2">
+            {% if mascota.biometria_entrenada %}
+              <a href="{% url 'mascota:scanner' %}" 
+                 class="px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white text-sm font-bold rounded-lg transition-all shadow-md hover:shadow-lg" 
+                 title="Reconocer con IA">
+                <i class="fas fa-robot"></i> Usar el scanner
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
   </div>
   {% endif %}
 

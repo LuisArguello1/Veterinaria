@@ -4,7 +4,7 @@ import time
 import pickle
 import numpy as np
 import logging
-from typing import List, Dict, Tuple, Union, Optional
+from typing import List, Dict, Tuple, Union, Optional, Any
 from pathlib import Path
 
 from django.conf import settings
@@ -114,25 +114,47 @@ class BiometriaService:
         
         logger.info(f"Extractor de características inicializado: {self.modelo_extractor} en {self.device}")
     
-    def procesar_imagen(self, ruta_imagen: Union[str, Path]) -> ImageArray:
+    def procesar_imagen(self, imagen_input: Union[str, Path, Any]) -> ImageArray:
         """
         Procesa una imagen para prepararla para el análisis biométrico
         
         Args:
-            ruta_imagen: Ruta al archivo de imagen
+            imagen_input: Puede ser:
+                - Ruta al archivo de imagen (str o Path) - para archivos locales
+                - FileField de Django - para archivos en cualquier storage (local o Azure)
             
         Returns:
             Imagen como array numpy procesada
         """
-        # Cargar imagen con OpenCV
-        img = cv2.imread(str(ruta_imagen))
-        if img is None:
-            raise ValueError(f"No se pudo cargar la imagen: {ruta_imagen}")
-        
-        # Convertir de BGR a RGB (OpenCV usa BGR por defecto)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        return img
+        try:
+            # Si es un FileField de Django (compatible con cualquier storage backend)
+            if hasattr(imagen_input, 'open'):
+                # Leer la imagen desde el storage (funciona con Azure, S3, local, etc.)
+                with imagen_input.open('rb') as f:
+                    image_data = f.read()
+                    
+                # Convertir bytes a array numpy
+                nparr = np.frombuffer(image_data, np.uint8)
+                
+                # Decodificar imagen con OpenCV
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                
+                if img is None:
+                    raise ValueError(f"No se pudo decodificar la imagen desde el storage")
+            else:
+                # Método legacy: cargar desde ruta local (solo funciona con archivos locales)
+                img = cv2.imread(str(imagen_input))
+                if img is None:
+                    raise ValueError(f"No se pudo cargar la imagen: {imagen_input}")
+            
+            # Convertir de BGR a RGB (OpenCV usa BGR por defecto)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            return img
+            
+        except Exception as e:
+            logger.error(f"Error al procesar imagen: {e}")
+            raise ValueError(f"Error al procesar imagen: {e}")
     
     def detectar_mascota(self, img: ImageArray) -> Tuple[ImageArray, Optional[Tuple[int, int, int, int]]]:
         """
@@ -368,10 +390,27 @@ class BiometriaService:
         with open(ruta, 'wb') as f:
             pickle.dump(modelo, f)
             
-    def cargar_modelo(self, ruta: Union[str, Path]):
-        """Carga un modelo entrenado desde disco"""
-        with open(ruta, 'rb') as f:
-            return pickle.load(f)
+    def cargar_modelo(self, modelo_input: Union[str, Path, Any]):
+        """
+        Carga un modelo entrenado desde disco o storage
+        
+        Args:
+            modelo_input: Puede ser:
+                - Ruta al archivo (str o Path) - para archivos locales
+                - FileField de Django - para archivos en cualquier storage (local o Azure)
+        """
+        try:
+            # Si es un FileField de Django (compatible con cualquier storage backend)
+            if hasattr(modelo_input, 'open'):
+                with modelo_input.open('rb') as f:
+                    return pickle.load(f)
+            else:
+                # Método legacy: cargar desde ruta local
+                with open(modelo_input, 'rb') as f:
+                    return pickle.load(f)
+        except Exception as e:
+            logger.error(f"Error al cargar modelo: {e}")
+            raise ValueError(f"Error al cargar modelo: {e}")
             
     def predecir_con_multiples_embeddings(self, modelo, embedding_consulta: EmbeddingVector, embeddings_db: dict) -> Tuple[int, float]:
         """
@@ -527,28 +566,21 @@ def actualizar_modelo_global(tipo_modelo='knn', extractor='efficientnet_b0', **k
     # Entrenar el modelo
     clasificador, metricas = servicio.entrenar_modelo(X, y, tipo_modelo, **kwargs)
     
-    # Guardar el modelo
-    # Crear directorio para modelos si no existe
-    ruta_modelos = os.path.join(settings.MEDIA_ROOT, 'modelos')
-    os.makedirs(ruta_modelos, exist_ok=True)
+    # Guardar el modelo en memoria primero
+    import io
+    buffer = io.BytesIO()
+    pickle.dump(clasificador, buffer)
+    buffer.seek(0)
     
     # Generar nombre único para el archivo
     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
     nombre_archivo = f"modelo_global_{tipo_modelo}_{timestamp}.pkl"
-    ruta_archivo = os.path.join(ruta_modelos, nombre_archivo)
-    
-    # Guardar el modelo
-    servicio.guardar_modelo(clasificador, ruta_archivo)
     
     # Crear nuevo registro de ModeloGlobal
     ultimo_modelo = ModeloGlobal.objects.order_by('-version').first()
     version = 1
     if ultimo_modelo:
         version = ultimo_modelo.version + 1
-        
-    # Cargar el archivo para el FileField
-    with open(ruta_archivo, 'rb') as f:
-        contenido_modelo = f.read()
     
     # Desactivar modelos anteriores
     ModeloGlobal.objects.filter(activo=True).update(activo=False)
@@ -567,8 +599,8 @@ def actualizar_modelo_global(tipo_modelo='knn', extractor='efficientnet_b0', **k
         activo=True
     )
     
-    # Asignar archivo al FileField
-    modelo_global.modelo_file.save(nombre_archivo, ContentFile(contenido_modelo))
+    # Asignar archivo al FileField desde el buffer (compatible con Azure)
+    modelo_global.modelo_file.save(nombre_archivo, ContentFile(buffer.getvalue()))
     
     # Marcar embeddings como usados en entrenamiento
     embeddings.update(usado_en_entrenamiento=True)
@@ -615,8 +647,8 @@ def procesar_imagen_mascota(imagen_mascota_id):
     
     # Procesar imagen
     try:
-        # Cargar y preprocesar imagen
-        img = servicio.procesar_imagen(imagen.imagen.path)
+        # Cargar y preprocesar imagen - usar el FileField directamente (compatible con Azure)
+        img = servicio.procesar_imagen(imagen.imagen)
         
         # Detectar mascota en la imagen
         img_recortada, coords = servicio.detectar_mascota(img)
@@ -687,8 +719,8 @@ def reconocer_mascota(ruta_imagen, usuario=None):
     inicio = time.time()
     
     try:
-        # Cargar modelo
-        clasificador = servicio.cargar_modelo(modelo_global.modelo_file.path)
+        # Cargar modelo desde Azure Storage o local storage
+        clasificador = servicio.cargar_modelo(modelo_global.modelo_file)
         
         # Procesar imagen
         img = servicio.procesar_imagen(ruta_imagen)

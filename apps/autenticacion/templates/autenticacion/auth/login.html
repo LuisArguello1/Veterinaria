@@ -101,6 +101,19 @@
                             Iniciar Sesión
                         </button>
                     </div>
+                    
+                    <!-- Botón login facial -->
+                    <div>
+                        <button type="button" 
+                                id="facialLoginBtn"
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white 
+                                       bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 
+                                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 
+                                       shadow-lg shadow-primary-600/30 transition-all duration-200">
+                            <i class="fas fa-camera mr-2"></i>
+                            Iniciar con Reconocimiento Facial
+                        </button>
+                    </div>
                 </form>
 
                 <!-- Separador -->
@@ -129,4 +142,70 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Login Facial (Compacto) -->
+<div id="facialLoginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4" style="display: none;">
+    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+        <!-- Header compacto -->
+        <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 text-white">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fas fa-user-circle"></i>
+                    Reconocimiento Facial
+                </h3>
+                <button id="closeFacialModal" class="text-white hover:text-gray-200 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <!-- Info compacta -->
+            <div class="mb-3 bg-blue-50 border-l-4 border-blue-500 p-3 rounded text-sm">
+                <p class="text-blue-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Coloca tu rostro frente a la cámara
+                </p>
+            </div>
+            
+            <!-- Video en 16:9 más pequeño -->
+            <div class="relative bg-black rounded-lg overflow-hidden" style="aspect-ratio: 16/9;">
+                <video id="facialLoginVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                <canvas id="facialLoginOverlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                
+                <!-- Status compacto -->
+                <div id="facialLoginStatus" class="absolute top-2 left-2 right-2 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
+                    <div class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                    <span id="facialLoginStatusText">Iniciando cámara...</span>
+                </div>
+            </div>
+            
+            <!-- Botones compactos -->
+            <div class="mt-4 flex gap-2">
+                <button id="cancelFacialLogin" class="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition text-sm">
+                    <i class="fas fa-times mr-1"></i>
+                    Cancelar
+                </button>
+                <button id="retryFacialLogin" class="flex-1 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition text-sm" style="display: none;">
+                    <i class="fas fa-redo mr-1"></i>
+                    Reintentar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #facialLoginModal.show {
+        display: flex !important;
+    }
+</style>
+
+<script src="{% static 'js/facial-login.js' %}"></script>
+<script>
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+        new FacialLoginSystem("{% url 'auth:facial_verify' %}");
+    });
+</script>
 {% endblock %}
