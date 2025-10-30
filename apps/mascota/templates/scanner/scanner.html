@@ -132,6 +132,27 @@
                                 <i class="fas fa-camera mr-2"></i> Capturar foto
                             </button>
                         </div>
+                        
+                        <!-- Vista previa de foto capturada desde cámara -->
+                        <div id="scanner-camera-preview" class="hidden mb-6">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Foto capturada:</h4>
+                                <div class="relative max-h-64 max-w-full mx-auto mb-3">
+                                    <img id="scanner-camera-preview-img" src="" alt="Foto capturada" class="max-h-64 max-w-full rounded-md object-contain mx-auto block">
+                                    <button id="scanner-clear-camera-photo" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-lg">
+                                        <i class="fas fa-times text-sm"></i>
+                                    </button>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button id="scanner-retake-photo" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-redo mr-2"></i> Tomar otra foto
+                                    </button>
+                                    <button id="scanner-recognize-photo" class="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-search mr-2"></i> Reconocer mascota
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="scan-tab-content mt-4 hidden" id="upload-tab">
@@ -172,52 +193,6 @@
                 
                 <!-- Canvas para procesar imagen -->
                 <canvas id="scanner-canvas" class="hidden"></canvas>
-                
-                <!-- Predicciones de IA -->
-                <div id="ai-predictions" class="hidden border-t border-gray-200 pt-4 mt-4 mb-4">
-                    <h3 class="font-medium text-lg text-gray-800 mb-3 flex items-center">
-                        <i class="fas fa-brain text-primary-600 mr-2"></i> Análisis con IA
-                    </h3>
-                    
-                    <div id="ai-predictions-loading" class="py-6 flex flex-col items-center justify-center">
-                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-                        <p class="mt-3 text-gray-600 text-sm">Analizando características...</p>
-                    </div>
-
-                    <div id="ai-predictions-content" class="hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Predicción de raza -->
-                            <div id="scanner-breed-prediction" class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200 hidden">
-                                <h5 class="font-medium text-blue-800 text-sm flex items-center">
-                                    <i class="fas fa-dog text-blue-600 mr-1"></i>Raza Detectada
-                                </h5>
-                                <div data-result class="text-sm text-blue-700 font-medium"></div>
-                                <div data-confidence class="text-xs text-blue-600"></div>
-                                <div data-status class="text-xs mt-1"></div>
-                            </div>
-                            
-                            <!-- Predicción de etapa de vida -->
-                            <div id="scanner-stage-prediction" class="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 hidden">
-                                <h5 class="font-medium text-green-800 text-sm flex items-center">
-                                    <i class="fas fa-calendar-alt text-green-600 mr-1"></i>Etapa Detectada
-                                </h5>
-                                <div data-result class="text-sm text-green-700 font-medium"></div>
-                                <div data-confidence class="text-xs text-green-600"></div>
-                                <div data-status class="text-xs mt-1"></div>
-                            </div>
-                            
-                            <!-- Predicción de condición corporal -->
-                            <div id="scanner-body-condition-prediction" class="mb-3 p-3 bg-purple-50 rounded-lg border border-purple-200 hidden">
-                                <h5 class="font-medium text-purple-800 text-sm flex items-center">
-                                    <i class="fas fa-weight text-purple-600 mr-1"></i>Condición Corporal
-                                </h5>
-                                <div data-result class="text-sm text-purple-700 font-medium"></div>
-                                <div data-confidence class="text-xs text-purple-600"></div>
-                                <div data-status class="text-xs mt-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Resultado del reconocimiento -->
                 <div id="recognition-result" class="hidden">
@@ -458,7 +433,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/ai_predictions.js' %}"></script>
 <script src="{% static 'js/scanner.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

@@ -1,0 +1,78 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block title %}Correo Enviado{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-2xl">
+        <div class="p-8 md:p-12 text-center">
+            <!-- Icono de éxito -->
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-success-100 mb-6">
+                <i class="fas fa-envelope text-4xl text-success-600"></i>
+            </div>
+
+            <h2 class="text-3xl font-bold text-dark-800 mb-4">
+                ¡Correo Enviado!
+            </h2>
+            
+            <p class="text-gray-600 mb-6 text-lg">
+                Si el correo electrónico ingresado está registrado en nuestro sistema, 
+                recibirás instrucciones para restablecer tu contraseña.
+            </p>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-left">
+                <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Pasos a seguir:
+                </h3>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-blue-700">
+                    <li>Revisa tu bandeja de entrada</li>
+                    <li>Busca el correo con el asunto "Recuperación de contraseña"</li>
+                    <li>Haz clic en el enlace proporcionado</li>
+                    <li>Ingresa tu nueva contraseña</li>
+                </ol>
+                <p class="mt-4 text-sm text-blue-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    <strong>Nota:</strong> El enlace expira en 24 horas.
+                </p>
+            </div>
+
+            <!-- Alerta para revisar spam -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    </div>
+                    <div class="ml-3 text-left">
+                        <p class="text-sm text-yellow-700">
+                            Si no recibes el correo en los próximos minutos, 
+                            revisa tu carpeta de <strong>spam o correo no deseado</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-3">
+                <a href="{% url 'auth:login' %}" 
+                   class="inline-flex justify-center items-center w-full py-3 px-6 border border-transparent rounded-md text-sm font-medium text-white 
+                          bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-500 hover:to-secondary-600 
+                          focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 
+                          shadow-lg transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Volver al inicio de sesión
+                </a>
+
+                <a href="{% url 'auth:password_recovery_request' %}" 
+                   class="inline-flex justify-center items-center w-full py-3 px-6 border border-gray-300 rounded-md text-sm font-medium text-gray-700 
+                          bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 
+                          transition-all duration-200">
+                    <i class="fas fa-redo mr-2"></i>
+                    Reenviar correo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
