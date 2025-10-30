@@ -1242,9 +1242,22 @@ function initGallery() {
     
     // Manejar entrenamiento del modelo
     if (trainModelBtn) {
+        console.log('Botón de entrenamiento encontrado e inicializado');
+        
         trainModelBtn.addEventListener('click', async () => {
-            if (confirm('¿Deseas iniciar el entrenamiento del modelo biométrico? Este proceso puede tardar unos minutos.')) {
+            // Detectar si es entrenamiento o re-entrenamiento por el texto del botón
+            const isRetraining = trainModelBtn.textContent.includes('Re-entrenar');
+            const confirmMessage = isRetraining 
+                ? '¿Deseas re-entrenar el modelo biométrico con las nuevas imágenes? Esto puede mejorar la precisión del reconocimiento.'
+                : '¿Deseas iniciar el entrenamiento del modelo biométrico? Este proceso puede tardar unos minutos.';
+            
+            console.log('Iniciando entrenamiento/re-entrenamiento:', isRetraining ? 'Re-entrenamiento' : 'Entrenamiento inicial');
+            
+            if (confirm(confirmMessage)) {
                 try {
+                    // Guardar el contenido original del botón para restaurarlo después
+                    const originalButtonHTML = trainModelBtn.innerHTML;
+                    
                     // Mostrar mensaje de carga
                     trainModelBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Entrenando...';
                     trainModelBtn.disabled = true;
@@ -1263,7 +1276,10 @@ function initGallery() {
                         const data = await response.json();
                         
                         if (data.success) {
-                            showToast('Modelo entrenado correctamente', 'success');
+                            const successMessage = isRetraining 
+                                ? 'Modelo re-entrenado correctamente con mayor precisión'
+                                : 'Modelo entrenado correctamente';
+                            showToast(successMessage, 'success');
                             
                             // Recargar página para actualizar estado
                             setTimeout(() => {
@@ -1271,19 +1287,28 @@ function initGallery() {
                             }, 2000);
                         } else {
                             showToast(data.error || 'Error al entrenar el modelo', 'error');
+                            // Restaurar botón en caso de error
+                            trainModelBtn.innerHTML = originalButtonHTML;
+                            trainModelBtn.disabled = false;
                         }
                     } else {
-                        showToast('Error al entrenar el modelo', 'error');
+                        const errorData = await response.json().catch(() => ({}));
+                        showToast(errorData.error || 'Error al entrenar el modelo', 'error');
+                        // Restaurar botón en caso de error
+                        trainModelBtn.innerHTML = originalButtonHTML;
+                        trainModelBtn.disabled = false;
                     }
                 } catch (err) {
                     console.error('Error al entrenar el modelo:', err);
-                    showToast('Error al entrenar el modelo', 'error');
-                } finally {
-                    trainModelBtn.innerHTML = '<i class="fas fa-brain mr-2"></i> Entrenar modelo biométrico';
+                    showToast('Error al entrenar el modelo: ' + err.message, 'error');
+                    // Restaurar botón en caso de error
+                    trainModelBtn.innerHTML = originalButtonHTML;
                     trainModelBtn.disabled = false;
                 }
             }
         });
+    } else {
+        console.warn('Botón de entrenamiento no encontrado en el DOM. Verifica que la mascota tenga suficientes imágenes (mínimo 5).');
     }
 }
 

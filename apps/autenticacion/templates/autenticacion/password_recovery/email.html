@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperación de Contraseña</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
+                                🔐 Recuperación de Contraseña
+                            </h1>
+                            <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 14px;">
+                                Sistema Veterinario - PET FACE ID
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hola <strong>{{ user.get_full_name|default:user.username }}</strong>,
+                            </p>
+                            
+                            <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Recibimos una solicitud para restablecer la contraseña de tu cuenta en nuestro sistema veterinario.
+                            </p>
+
+                            <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0 0 30px 0;">
+                                Haz clic en el siguiente botón para crear una nueva contraseña:
+                            </p>
+
+                            <!-- Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 0 0 30px 0;">
+                                        <a href="{{ protocol }}://{{ domain }}{% url 'auth:password_recovery_confirm' uidb64=uid token=token %}" 
+                                           style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);">
+                                            Restablecer Contraseña
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Alternative Link -->
+                            <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 15px; margin: 0 0 25px 0; border-radius: 4px;">
+                                <p style="color: #555555; font-size: 13px; line-height: 1.5; margin: 0 0 10px 0;">
+                                    <strong>Si el botón no funciona, copia y pega este enlace en tu navegador:</strong>
+                                </p>
+                                <p style="color: #667eea; font-size: 12px; line-height: 1.5; margin: 0; word-break: break-all;">
+                                    {{ protocol }}://{{ domain }}{% url 'auth:password_recovery_confirm' uidb64=uid token=token %}
+                                </p>
+                            </div>
+
+                            <!-- Warning Box -->
+                            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 0 0 25px 0; border-radius: 4px;">
+                                <p style="color: #856404; font-size: 14px; line-height: 1.5; margin: 0;">
+                                    <strong>⚠️ Importante:</strong> Este enlace expirará en <strong>24 horas</strong> por razones de seguridad.
+                                </p>
+                            </div>
+
+                            <!-- Security Notice -->
+                            <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 0 0 25px 0; border-radius: 4px;">
+                                <p style="color: #721c24; font-size: 13px; line-height: 1.5; margin: 0;">
+                                    <strong>🔒 Nota de seguridad:</strong> Si no solicitaste restablecer tu contraseña, 
+                                    puedes ignorar este correo. Tu cuenta permanecerá segura.
+                                </p>
+                            </div>
+
+                            <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 0;">
+                                Saludos,<br>
+                                <strong>Equipo de PetFace ID</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                            <p style="color: #6c757d; font-size: 12px; line-height: 1.5; margin: 0 0 10px 0;">
+                                Este es un correo automático, por favor no responder.
+                            </p>
+                            <p style="color: #6c757d; font-size: 12px; line-height: 1.5; margin: 0 0 15px 0;">
+                                Si tienes alguna pregunta, contáctanos en: 
+                                <a href="mailto:{{ support_email|default:'informationsystem235@gmail.com' }}" 
+                                   style="color: #667eea; text-decoration: none;">
+                                    {{ support_email|default:'informationsystem235@gmail.com' }}
+                                </a>
+                            </p>
+                            <p style="color: #adb5bd; font-size: 11px; margin: 0;">
+                                © {% now "Y" %} Sistema Veterinario PET FACE ID. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

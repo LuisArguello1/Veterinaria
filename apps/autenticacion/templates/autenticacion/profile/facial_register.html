@@ -1,0 +1,209 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/facial-biometry.css' %}">
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('facial-page');
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="facial-container">
+    {% include "components/breadcrumbs.html" with breadcrumbs=breadcrumb_list %}
+    
+    <!-- Layout de dos columnas -->
+    <div class="two-column-layout">
+        <!-- COLUMNA IZQUIERDA: CÁMARA -->
+        <div class="camera-column">
+            <!-- Contenedor de video -->
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="overlay" class="face-overlay"></canvas>
+                    
+                    <div class="detection-status">
+                        <div class="status-indicator detecting" id="statusIndicator"></div>
+                        <span id="statusText">Iniciando cámara...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Consejos para la cámara -->
+            <div class="camera-tips">
+                <h3>
+                    <i class="fas fa-lightbulb"></i>
+                    Consejos para mejor detección
+                </h3>
+                <ul>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Asegúrate de estar en un lugar bien iluminado</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mira directamente a la cámara</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mantén tu rostro centrado en el cuadro verde</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Evita usar gafas oscuras o accesorios que cubran tu rostro</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Espera a que el sistema detecte tu rostro correctamente</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- COLUMNA DERECHA: CONTROLES Y ESTADÍSTICAS -->
+        <div class="controls-column">
+            <!-- Card de Acciones -->
+            <div class="control-card">
+                <h2>
+                    <i class="fas fa-sliders-h"></i>
+                    Acciones
+                </h2>
+                
+                <div class="action-buttons">
+                    <button id="captureBtn" class="btn-facial btn-capture" disabled>
+                        <i class="fas fa-camera"></i>
+                        <span>Capturar Rostro</span>
+                    </button>
+                    
+                    {% if has_biometry %}
+                    <button id="toggleBtn" class="btn-facial btn-toggle">
+                        <i class="fas fa-lock"></i>
+                        <span id="toggleText">
+                            {% if biometry_info.allow_login %}Desactivar{% else %}Activar{% endif %} Login Facial
+                        </span>
+                    </button>
+                    
+                    <button id="deleteBtn" class="btn-facial btn-delete-2">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Eliminar Biometría</span>
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="alert-info">
+                    <p>
+                        <i class="fas fa-info-circle"></i>
+                        {% if has_biometry %}
+                            <span>Puedes actualizar tu biometría en cualquier momento capturando una nueva imagen.</span>
+                        {% else %}
+                            <span>Captura tu rostro para habilitar el inicio de sesión mediante reconocimiento facial.</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Card de Estadísticas -->
+            {% if has_biometry %}
+            <div class="control-card">
+                <h2>
+                    <i class="fas fa-chart-bar"></i>
+                    Estadísticas
+                </h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <i class="fas fa-calendar-plus"></i>
+                            Registrado
+                        </div>
+                        <div class="stat-value">
+                            {{ biometry_info.created_at|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <i class="fas fa-percentage"></i>
+                            Confianza
+                        </div>
+                        <div class="stat-value success">
+                            {{ biometry_info.confidence|floatformat:0 }}%
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Logins
+                        </div>
+                        <div class="stat-value">
+                            {{ biometry_info.successful_logins }}
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <i class="fas fa-clock"></i>
+                            Último Acceso
+                        </div>
+                        <div class="stat-value warning">
+                            {% if biometry_info.last_successful_login %}
+                                {{ biometry_info.last_successful_login|date:"d/m" }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if biometry_info.is_active and biometry_info.allow_login %}
+                    <div class="status-badge active">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Biometría Activa</span>
+                    </div>
+                {% else %}
+                    <div class="status-badge inactive">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Biometría Inactiva</span>
+                    </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="control-card">
+                <h2>
+                    <i class="fas fa-user-plus"></i>
+                    Primera vez
+                </h2>
+                
+                <div class="alert-info">
+                    <p>
+                        <i class="fas fa-info-circle"></i>
+                        <span>No tienes biometría registrada. Registra tu rostro para poder iniciar sesión de forma rápida y segura sin necesidad de contraseña.</span>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/facial-recognition.js' %}"></script>
+<script src="{% static 'js/facial-biometry-init.js' %}"></script>
+<script>
+    // Pasar configuración al script de inicialización
+    window.FACIAL_CONFIG = {
+        hasBiometry: {{ has_biometry|yesno:"true,false" }},
+        allowLogin: {{ biometry_info.allow_login|default:"false"|yesno:"true,false" }},
+        urls: {
+            detect: "{% url 'auth:facial_detect' %}",
+            register: "{% url 'auth:facial_register' %}",
+            delete: "{% url 'auth:facial_delete' %}",
+            toggle: "{% url 'auth:facial_toggle' %}"
+        }
+    };
+</script>
+{% endblock %}

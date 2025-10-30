@@ -11,6 +11,20 @@ from apps.autenticacion.views.users import (
   ChangePasswordView
 )
 from apps.autenticacion.views.register import RegisterView
+from apps.autenticacion.views.facial_views import (
+  FacialBiometryRegisterView,
+  DetectFaceView,
+  RegisterFacialBiometryView,
+  VerifyFacialLoginView,
+  DeleteFacialBiometryView,
+  ToggleFacialLoginView
+)
+from apps.autenticacion.views.password_recovery import (
+  PasswordRecoveryRequestView,
+  PasswordRecoveryDoneView,
+  PasswordRecoveryConfirmView,
+  PasswordRecoveryCompleteView
+)
 
 app_name='auth'
 
@@ -37,6 +51,20 @@ urlpatterns = [
   path('users/<int:pk>/edit/', UserUpdateView.as_view(), name='user_edit'),
   path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
   path('users/<int:pk>/password/', ChangePasswordView.as_view(), name='user_password_change'),
+  
+  # Reconocimiento facial
+  path('profile/facial-biometry/', FacialBiometryRegisterView.as_view(), name='facial_biometry_register'),
+  path('api/facial/detect/', DetectFaceView.as_view(), name='facial_detect'),
+  path('api/facial/register/', RegisterFacialBiometryView.as_view(), name='facial_register'),
+  path('api/facial/verify/', VerifyFacialLoginView.as_view(), name='facial_verify'),
+  path('api/facial/delete/', DeleteFacialBiometryView.as_view(), name='facial_delete'),
+  path('api/facial/toggle/', ToggleFacialLoginView.as_view(), name='facial_toggle'),
+  
+  # Recuperación de contraseña
+  path('password-recovery/', PasswordRecoveryRequestView.as_view(), name='password_recovery_request'),
+  path('password-recovery/done/', PasswordRecoveryDoneView.as_view(), name='password_recovery_done'),
+  path('password-recovery/confirm/<uidb64>/<token>/', PasswordRecoveryConfirmView.as_view(), name='password_recovery_confirm'),
+  path('password-recovery/complete/', PasswordRecoveryCompleteView.as_view(), name='password_recovery_complete'),
   
   # APIs para integración con chatbot
   path('api/', include('apps.autenticacion.urls_chatbot')),

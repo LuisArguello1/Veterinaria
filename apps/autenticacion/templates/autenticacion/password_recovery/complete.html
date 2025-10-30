@@ -1,0 +1,90 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block title %}Contraseña Restablecida{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-2xl">
+        <div class="p-8 md:p-12 text-center">
+            <!-- Icono de éxito -->
+            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-success-100 mb-6">
+                <i class="fas fa-check-circle text-5xl text-success-600"></i>
+            </div>
+
+            <h2 class="text-3xl font-bold text-dark-800 mb-4">
+                ¡Contraseña Restablecida!
+            </h2>
+            
+            <p class="text-gray-600 mb-8 text-lg">
+                Tu contraseña ha sido actualizada exitosamente. 
+                Ahora puedes iniciar sesión con tu nueva contraseña.
+            </p>
+
+            <div class="bg-success-50 border border-success-200 rounded-lg p-6 mb-8">
+                <div class="flex items-center justify-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shield-alt text-success-400 text-2xl"></i>
+                    </div>
+                    <div class="ml-4 text-left">
+                        <h3 class="text-sm font-semibold text-success-900">
+                            Tu cuenta está segura
+                        </h3>
+                        <p class="text-sm text-success-700 mt-1">
+                            Recuerda mantener tu contraseña en un lugar seguro y no compartirla con nadie.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consejos de seguridad -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-left">
+                <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Consejos de seguridad:
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                        <span>Usa contraseñas únicas para cada servicio</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                        <span>Cambia tu contraseña periódicamente</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                        <span>No compartas tu contraseña con nadie</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                        <span>Habilita la autenticación facial para mayor seguridad</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Botón de acción -->
+            <div>
+                <a href="{% url 'auth:login' %}" 
+                   class="inline-flex justify-center items-center w-full py-3 px-6 border border-transparent rounded-md text-sm font-medium text-white 
+                          bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-500 hover:to-secondary-600 
+                          focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 
+                          shadow-lg transition-all duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Ir al inicio de sesión
+                </a>
+            </div>
+
+            <div class="mt-6">
+                <p class="text-sm text-gray-500">
+                    ¿Necesitas ayuda? 
+                    <a href="mailto:{{ support_email|default:'informationsystem235@gmail.com' }}" 
+                       class="text-primary-600 hover:text-primary-500 font-medium">
+                        Contáctanos
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
