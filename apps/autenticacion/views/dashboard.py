@@ -13,7 +13,7 @@ def Dashboard(request):
     user = request.user
     
     # Estadísticas generales según el rol del usuario
-    if user.role in ['ADMIN', 'VET']:
+    if user.role in ['ADMIN', 'VET', 'OWNER']:
         # Estadísticas para administradores y veterinarios
         total_users = User.objects.filter(is_active=True).count()
         total_mascotas = Mascota.objects.count()
@@ -56,7 +56,7 @@ def Dashboard(request):
         month_date = today.replace(day=1) - timedelta(days=30 * i)
         
         # Contar mascotas registradas en ese mes
-        if user.role in ['ADMIN', 'VET']:
+        if user.role in ['ADMIN', 'VET', 'OWNER']:
             count = Mascota.objects.filter(
                 created_at__year=month_date.year,
                 created_at__month=month_date.month
@@ -88,7 +88,7 @@ def Dashboard(request):
     for i in range(6, -1, -1):  # 7 días hacia atrás
         day_date = today - timedelta(days=i)
         
-        if user.role in ['ADMIN', 'VET']:
+        if user.role in ['ADMIN', 'VET', 'OWNER']:
             count = RegistroReconocimiento.objects.filter(
                 fecha__date=day_date
             ).count()
