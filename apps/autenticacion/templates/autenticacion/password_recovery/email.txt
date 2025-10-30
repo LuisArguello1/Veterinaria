@@ -1,0 +1,20 @@
+Hola {{ user.get_full_name|default:user.username }},
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en nuestro sistema veterinario.
+
+Para crear una nueva contraseña, haz clic en el siguiente enlace:
+
+{{ protocol }}://{{ domain }}{% url 'auth:password_recovery_confirm' uidb64=uid token=token %}
+
+IMPORTANTE: Este enlace expirará en 24 horas por razones de seguridad.
+
+Si no solicitaste restablecer tu contraseña, puedes ignorar este correo. Tu cuenta permanecerá segura.
+
+Saludos,
+Equipo de Sistema Veterinario PET FACE ID
+
+---
+Este es un correo automático, por favor no responder.
+Si tienes alguna pregunta, contáctanos en: {{ support_email|default:'informationsystem235@gmail.com' }}
+
+© {% now "Y" %} Sistema Veterinario PET FACE ID. Todos los derechos reservados.

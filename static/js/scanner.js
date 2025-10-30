@@ -133,7 +133,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const switchCameraBtn = document.getElementById('scanner-switch-camera');
         let stream = null;
         let currentDeviceId = '';
+        let capturedImageData = null; // Variable para guardar la imagen capturada
         // Eliminamos la variable local cameraActive ya que usamos la global scannerCameraActive
+        
+        // Variables de vista previa de cámara
+        const cameraPreview = document.getElementById('scanner-camera-preview');
+        const cameraPreviewImg = document.getElementById('scanner-camera-preview-img');
+        const clearCameraPhotoBtn = document.getElementById('scanner-clear-camera-photo');
+        const retakePhotoBtn = document.getElementById('scanner-retake-photo');
+        const recognizePhotoBtn = document.getElementById('scanner-recognize-photo');
         
         // Variables de subida de archivos
         const fileInput = document.getElementById('scanner-file-input');
@@ -338,29 +346,155 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('Capturando foto, estado antes:', scannerCameraActive);
                 
+                // Verificar que el video tenga dimensiones válidas
+                if (webcamVideo.videoWidth === 0 || webcamVideo.videoHeight === 0) {
+                    console.error('Video sin dimensiones válidas');
+                    alert('Error al capturar la foto. Por favor, intenta de nuevo.');
+                    return;
+                }
+                
                 // Configurar canvas con dimensiones del video
                 canvas.width = webcamVideo.videoWidth;
                 canvas.height = webcamVideo.videoHeight;
+                
+                console.log('Dimensiones del canvas:', canvas.width, 'x', canvas.height);
                 
                 // Dibujar frame actual del video en el canvas
                 const context = canvas.getContext('2d');
                 context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
                 
                 // Obtener imagen como base64 comprimida (calidad 0.8 para reducir tamaño)
-                const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                console.log('Imagen capturada, tamaño:', capturedImageData.length, 'caracteres');
+                
+                // Verificar que la imagen se capturó correctamente
+                if (!capturedImageData || capturedImageData.length < 1000) {
+                    console.error('Imagen capturada inválida o vacía');
+                    alert('Error al capturar la foto. Por favor, intenta de nuevo.');
+                    return;
+                }
                 
                 // Detener cámara
                 stopScannerCamera();
                 
-                // Verificar estado después de detener
+                // LUEGO mostrar vista previa de la foto capturada
                 setTimeout(() => {
-                    console.log('Estado después de capturar:', scannerCameraActive);
-                }, 100);
-                
-                // Mostrar resultados y procesar reconocimiento
-                processRecognition(imageDataUrl);
+                    if (cameraPreview && cameraPreviewImg && capturedImageData) {
+                        console.log('Mostrando vista previa de la imagen...');
+                        
+                        // IMPORTANTE: Limpiar la imagen anterior primero
+                        cameraPreviewImg.src = '';
+                        cameraPreviewImg.removeAttribute('src');
+                        
+                        // Forzar un pequeño delay para asegurar que se limpia
+                        setTimeout(() => {
+                            // Configurar eventos de carga
+                            cameraPreviewImg.onload = () => {
+                                console.log('✅ Imagen cargada exitosamente en el preview');
+                            };
+                            
+                            cameraPreviewImg.onerror = (error) => {
+                                console.error('❌ Error al cargar la imagen en el preview:', error);
+                                console.log('Longitud de datos:', capturedImageData.length);
+                                console.log('Primeros 100 caracteres:', capturedImageData.substring(0, 100));
+                            };
+                            
+                            // Asignar la nueva imagen
+                            cameraPreviewImg.src = capturedImageData;
+                            cameraPreview.classList.remove('hidden');
+                            
+                            // Hacer scroll a la vista previa
+                            cameraPreview.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 50);
+                    } else {
+                        console.error('Elementos de preview no encontrados');
+                    }
+                }, 200);
             });
         }
+        
+        // Botón para reconocer la foto capturada
+        if (recognizePhotoBtn) {
+            recognizePhotoBtn.addEventListener('click', () => {
+                if (capturedImageData) {
+                    // Ocultar vista previa
+                    if (cameraPreview) {
+                        cameraPreview.classList.add('hidden');
+                    }
+                    // Procesar reconocimiento
+                    processRecognition(capturedImageData);
+                }
+            });
+        }
+        
+        // Botón para limpiar/cancelar la foto capturada
+        if (clearCameraPhotoBtn) {
+            clearCameraPhotoBtn.addEventListener('click', () => {
+                console.log('❌ Cancelando foto capturada...');
+                
+                capturedImageData = null;
+                
+                // Limpiar COMPLETAMENTE la imagen de preview
+                if (cameraPreviewImg) {
+                    cameraPreviewImg.onload = null;
+                    cameraPreviewImg.onerror = null;
+                    cameraPreviewImg.src = '';
+                    cameraPreviewImg.removeAttribute('src');
+                }
+                
+                if (cameraPreview) {
+                    cameraPreview.classList.add('hidden');
+                }
+                
+                console.log('✅ Foto cancelada y limpiada');
+            });
+        }
+        
+        // Botón para tomar otra foto
+        if (retakePhotoBtn) {
+            retakePhotoBtn.addEventListener('click', async () => {
+                console.log('🔄 Retomando foto...');
+                
+                // Limpiar imagen capturada
+                capturedImageData = null;
+                
+                // Limpiar COMPLETAMENTE la imagen de preview
+                if (cameraPreviewImg) {
+                    cameraPreviewImg.onload = null;
+                    cameraPreviewImg.onerror = null;
+                    cameraPreviewImg.src = '';
+                    cameraPreviewImg.removeAttribute('src');
+                    console.log('🧹 Imagen de preview limpiada');
+                }
+                
+                // Ocultar vista previa
+                if (cameraPreview) {
+                    cameraPreview.classList.add('hidden');
+                    console.log('👁️ Vista previa ocultada');
+                }
+                
+                // Ocultar resultados si están visibles
+                if (recognitionResult) {
+                    recognitionResult.classList.add('hidden');
+                }
+                
+                // Hacer scroll de vuelta al área de la cámara
+                const cameraTab = document.getElementById('camera-tab');
+                if (cameraTab) {
+                    cameraTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                
+                // Esperar un momento antes de reiniciar la cámara
+                await new Promise(resolve => setTimeout(resolve, 400));
+                
+                // Reiniciar cámara
+                console.log('📹 Reiniciando cámara con deviceId:', currentDeviceId);
+                await startCamera(currentDeviceId || null);
+                console.log('✅ Cámara reiniciada');
+            });
+        }
+        
         
         // Subida de archivos
         if (selectFileBtn && !disabled) {
@@ -469,9 +603,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const resultLoading = document.getElementById('result-loading');
                 const resultSuccess = document.getElementById('result-success');
                 const resultError = document.getElementById('result-error');
-                const aiPredictionsPanel = document.getElementById('ai-predictions');
-                const aiPredictionsLoading = document.getElementById('ai-predictions-loading');
-                const aiPredictionsContent = document.getElementById('ai-predictions-content');
                 
                 // Mostrar sección de resultados
                 if (recognitionResult) recognitionResult.classList.remove('hidden');
@@ -479,35 +610,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (resultSuccess) resultSuccess.classList.add('hidden');
                 if (resultError) resultError.classList.add('hidden');
                 
-                // También mostrar panel de predicciones IA
-                if (aiPredictionsPanel) aiPredictionsPanel.classList.remove('hidden');
-                if (aiPredictionsLoading) aiPredictionsLoading.classList.remove('hidden');
-                if (aiPredictionsContent) aiPredictionsContent.classList.add('hidden');
-                
                 // Hacer scroll a la sección de resultados
-                aiPredictionsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                recognitionResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
                 // Comprimir imagen antes de enviar
                 const compressedImageData = await compressImage(imageData, 800, 600, 0.85);
-                
-                // Debug: verificar qué tipo de datos recibimos
-                console.log('Tipo de imagen recibida:', typeof imageData, 
-                            'Es string:', typeof imageData === 'string',
-                            'Longitud:', typeof imageData === 'string' ? imageData.length : 'N/A',
-                            'Es base64:', typeof imageData === 'string' && imageData.startsWith('data:image'));
-                
-                // Convertir base64 a Blob para las predicciones IA
-                const imageBlob = await base64ToBlob(compressedImageData);
-                
-                // Debug: verificar el blob creado
-                console.log('Blob creado:', {
-                    tipo: imageBlob.type,
-                    tamaño: imageBlob.size,
-                    nombre: imageBlob.name || 'Sin nombre'
-                });
-                
-                // Realizar análisis de IA en paralelo (no esperamos a que termine)
-                runAIAnalysis(imageBlob);
                 
                 // Crear FormData para enviar la imagen
                 const formData = new FormData();
@@ -716,132 +823,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             resolve(blob);
         });
-    }
-    
-    // Función para realizar análisis de IA
-    function runAIAnalysis(imageBlob) {
-        // Obtener elementos de UI necesarios
-        const aiPredictionsPanel = document.getElementById('ai-predictions');
-        const aiPredictionsLoading = document.getElementById('ai-predictions-loading');
-        const aiPredictionsContent = document.getElementById('ai-predictions-content');
-        
-        console.log('Iniciando análisis de IA con elementos:', {
-            panel: aiPredictionsPanel, 
-            loading: aiPredictionsLoading, 
-            content: aiPredictionsContent
-        });
-        
-        // Verificar que el blob sea válido
-        if (!imageBlob || !(imageBlob instanceof Blob)) {
-            console.error('Error: El objeto recibido no es un Blob válido', imageBlob);
-            
-            if (aiPredictionsLoading && aiPredictionsContent) {
-                aiPredictionsLoading.classList.add('hidden');
-                aiPredictionsContent.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p class="text-sm text-red-700">Error: Imagen no válida para análisis.</p>
-                    </div>
-                `;
-                aiPredictionsContent.classList.remove('hidden');
-            }
-            return;
-        }
-        
-        // Asegurarse de que el panel de IA sea visible
-        if (aiPredictionsPanel) {
-            aiPredictionsPanel.classList.remove('hidden');
-        }
-        
-        // Mostrar la animación de carga
-        if (aiPredictionsLoading) {
-            aiPredictionsLoading.classList.remove('hidden');
-        }
-        
-        // Ocultar el contenido hasta que tengamos resultados
-        if (aiPredictionsContent) {
-            aiPredictionsContent.classList.add('hidden');
-        }
-
-        // Verificar token CSRF
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-        console.log('CSRF Token encontrado:', !!csrfToken);
-        
-        // Usar el módulo de predicción de IA
-        if (typeof AIPredictions !== 'undefined') {
-            // Crear una copia del Blob con un nombre de archivo
-            const file = new File([imageBlob], "scanner_image.jpg", {
-                type: imageBlob.type || "image/jpeg",
-                lastModified: new Date()
-            });
-            
-            console.log('Enviando archivo para predicción IA:', {
-                nombre: file.name,
-                tipo: file.type,
-                tamaño: file.size
-            });
-            
-            AIPredictions.predict(
-                file,
-                // Éxito
-                (predictions) => {
-                    console.log('Predicciones recibidas:', predictions);
-                    // Mostrar las predicciones
-                    AIPredictions.renderPredictions(predictions, {
-                        breed: document.getElementById('scanner-breed-prediction'),
-                        stage: document.getElementById('scanner-stage-prediction'),
-                        bodyCondition: document.getElementById('scanner-body-condition-prediction')
-                    });
-                    
-                    // Mostrar panel de contenido y ocultar carga
-                    if (aiPredictionsLoading && aiPredictionsContent) {
-                        aiPredictionsLoading.classList.add('hidden');
-                        aiPredictionsContent.classList.remove('hidden');
-                    }
-                },
-                // Error
-                (error) => {
-                    console.error('Error en análisis de IA:', error);
-                    // Mostrar mensaje de error si los elementos existen
-                    if (aiPredictionsLoading && aiPredictionsContent) {
-                        aiPredictionsLoading.classList.add('hidden');
-                        aiPredictionsContent.innerHTML = `
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-yellow-700">No se pudieron realizar las predicciones adicionales de IA.</p>
-                                        <p class="text-xs text-gray-500 mt-1">Esto no afecta al reconocimiento de la mascota.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        aiPredictionsContent.classList.remove('hidden');
-                    }
-                }
-            );
-        } else {
-            // Si el módulo no está disponible, mostrar mensaje
-            console.error('Módulo de IA no disponible');
-            if (aiPredictionsLoading && aiPredictionsContent) {
-                aiPredictionsLoading.classList.add('hidden');
-                aiPredictionsContent.innerHTML = `
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700">Análisis adicionales de IA no disponibles.</p>
-                                <p class="text-xs text-gray-500 mt-1">Esto no afecta al reconocimiento principal de mascotas.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                aiPredictionsContent.classList.remove('hidden');
-            }
-        }
     }
     
     function getCookie(name) {
