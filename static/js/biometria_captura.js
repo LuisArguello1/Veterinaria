@@ -623,6 +623,7 @@ window.BiometriaCapturaAutomatica = (function() {
             
             let successCount = 0;
             let errorCount = 0;
+            let validationErrors = [];  // Para acumular errores de validación
             
             // Guardar cada imagen por separado
             for (let i = 0; i < capturedImages.length; i++) {
@@ -641,10 +642,22 @@ window.BiometriaCapturaAutomatica = (function() {
                     console.error(`Error al guardar imagen ${i+1}:`, err);
                     errorCount++;
                     
-                    // Si hay demasiados errores, abortar
-                    if (errorCount > 3) {
-                        showToast('Demasiados errores al guardar imágenes, proceso abortado', 'error');
-                        break;
+                    // Si es un error de validación, guardar en lista
+                    if (err.validation_error) {
+                        validationErrors.push({
+                            numero: i + 1,
+                            mensaje: err.message,
+                            objeto_detectado: err.objeto_detectado,
+                            confianza: err.confianza
+                        });
+                        // No contar errores de validación para abortar (son errores del usuario, no del sistema)
+                        errorCount--;
+                    } else {
+                        // Si hay demasiados errores del sistema, abortar
+                        if (errorCount > 3) {
+                            showToast('Demasiados errores al guardar imágenes, proceso abortado', 'error');
+                            break;
+                        }
                     }
                 }
                 
@@ -652,22 +665,118 @@ window.BiometriaCapturaAutomatica = (function() {
                 updateProgressBar((i + 1) / capturedImages.length * 100);
             }
             
-            // Mostrar resultado
-            if (successCount > 0) {
+            // Limpiar imágenes guardadas
+            capturedImages = [];
+            if (elements.thumbnailsGrid) {
+                elements.thumbnailsGrid.innerHTML = '';
+            }
+            
+            // Ocultar contenedor de miniaturas
+            if (elements.thumbnailsContainer) {
+                elements.thumbnailsContainer.classList.add('hidden');
+            }
+            
+            // Mostrar resultado final
+            if (successCount > 0 && validationErrors.length > 0) {
+                // Hay imágenes guardadas Y rechazadas - mostrar ambas
+                showToast(`${successCount} imágenes guardadas, ${validationErrors.length} rechazadas`, 'warning');
+                
+                // Mostrar detalle de imágenes rechazadas
+                if (typeof Swal !== 'undefined') {
+                    const erroresHTML = validationErrors.map(err => `
+                        <div class="text-left bg-orange-50 border-l-4 border-orange-400 p-2 rounded mb-2">
+                            <p class="text-sm font-semibold text-gray-800">Imagen ${err.numero}</p>
+                            <p class="text-xs text-gray-700">
+                                <strong>Detectado:</strong> ${err.objeto_detectado}<br>
+                                <strong>Confianza:</strong> ${err.confianza ? err.confianza.toFixed(1) + '%' : 'N/A'}
+                            </p>
+                        </div>
+                    `).join('');
+                    
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ Algunas imágenes fueron rechazadas',
+                        html: `
+                            <div class="space-y-2">
+                                <p class="text-sm text-green-700 mb-2">
+                                    ✅ <strong>${successCount} imagen${successCount > 1 ? 'es' : ''} guardada${successCount > 1 ? 's' : ''} correctamente</strong>
+                                </p>
+                                <p class="text-sm text-gray-700 mb-3">
+                                    ❌ Las siguientes imágenes no fueron aceptadas porque no contienen caninos válidos:
+                                </p>
+                                ${erroresHTML}
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mt-3">
+                                    <p class="text-xs text-blue-800">
+                                        <strong>💡 Tip:</strong> Solo se aceptan imágenes claras de perros. 
+                                        Intenta capturar con mejor iluminación y ángulo.
+                                    </p>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3B82F6',
+                        width: '600px',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        // Recargar DESPUÉS de cerrar el modal
+                        window.location.reload();
+                    });
+                } else {
+                    // Sin SweetAlert, recargar con delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2500);
+                }
+            } else if (successCount > 0) {
+                // Solo imágenes guardadas correctamente
                 showToast(`${successCount} imágenes guardadas correctamente`, 'success');
                 
                 // Recargar la página para actualizar todo
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
+            } else if (validationErrors.length > 0) {
+                // Solo hubo errores de validación, ninguna guardada
+                showToast('Ninguna imagen fue aceptada. Por favor, captura imágenes de perros.', 'error');
                 
-                // Limpiar imágenes guardadas
-                capturedImages = [];
-                if (elements.thumbnailsGrid) {
-                    elements.thumbnailsGrid.innerHTML = '';
+                // Mostrar detalle
+                if (typeof Swal !== 'undefined') {
+                    const erroresHTML = validationErrors.map(err => `
+                        <div class="text-left bg-orange-50 border-l-4 border-orange-400 p-2 rounded mb-2">
+                            <p class="text-sm font-semibold text-gray-800">Imagen ${err.numero}</p>
+                            <p class="text-xs text-gray-700">
+                                <strong>Detectado:</strong> ${err.objeto_detectado}<br>
+                                <strong>Confianza:</strong> ${err.confianza ? err.confianza.toFixed(1) + '%' : 'N/A'}
+                            </p>
+                        </div>
+                    `).join('');
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: '❌ Todas las imágenes fueron rechazadas',
+                        html: `
+                            <div class="space-y-2">
+                                <p class="text-sm text-gray-700 mb-3">
+                                    Ninguna imagen fue aceptada porque no contienen caninos válidos:
+                                </p>
+                                ${erroresHTML}
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mt-3">
+                                    <p class="text-xs text-blue-800">
+                                        <strong>💡 Recomendación:</strong> Captura imágenes claras de perros. 
+                                        Verifica que el animal esté bien iluminado y enfocado.
+                                    </p>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3B82F6',
+                        width: '600px'
+                    });
                 }
-                
-                // Verificar si se alcanzó el límite
+            }
+            
+            // Verificar límite alcanzado (solo si se guardaron imágenes)
+            if (successCount > 0) {
                 const biometriaContent = document.querySelector('.biometria-content');
                 if (biometriaContent) {
                     const imagesCountText = biometriaContent.querySelector('.text-gray-800.font-bold');
@@ -678,15 +787,10 @@ window.BiometriaCapturaAutomatica = (function() {
                         }
                     }
                 }
-                
-                // Ocultar contenedor de miniaturas
-                if (elements.thumbnailsContainer) {
-                    elements.thumbnailsContainer.classList.add('hidden');
-                }
             }
             
             if (errorCount > 0) {
-                showToast(`No se pudieron guardar ${errorCount} imágenes`, 'warning');
+                showToast(`No se pudieron guardar ${errorCount} imágenes (errores de sistema)`, 'warning');
             }
         } catch (err) {
             console.error('Error al guardar imágenes:', err);
@@ -732,10 +836,36 @@ window.BiometriaCapturaAutomatica = (function() {
                         updateProgressBar(data.images_count, 20);
                         resolve(data);
                     } else {
-                        reject(new Error(data.error || 'Error al guardar la imagen'));
+                        // Verificar si es un error de validación canina
+                        if (data.validation_error && data.details) {
+                            // Error de validación - imagen no es de un perro
+                            reject({
+                                validation_error: true,
+                                message: data.details.mensaje || 'La imagen no contiene un canino válido',
+                                objeto_detectado: data.details.objeto_detectado,
+                                confianza: data.details.confianza,
+                                recomendacion: data.details.recomendacion
+                            });
+                        } else {
+                            // Otro tipo de error
+                            reject(new Error(data.error || 'Error al guardar la imagen'));
+                        }
                     }
                 } else {
-                    reject(new Error(`Error ${response.status}: No se pudo guardar la imagen`));
+                    const errorData = await response.json().catch(() => ({}));
+                    
+                    // Verificar si es error de validación incluso con status error
+                    if (errorData.validation_error && errorData.details) {
+                        reject({
+                            validation_error: true,
+                            message: errorData.details.mensaje || 'La imagen no contiene un canino válido',
+                            objeto_detectado: errorData.details.objeto_detectado,
+                            confianza: errorData.details.confianza,
+                            recomendacion: errorData.details.recomendacion
+                        });
+                    } else {
+                        reject(new Error(`Error ${response.status}: No se pudo guardar la imagen`));
+                    }
                 }
             } catch (err) {
                 reject(err);
@@ -822,6 +952,68 @@ window.BiometriaCapturaAutomatica = (function() {
         
         // También logueamos para depuración
         console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+    
+    /**
+     * Muestra un mensaje de error específico para validación canina
+     * @param {object} details - Detalles del error de validación
+     */
+    function showValidationError(details) {
+        const mensaje = details.mensaje || 'La imagen no contiene un canino válido';
+        const objetoDetectado = details.objeto_detectado || 'Desconocido';
+        const confianza = details.confianza || 0;
+        const recomendacion = details.recomendacion || 'Por favor, sube una imagen clara de un perro.';
+        
+        // Intentar usar SweetAlert2 si está disponible
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: '🐕 Imagen no válida',
+                html: `
+                    <div class="text-left space-y-3">
+                        <div class="bg-orange-50 border-l-4 border-orange-400 p-3 rounded">
+                            <p class="text-sm text-gray-800 mb-2">
+                                <strong>❌ ${mensaje}</strong>
+                            </p>
+                            <div class="text-xs text-gray-700 space-y-1">
+                                <p><strong>Detectado:</strong> ${objetoDetectado}</p>
+                                <p><strong>Confianza:</strong> ${confianza.toFixed(1)}%</p>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                            <p class="text-xs text-blue-800">
+                                <strong>💡 Recomendación:</strong><br>
+                                ${recomendacion}
+                            </p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#3B82F6',
+                width: '500px'
+            });
+        } else {
+            // Fallback: usar mensaje simple
+            const mensajeCompleto = `
+❌ Imagen no válida
+
+${mensaje}
+
+🔍 Detectado: ${objetoDetectado}
+📊 Confianza: ${confianza.toFixed(1)}%
+
+💡 ${recomendacion}
+            `.trim();
+            
+            showToast(mensajeCompleto, 'warning');
+        }
+        
+        console.warn('Validación canina falló:', {
+            mensaje,
+            objetoDetectado,
+            confianza,
+            recomendacion
+        });
     }
     
     /**

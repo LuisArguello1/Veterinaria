@@ -6,6 +6,7 @@ También incluye vistas para la gestión de mascotas como el detalle y listado.
 
 import base64
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
@@ -35,6 +36,9 @@ from ..services.biometria import (
     BiometriaService, 
     DEPS_INSTALLED
 )
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -190,6 +194,11 @@ def upload_biometria_image(request):
         # Subir imágenes de forma optimizada
         count = 0
         imagenes_creadas = []
+        imagenes_rechazadas = []
+        
+        # Obtener validador para verificar que sean imágenes de perros
+        from ..services.canine_validator import get_validator
+        validator = get_validator()
         
         for file in files:
             # Verificar límite durante el proceso
@@ -199,7 +208,36 @@ def upload_biometria_image(request):
                 
             # Verificar que sea una imagen
             if not file.content_type.startswith('image/'):
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': 'Tipo de archivo no válido',
+                    'objeto_detectado': 'No es una imagen'
+                })
                 continue
+            
+            # ✨ VALIDACIÓN CANINA - Verificar que la imagen sea de un perro
+            try:
+                resultado_validacion = validator.validar_desde_file(file)
+            except Exception as e:
+                logger.error(f"Error al validar imagen '{file.name}': {e}", exc_info=True)
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': f'Error al procesar imagen: {str(e)}',
+                    'objeto_detectado': 'Error de validación'
+                })
+                continue
+            
+            if not resultado_validacion['es_canino']:
+                logger.warning(f"Imagen '{file.name}' rechazada: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': resultado_validacion['mensaje'],
+                    'objeto_detectado': resultado_validacion['objeto_detectado'],
+                    'confianza': resultado_validacion['confianza']
+                })
+                continue
+            
+            logger.info(f"Imagen '{file.name}' validada: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
                 
             # Crear objeto ImagenMascota (sin procesar aún)
             imagen = ImagenMascota.objects.create(
@@ -233,11 +271,22 @@ def upload_biometria_image(request):
             
         # Obtener conteo final
         final_count = mascota.imagenes.filter(is_biometrica=True).count()
+        
+        # Construir mensaje de respuesta
+        mensaje_partes = []
+        if count > 0:
+            mensaje_partes.append(f'{count} imagen{"es" if count != 1 else ""} subida{"s" if count != 1 else ""} correctamente')
+        if imagenes_rechazadas:
+            mensaje_partes.append(f'{len(imagenes_rechazadas)} imagen{"es" if len(imagenes_rechazadas) != 1 else ""} rechazada{"s" if len(imagenes_rechazadas) != 1 else ""}')
+        
+        mensaje_final = ' y '.join(mensaje_partes) if mensaje_partes else 'No se subieron imágenes'
             
         return JsonResponse({
             'success': True, 
-            'count': count, 
-            'message': f'{count} imágenes subidas correctamente',
+            'count': count,
+            'rechazadas_count': len(imagenes_rechazadas),
+            'rechazadas': imagenes_rechazadas,
+            'message': mensaje_final,
             'images_count': final_count,
             'images_remaining': max(0, 20 - final_count),
             'limit_reached': final_count >= 20,
@@ -284,6 +333,41 @@ def upload_biometria_base64(request):
             
         # Decodificar base64
         imagen_data = base64.b64decode(imagen_base64)
+        
+        # ✨ VALIDACIÓN CANINA - Verificar que la imagen sea de un perro
+        try:
+            from ..services.canine_validator import get_validator
+            validator = get_validator()
+            resultado_validacion = validator.validar_desde_bytes(imagen_data)
+        except Exception as e:
+            logger.error(f"Error al validar imagen biométrica: {e}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': 'Error al validar imagen',
+                'validation_error': True,
+                'details': {
+                    'mensaje': f'Error al procesar imagen: {str(e)}',
+                    'objeto_detectado': 'Error de validación',
+                    'confianza': 0.0,
+                    'recomendacion': 'Por favor, intenta con otra imagen o contacta al administrador.'
+                }
+            }, status=500)
+        
+        if not resultado_validacion['es_canino']:
+            logger.warning(f"Imagen rechazada en biometría: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
+            return JsonResponse({
+                'success': False,
+                'error': 'Imagen no válida',
+                'validation_error': True,
+                'details': {
+                    'mensaje': resultado_validacion['mensaje'],
+                    'objeto_detectado': resultado_validacion['objeto_detectado'],
+                    'confianza': resultado_validacion['confianza'],
+                    'recomendacion': 'Por favor, sube una imagen clara de un perro. El sistema detectó que esta imagen no contiene un canino válido.'
+                }
+            }, status=400)
+        
+        logger.info(f"Imagen validada exitosamente: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
         
         # Crear nombre de archivo único
         filename = f"{uuid.uuid4().hex}.jpg"
