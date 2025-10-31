@@ -84,6 +84,12 @@ class AIPredictor:
         self.stage_classes = ['adulto', 'cachorro', 'joven', 'senior']     # alfabético
         self.body_condition_classes = ['delgado', 'normal', 'obeso']       # condición corporal
         
+        # Umbral de confianza mínimo para aceptar predicciones
+        # Las razas entrenadas (Chihuahua, Golden Retriever, Bulldog) suelen tener
+        # confianzas de 98-100%. Si la confianza es menor, probablemente no es
+        # ninguna de las razas entrenadas.
+        self.MIN_BREED_CONFIDENCE = 0.98  # 98% mínimo para considerar válida la predicción
+        
         # Transformaciones para las imágenes (mismas para ambos modelos)
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -440,11 +446,42 @@ class AIPredictor:
                         predicted_breed = self.breed_classes[breed_pred_idx]
                         predicted_stage = self.stage_classes[stage_pred_idx]
                         
-                        # Preparar todas las probabilidades
+                        # Preparar todas las probabilidades PRIMERO (para usar en validación)
                         breed_probabilities = {}
                         for i, breed in enumerate(self.breed_classes):
                             breed_probabilities[breed] = breed_probs[0][i].item()
                         
+                        # ==========================================
+                        # VALIDACIÓN: Verificar confianza de la raza
+                        # ==========================================
+                        # Las razas entrenadas (Chihuahua, Golden Retriever, Bulldog) suelen tener
+                        # confianzas muy altas (98-100%). Si la confianza es baja, significa que
+                        # la imagen probablemente no corresponde a ninguna de las razas entrenadas.
+                        
+                        if breed_confidence < self.MIN_BREED_CONFIDENCE:
+                            logger.warning(f"⚠️ Confianza de raza insuficiente: {breed_confidence:.1%} (mínimo requerido: {self.MIN_BREED_CONFIDENCE:.0%})")
+                            logger.info(f"Probabilidades detectadas: {breed_probabilities}")
+                            
+                            return {
+                                'success': False,
+                                'error': 'breed_not_recognized',
+                                'message': 'La mascota ingresada no pertenece a las razas reconocidas por el sistema',
+                                'details': {
+                                    'explanation': 'El sistema fue entrenado específicamente para reconocer tres razas de perros: Chihuahua, Golden Retriever y Bulldog.',
+                                    'confidence_detected': round(breed_confidence * 100, 1),
+                                    'confidence_required': round(self.MIN_BREED_CONFIDENCE * 100, 0),
+                                    'predicted_breed': predicted_breed,
+                                    'all_probabilities': {
+                                        breed: round(prob * 100, 1)
+                                        for breed, prob in breed_probabilities.items()
+                                    },
+                                    'recommendation': 'Por favor, asegúrese de que la imagen corresponda a un perro de raza Chihuahua, Golden Retriever o Bulldog para obtener predicciones precisas.'
+                                }
+                            }
+                        
+                        logger.info(f"✅ Confianza de raza aceptable: {breed_confidence:.1%} (umbral: {self.MIN_BREED_CONFIDENCE:.0%})")
+                        
+                        # Preparar probabilidades de etapa de vida
                         stage_probabilities = {}
                         for i, stage in enumerate(self.stage_classes):
                             stage_probabilities[stage] = stage_probs[0][i].item()
