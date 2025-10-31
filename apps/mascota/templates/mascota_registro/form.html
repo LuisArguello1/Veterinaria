@@ -79,9 +79,9 @@
                                 <div id="upload-placeholder">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-1"></i>
                                     <div class="flex text-sm text-gray-600 justify-center">
-                                        <label for="{{ form.foto_perfil.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
+                                        <span class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
                                             <span>Subir archivo</span>
-                                        </label>
+                                        </span>
                                     </div>
                                     <p class="text-xs text-gray-500">PNG, JPG hasta 5MB</p>
                                 </div>
@@ -106,6 +106,33 @@
                             <i class="fas fa-magic text-purple-600 mr-2"></i>
                             Predicciones
                         </h4>
+                        
+                        <!-- Panel de error de validación -->
+                        <div id="prediction-error-panel" class="hidden mb-4 p-5 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-300 shadow-sm">
+                            <div class="flex items-start mb-3">
+                                <div class="flex-shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-paw text-white text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="font-bold text-orange-900 text-lg mb-1">¡Ups! Esta imagen no puede ser analizada</h5>
+                                    <p class="text-orange-800 text-sm">Necesitamos una foto que cumpla con los requisitos del sistema</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg p-4 mb-3 border border-orange-200">
+                                <p id="prediction-error-message" class="text-gray-800 text-sm font-medium mb-3"></p>
+                                <div id="prediction-error-details" class="space-y-2"></div>
+                            </div>
+                            
+                            <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                <div class="flex items-start">
+                                    <i class="fas fa-lightbulb text-blue-500 mt-0.5 mr-2 flex-shrink-0"></i>
+                                    <p class="text-blue-800 text-xs font-medium">
+                                        <strong>Tip:</strong> Para obtener los mejores resultados, asegúrate de subir una foto clara de un perro de raza <strong>Chihuahua</strong>, <strong>Golden Retriever</strong> o <strong>Bulldog</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Predicción de raza -->
                         <div id="breed-prediction" class="mb-3 p-3 bg-orange-50 rounded-lg border border-orange-200 hidden">
@@ -367,12 +394,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentPredictions = data.predictions;
                 showPredictions(data.predictions);
             } else {
-                alert('Error en predicción: ' + data.error);
+                // Mostrar error en el panel en lugar de alert
+                showPredictionError(data);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error en la conexión');
+            showPredictionError({
+                message: 'Error de conexión con el servidor',
+                details: {
+                    explanation: 'No se pudo conectar con el servicio de predicción. Por favor, intenta nuevamente.'
+                }
+            });
         })
         .finally(() => {
             predictBtn.disabled = false;
@@ -380,8 +413,123 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    function showPredictionError(data) {
+        // Mostrar el panel de predicciones y el panel de error
+        predictionsPanel.classList.remove('hidden');
+        
+        // Ocultar todos los paneles de predicción exitosa
+        document.getElementById('breed-prediction').classList.add('hidden');
+        document.getElementById('stage-prediction').classList.add('hidden');
+        document.getElementById('body-condition-prediction').classList.add('hidden');
+        
+        // Mostrar panel de error
+        const errorPanel = document.getElementById('prediction-error-panel');
+        const errorMessage = document.getElementById('prediction-error-message');
+        const errorDetails = document.getElementById('prediction-error-details');
+        
+        // Mensaje principal amigable
+        let mainMessage = 'No pudimos analizar esta imagen con suficiente certeza 🤔';
+        if (data.details && data.details.explanation) {
+            mainMessage = data.details.explanation;
+        } else if (data.message) {
+            mainMessage = data.message;
+        }
+        errorMessage.textContent = mainMessage;
+        
+        // Detalles adicionales con diseño mejorado
+        let detailsHTML = '';
+        
+        if (data.details) {
+            // Mostrar confianza con barras de progreso visuales
+            if (data.details.confidence_detected && data.details.confidence_required) {
+                const detected = parseFloat(data.details.confidence_detected);
+                const required = parseFloat(data.details.confidence_required);
+                const percentage = (detected / required) * 100;
+                
+                detailsHTML += `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-medium text-gray-700">Nivel de certeza detectado:</span>
+                            <span class="text-lg font-bold text-orange-600">${detected}%</span>
+                        </div>
+                        
+                        <!-- Barra de progreso visual -->
+                        <div class="relative h-8 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="absolute inset-0 flex items-center justify-between px-3 text-xs font-medium z-10">
+                                <span class="text-gray-600">Detectado: ${detected}%</span>
+                                <span class="text-gray-700">Meta: ${required}%</span>
+                            </div>
+                            <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500" 
+                                 style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-info-circle text-orange-500"></i>
+                            <span>Necesitamos al menos <strong>${required}%</strong> de certeza para garantizar resultados precisos</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Mostrar probabilidades por raza si están disponibles
+            if (data.details.breed_probabilities) {
+                detailsHTML += `
+                    <div class="mt-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-chart-bar text-blue-600"></i>
+                            <span class="font-semibold text-blue-900">Probabilidades detectadas:</span>
+                        </div>
+                        <div class="space-y-2">
+                `;
+                
+                for (const [breed, prob] of Object.entries(data.details.breed_probabilities)) {
+                    const percentage = (prob * 100).toFixed(1);
+                    detailsHTML += `
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 w-32">${breed}:</span>
+                            <div class="flex-1 h-6 bg-white rounded-full overflow-hidden border border-blue-200">
+                                <div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-end px-2 transition-all duration-500" 
+                                     style="width: ${percentage}%">
+                                    <span class="text-xs font-bold text-white">${percentage}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                detailsHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Recomendación amigable
+            if (data.details.recommendation) {
+                detailsHTML += `
+                    <div class="mt-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-lightbulb text-white text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-green-900 mb-1">💡 Consejo útil:</h6>
+                                <p class="text-sm text-green-800">${data.details.recommendation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        errorDetails.innerHTML = detailsHTML;
+        errorPanel.classList.remove('hidden');
+    }
+    
     function showPredictions(predictions) {
         predictionsPanel.classList.remove('hidden');
+        
+        // Ocultar panel de error si estaba visible
+        document.getElementById('prediction-error-panel').classList.add('hidden');
         
         // Mostrar predicción de raza
         if (predictions.breed) {

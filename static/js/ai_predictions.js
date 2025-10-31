@@ -83,7 +83,36 @@ const AIPredictions = (function() {
                 if (onSuccess) onSuccess(data.predictions);
             } else {
                 console.error('Respuesta de error del servidor:', data);
-                if (onError) onError(data && data.error ? data.error : "Error en predicción: respuesta del servidor inválida");
+                
+                // Construir mensaje de error profesional
+                let errorMessage = "Error en la predicción";
+                
+                if (data && data.error === 'breed_not_recognized') {
+                    // Error específico: raza no reconocida
+                    errorMessage = data.message || 'La mascota no pertenece a las razas reconocidas';
+                    
+                    // Si hay detalles adicionales, agregarlos
+                    if (data.details) {
+                        errorMessage += '\n\n';
+                        errorMessage += '📋 ' + data.details.explanation;
+                        
+                        if (data.details.confidence_detected && data.details.confidence_required) {
+                            errorMessage += `\n\n📊 Confianza detectada: ${data.details.confidence_detected}%`;
+                            errorMessage += `\n📊 Confianza requerida: ${data.details.confidence_required}%`;
+                        }
+                        
+                        if (data.details.recommendation) {
+                            errorMessage += '\n\n💡 ' + data.details.recommendation;
+                        }
+                    }
+                } else if (data && data.error) {
+                    // Otros errores
+                    errorMessage = data.error;
+                } else {
+                    errorMessage = "Error en predicción: respuesta del servidor inválida";
+                }
+                
+                if (onError) onError(errorMessage);
             }
         })
         .catch(error => {
