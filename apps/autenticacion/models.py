@@ -68,7 +68,7 @@ class User(AbstractUser):
 
 
 class UserFaceEmbedding(models.Model):
-    """Modelo para almacenar descriptores faciales de usuarios para autenticación biométrica"""
+    """Modelo para almacenar embeddings faciales de usuarios para autenticación biométrica con ArcFace"""
     
     user = models.OneToOneField(
         User,
@@ -77,18 +77,31 @@ class UserFaceEmbedding(models.Model):
         verbose_name="Usuario"
     )
     
-    # Descriptor facial serializado como JSON
-    descriptor_data = models.TextField(
-        default='{}',
-        verbose_name="Descriptor facial",
-        help_text="Descriptor facial (LBP + textura + geométrico) como JSON"
+    # Embedding facial de ArcFace (512 dimensiones)
+    embedding_vector = models.JSONField(
+        default=list,
+        verbose_name="Vector de embedding",
+        help_text="Vector de 512 dimensiones generado por ArcFace ResNet100"
+    )
+    
+    embedding_size = models.IntegerField(
+        default=512,
+        verbose_name="Tamaño del embedding",
+        help_text="Número de dimensiones del vector (512 para ArcFace)"
+    )
+    
+    model_version = models.CharField(
+        max_length=50,
+        default="arcfaceresnet100-8",
+        verbose_name="Versión del modelo",
+        help_text="Versión del modelo ArcFace utilizado"
     )
     
     # Metadatos de la captura
     confidence_score = models.FloatField(
         default=0.0,
         verbose_name="Puntuación de confianza",
-        help_text="Calidad del rostro detectado (0.0 - 1.0)"
+        help_text="Calidad del rostro detectado por YuNet (0.0 - 1.0)"
     )
     
     face_bbox = models.JSONField(

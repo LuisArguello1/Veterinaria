@@ -230,3 +230,10 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB (por defecto es 2.5MB)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB (por defecto es 2.5MB)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240  # Por defecto es 1000
+
+# Configuración CSRF para desarrollo
+if DEBUG:
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
