@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Validación de Imágenes</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba de Validación de Imágenes</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Registro de Usuario</h2>
+        <p>Campo de imagen para registro</p>
+        <input type="file" id="id_image" accept="image/*">
+        <div class="info" id="info1">
+            <strong>Estado:</strong> Esperando selección de archivo...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Perfil de Usuario</h2>
+        <p>Campo de imagen para perfil</p>
+        <input type="file" id="profile_image" accept="image/*">
+        <div class="info" id="info2">
+            <strong>Estado:</strong> Esperando selección de archivo...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Formulario de Administración</h2>
+        <p>Campo de imagen para admin</p>
+        <input type="file" id="admin_image" accept="image/*">
+        <div class="info" id="info3">
+            <strong>Estado:</strong> Esperando selección de archivo...
+        </div>
+    </div>
+
+    <script>
+        // Función de validación reutilizable
+        function validateImageInput(inputElement, infoElement) {
+            inputElement.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    infoElement.innerHTML = `<strong>Archivo seleccionado:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    
+                    // Validar tamaño (5MB máximo)
+                    if (file.size > 5 * 1024 * 1024) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Imagen muy grande',
+                            text: 'La imagen no debe superar los 5MB. Por favor, selecciona una imagen más pequeña.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#d33'
+                        });
+                        e.target.value = ''; // Limpiar el input
+                        infoElement.innerHTML = '<strong style="color: red;">Error:</strong> Imagen rechazada (demasiado grande)';
+                        return;
+                    }
+                    
+                    // Validar tipo de archivo
+                    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+                    if (!validImageTypes.includes(file.type)) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Tipo de archivo inválido',
+                            text: 'Por favor, selecciona un archivo de imagen válido (JPG, PNG, GIF, WEBP).',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#d33'
+                        });
+                        e.target.value = ''; // Limpiar el input
+                        infoElement.innerHTML = '<strong style="color: red;">Error:</strong> Tipo de archivo inválido';
+                        return;
+                    }
+
+                    infoElement.innerHTML = `<strong style="color: green;">✓ Imagen válida:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                }
+            });
+        }
+
+        // Aplicar validación a todos los inputs
+        const input1 = document.getElementById('id_image');
+        const info1 = document.getElementById('info1');
+        validateImageInput(input1, info1);
+
+        const input2 = document.getElementById('profile_image');
+        const info2 = document.getElementById('info2');
+        validateImageInput(input2, info2);
+
+        const input3 = document.getElementById('admin_image');
+        const info3 = document.getElementById('info3');
+        validateImageInput(input3, info3);
+    </script>
+</body>
+</html>

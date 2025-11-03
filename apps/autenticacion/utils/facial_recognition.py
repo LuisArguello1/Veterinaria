@@ -1,6 +1,7 @@
 """
-Sistema de reconocimiento facial usando OpenCV y el modelo YuNet
-Detecta rostros y genera descriptores para autenticación biométrica
+Sistema de reconocimiento facial usando ArcFace + YuNet
+- YuNet: Detección de rostros y landmarks
+- ArcFace: Extracción de embeddings de 512 dimensiones para autenticación biométrica
 """
 import cv2
 import numpy as np
@@ -12,35 +13,54 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class FacialRecognitionSystem:
-    """Sistema de reconocimiento facial para autenticación de usuarios"""
+class ArcFaceSystem:
+    """Sistema de reconocimiento facial con ArcFace ResNet100 + YuNet detector"""
     
-    # Ruta al modelo ONNX de detección facial
-    MODEL_PATH = Path(settings.BASE_DIR) / 'models' / 'face_detection_yunet_2023mar_int8.onnx'
+    # Rutas a los modelos ONNX
+    YUNET_MODEL_PATH = Path(settings.BASE_DIR) / 'models' / 'face_detection_yunet_2023mar_int8.onnx'
+    ARCFACE_MODEL_PATH = Path(settings.BASE_DIR) / 'models' / 'arcfaceresnet100-8.onnx'
     
-    # Parámetros de configuración
-    CONFIDENCE_THRESHOLD = 0.7  # Umbral de confianza para detección
-    NMS_THRESHOLD = 0.3  # Non-maximum suppression
-    TOP_K = 5000  # Máximo de detecciones antes de NMS
+    # Configuración YuNet (Detección)
+    YUNET_CONFIDENCE_THRESHOLD = 0.7  # Umbral de confianza para detección
+    YUNET_NMS_THRESHOLD = 0.3  # Non-maximum suppression
+    YUNET_TOP_K = 5000  # Máximo de detecciones antes de NMS
     
-    # Parámetros para comparación de rostros
-    SIMILARITY_THRESHOLD = 0.65  # Umbral para considerar rostros similares
+    # Configuración ArcFace (Reconocimiento)
+    ARCFACE_SIMILARITY_THRESHOLD = 0.40  # Threshold recomendado para ArcFace (doc oficial)
+    ARCFACE_INPUT_SIZE = (112, 112)  # Tamaño de entrada requerido por ArcFace
+    EMBEDDING_SIZE = 512  # Dimensiones del vector de salida
+    CONFIDENCE_THRESHOLD = 0.7  # Confianza mínima para aceptar registro
     
     def __init__(self):
-        """Inicializa el detector de rostros con YuNet"""
+        """Inicializa YuNet (detector) y ArcFace (recognizer)"""
         try:
-            # Cargar el modelo YuNet
+            # Verificar que existan los modelos
+            if not self.YUNET_MODEL_PATH.exists():
+                raise FileNotFoundError(f"Modelo YuNet no encontrado: {self.YUNET_MODEL_PATH}")
+            if not self.ARCFACE_MODEL_PATH.exists():
+                raise FileNotFoundError(f"Modelo ArcFace no encontrado: {self.ARCFACE_MODEL_PATH}")
+            
+            # Cargar YuNet para detección de rostros
             self.detector = cv2.FaceDetectorYN.create(
-                str(self.MODEL_PATH),
+                str(self.YUNET_MODEL_PATH),
                 "",
-                (320, 320),
-                self.CONFIDENCE_THRESHOLD,
-                self.NMS_THRESHOLD,
-                self.TOP_K
+                (320, 320),  # Tamaño inicial, se ajustará dinámicamente
+                self.YUNET_CONFIDENCE_THRESHOLD,
+                self.YUNET_NMS_THRESHOLD,
+                self.YUNET_TOP_K
             )
-            logger.info("Detector facial YuNet inicializado correctamente")
+            
+            # Cargar ArcFace para reconocimiento facial
+            self.recognizer = cv2.FaceRecognizerSF.create(
+                str(self.ARCFACE_MODEL_PATH),
+                ""
+            )
+            
+            logger.info("✓ YuNet detector inicializado correctamente")
+            logger.info("✓ ArcFace recognizer inicializado correctamente")
+            
         except Exception as e:
-            logger.error(f"Error al inicializar detector facial: {e}")
+            logger.error(f"✗ Error al inicializar sistema de reconocimiento facial: {e}")
             raise
     
     def preprocess_image(self, image_data):
@@ -51,7 +71,7 @@ class FacialRecognitionSystem:
             image_data: bytes o array numpy con la imagen
             
         Returns:
-            numpy.ndarray: Imagen preprocesada
+            numpy.ndarray: Imagen preprocesada en formato BGR
         """
         if isinstance(image_data, bytes):
             # Convertir bytes a numpy array
@@ -63,7 +83,7 @@ class FacialRecognitionSystem:
         if image is None:
             raise ValueError("No se pudo cargar la imagen")
         
-        # Convertir a RGB si es necesario
+        # Convertir a BGR si es necesario (YuNet espera BGR)
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         
@@ -71,13 +91,13 @@ class FacialRecognitionSystem:
     
     def detect_faces(self, image_data):
         """
-        Detecta rostros en la imagen
+        Detecta rostros en la imagen usando YuNet
         
         Args:
             image_data: bytes o numpy array con la imagen
             
         Returns:
-            tuple: (imagen_procesada, lista_de_rostros, confianza)
+            tuple: (imagen_procesada, lista_de_rostros, confianza_max)
         """
         try:
             image = self.preprocess_image(image_data)
@@ -92,194 +112,165 @@ class FacialRecognitionSystem:
             if faces is None or len(faces) == 0:
                 return image, [], 0.0
             
-            # Obtener el rostro con mayor confianza
-            best_face = faces[0]
-            confidence = float(best_face[-1])
+            # Procesar todos los rostros detectados
+            face_list = []
+            for face in faces:
+                confidence = float(face[-1])
+                x, y, w_face, h_face = face[:4].astype(int)
+                landmarks = face[4:14].reshape(5, 2).astype(int)
+                
+                face_info = {
+                    'bbox': [int(x), int(y), int(w_face), int(h_face)],
+                    'landmarks': landmarks.tolist(),
+                    'confidence': confidence
+                }
+                face_list.append(face_info)
             
-            # Extraer coordenadas del bounding box
-            x, y, w, h = best_face[:4].astype(int)
+            # Ordenar por confianza descendente
+            face_list.sort(key=lambda f: f['confidence'], reverse=True)
+            max_confidence = face_list[0]['confidence'] if face_list else 0.0
             
-            # Extraer landmarks (5 puntos faciales)
-            landmarks = best_face[4:14].reshape(5, 2).astype(int)
-            
-            face_info = {
-                'bbox': [int(x), int(y), int(w), int(h)],
-                'landmarks': landmarks.tolist(),
-                'confidence': confidence
-            }
-            
-            return image, [face_info], confidence
+            return image, face_list, max_confidence
             
         except Exception as e:
             logger.error(f"Error en detección de rostros: {e}")
             return None, [], 0.0
     
-    def extract_face_descriptor(self, image_data):
+    def detect_and_validate_single_face(self, image_data):
         """
-        Extrae un descriptor facial de la imagen
+        Detecta rostros y VALIDA que haya exactamente UNO
         
         Args:
             image_data: bytes o numpy array con la imagen
             
         Returns:
-            dict: Diccionario con el descriptor y metadatos
+            tuple: (imagen, face_info, error_message)
+                - Si todo OK: (image, face_info, None)
+                - Si error: (None, None, mensaje_de_error)
         """
         try:
-            image, faces, confidence = self.detect_faces(image_data)
+            image, faces, _ = self.detect_faces(image_data)
             
-            if not faces or confidence < self.CONFIDENCE_THRESHOLD:
-                return None
+            # Validación 1: Sin rostros
+            if not faces or len(faces) == 0:
+                return None, None, "No se detectó ningún rostro. Asegúrate de estar frente a la cámara con buena iluminación."
             
-            face_info = faces[0]
-            x, y, w, h = face_info['bbox']
+            # Validación 2: Múltiples rostros (CRÍTICA)
+            if len(faces) > 1:
+                return None, None, f"Se detectaron {len(faces)} rostros. Solo debe haber UNA persona frente a la cámara."
             
-            # Extraer región del rostro con margen
-            margin = 20
-            x1 = max(0, x - margin)
-            y1 = max(0, y - margin)
-            x2 = min(image.shape[1], x + w + margin)
-            y2 = min(image.shape[0], y + h + margin)
+            # Validación 3: Confianza mínima
+            face = faces[0]
+            if face['confidence'] < self.YUNET_CONFIDENCE_THRESHOLD:
+                return None, None, f"La calidad del rostro es baja ({face['confidence']:.1%}). Mejora la iluminación o acércate a la cámara."
             
-            face_roi = image[y1:y2, x1:x2]
-            
-            # Redimensionar a tamaño estándar
-            face_roi = cv2.resize(face_roi, (128, 128))
-            
-            # Generar descriptor basado en múltiples características
-            descriptor = self._generate_descriptor(face_roi, face_info['landmarks'])
-            
-            return {
-                'descriptor': descriptor,
-                'bbox': face_info['bbox'],
-                'confidence': confidence,
-                'landmarks': face_info['landmarks']
-            }
+            return image, face, None
             
         except Exception as e:
-            logger.error(f"Error al extraer descriptor facial: {e}")
-            return None
+            logger.error(f"Error en validación de rostro: {e}")
+            return None, None, f"Error al procesar imagen: {str(e)}"
     
-    def _generate_descriptor(self, face_roi, landmarks):
+    def extract_face_embedding(self, image_data):
         """
-        Genera un descriptor robusto combinando múltiples características
+        Extrae embedding de 512 dimensiones usando ArcFace
+        
+        Proceso:
+        1. Detecta y valida que haya UN solo rostro
+        2. Alinea el rostro usando landmarks de YuNet
+        3. Extrae embedding con ArcFace (512 dims)
+        4. Normaliza a longitud unitaria
         
         Args:
-            face_roi: Región del rostro normalizada
-            landmarks: Puntos de referencia faciales
+            image_data: bytes o numpy array con la imagen
             
         Returns:
-            list: Descriptor facial normalizado
-        """
-        # Convertir a escala de grises
-        gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
-        
-        # 1. Histograma de LBP (Local Binary Patterns)
-        lbp = self._compute_lbp(gray)
-        hist_lbp = cv2.calcHist([lbp], [0], None, [256], [0, 256])
-        hist_lbp = hist_lbp.flatten() / (hist_lbp.sum() + 1e-7)
-        
-        # 2. Histograma de gradientes orientados (HOG simplificado)
-        gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
-        gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
-        mag, ang = cv2.cartToPolar(gx, gy)
-        hist_hog = cv2.calcHist([ang], [0], None, [18], [0, 2*np.pi])
-        hist_hog = hist_hog.flatten() / (hist_hog.sum() + 1e-7)
-        
-        # 3. Características de textura (Gabor simplificado con diferentes escalas)
-        gabor_features = []
-        for theta in [0, np.pi/4, np.pi/2, 3*np.pi/4]:
-            kernel = cv2.getGaborKernel((21, 21), 5, theta, 10, 0.5, 0)
-            filtered = cv2.filter2D(gray, cv2.CV_32F, kernel)
-            gabor_features.extend([filtered.mean(), filtered.std()])
-        gabor_features = np.array(gabor_features)
-        gabor_features = gabor_features / (np.linalg.norm(gabor_features) + 1e-7)
-        
-        # 4. Características geométricas de landmarks
-        if landmarks and len(landmarks) >= 5:
-            landmarks_arr = np.array(landmarks, dtype=np.float32)
-            # Normalizar landmarks relativos al centro
-            center = landmarks_arr.mean(axis=0)
-            landmarks_norm = (landmarks_arr - center) / (np.linalg.norm(landmarks_arr - center) + 1e-7)
-            geometric_features = landmarks_norm.flatten()
-        else:
-            geometric_features = np.zeros(10)
-        
-        # Combinar todas las características
-        descriptor = np.concatenate([
-            hist_lbp[:64],  # 64 bins del LBP
-            hist_hog,       # 18 bins del HOG
-            gabor_features, # 8 características Gabor
-            geometric_features  # 10 características geométricas
-        ])
-        
-        # Normalizar descriptor final
-        descriptor = descriptor / (np.linalg.norm(descriptor) + 1e-7)
-        
-        return descriptor.tolist()
-    
-    def _compute_lbp(self, gray_image):
-        """
-        Calcula Local Binary Pattern
-        
-        Args:
-            gray_image: Imagen en escala de grises
-            
-        Returns:
-            numpy.ndarray: Imagen con patrones LBP
-        """
-        h, w = gray_image.shape
-        lbp = np.zeros_like(gray_image)
-        
-        for i in range(1, h-1):
-            for j in range(1, w-1):
-                center = gray_image[i, j]
-                code = 0
-                code |= (gray_image[i-1, j-1] >= center) << 7
-                code |= (gray_image[i-1, j] >= center) << 6
-                code |= (gray_image[i-1, j+1] >= center) << 5
-                code |= (gray_image[i, j+1] >= center) << 4
-                code |= (gray_image[i+1, j+1] >= center) << 3
-                code |= (gray_image[i+1, j] >= center) << 2
-                code |= (gray_image[i+1, j-1] >= center) << 1
-                code |= (gray_image[i, j-1] >= center) << 0
-                lbp[i, j] = code
-        
-        return lbp
-    
-    def compare_faces(self, descriptor1, descriptor2):
-        """
-        Compara dos descriptores faciales
-        
-        Args:
-            descriptor1: Primer descriptor (dict o list)
-            descriptor2: Segundo descriptor (dict o list)
-            
-        Returns:
-            tuple: (similaridad, es_coincidencia)
+            tuple: (embedding_dict, error_message)
+                - Si OK: ({'embedding': [...], 'confidence': 0.95, ...}, None)
+                - Si error: (None, mensaje_de_error)
         """
         try:
-            # Extraer descriptores si vienen en formato dict
-            if isinstance(descriptor1, dict):
-                desc1 = np.array(descriptor1.get('descriptor', descriptor1))
-            else:
-                desc1 = np.array(descriptor1)
+            # 1. Detectar y validar un solo rostro
+            image, face_info, error = self.detect_and_validate_single_face(image_data)
             
-            if isinstance(descriptor2, dict):
-                desc2 = np.array(descriptor2.get('descriptor', descriptor2))
-            else:
-                desc2 = np.array(descriptor2)
+            if error:
+                return None, error
             
-            # Calcular similitud coseno
-            similarity = np.dot(desc1, desc2) / (
-                np.linalg.norm(desc1) * np.linalg.norm(desc2) + 1e-7
+            # 2. Preparar datos del rostro para alineación
+            # YuNet devuelve: [x, y, w, h, ...landmarks...]
+            face_data = np.array(
+                face_info['bbox'] + [coord for landmark in face_info['landmarks'] for coord in landmark],
+                dtype=np.float32
             )
             
-            is_match = similarity >= self.SIMILARITY_THRESHOLD
+            # 3. Alinear rostro a 112x112 (requerido por ArcFace)
+            aligned_face = self.recognizer.alignCrop(image, face_data)
             
-            return float(similarity), is_match
+            # 4. Extraer embedding con ArcFace
+            embedding = self.recognizer.feature(aligned_face)
+            
+            # 5. Normalizar a longitud unitaria (para similitud coseno)
+            embedding_norm = embedding / (np.linalg.norm(embedding) + 1e-7)
+            
+            # 6. Preparar resultado
+            result = {
+                'embedding': embedding_norm.flatten().tolist(),
+                'confidence': face_info['confidence'],
+                'bbox': face_info['bbox'],
+                'landmarks': face_info['landmarks'],
+                'embedding_size': len(embedding_norm.flatten()),
+                'model_version': 'arcfaceresnet100-8'
+            }
+            
+            logger.info(f"✓ Embedding extraído: {result['embedding_size']} dims, confianza: {result['confidence']:.2%}")
+            
+            return result, None
             
         except Exception as e:
-            logger.error(f"Error al comparar rostros: {e}")
+            logger.error(f"✗ Error al extraer embedding facial: {e}")
+            return None, f"Error al procesar rostro: {str(e)}"
+    
+    def compare_embeddings(self, embedding1, embedding2):
+        """
+        Compara dos embeddings de ArcFace usando similitud coseno
+        
+        Args:
+            embedding1: dict o list con el primer embedding
+            embedding2: dict o list con el segundo embedding
+            
+        Returns:
+            tuple: (similarity_score, is_match)
+                - similarity_score: float (0.0 - 1.0)
+                - is_match: bool (True si >= threshold)
+        """
+        try:
+            # Extraer embeddings si vienen en formato dict
+            if isinstance(embedding1, dict):
+                emb1 = np.array(embedding1.get('embedding', embedding1))
+            else:
+                emb1 = np.array(embedding1)
+            
+            if isinstance(embedding2, dict):
+                emb2 = np.array(embedding2.get('embedding', embedding2))
+            else:
+                emb2 = np.array(embedding2)
+            
+            # Validar dimensiones
+            if len(emb1) != self.EMBEDDING_SIZE or len(emb2) != self.EMBEDDING_SIZE:
+                logger.warning(f"Dimensiones incorrectas: {len(emb1)} vs {len(emb2)}, esperado: {self.EMBEDDING_SIZE}")
+                return 0.0, False
+            
+            # Similitud coseno (ya están normalizados)
+            similarity = float(np.dot(emb1, emb2))
+            
+            # Aplicar threshold de ArcFace
+            is_match = similarity >= self.ARCFACE_SIMILARITY_THRESHOLD
+            
+            return similarity, is_match
+            
+        except Exception as e:
+            logger.error(f"Error al comparar embeddings: {e}")
+            return 0.0, False
+            logger.error(f"Error al comparar embeddings: {e}")
             return 0.0, False
     
     def draw_face_box(self, image, face_info, is_match=False, similarity=0.0):
@@ -288,9 +279,9 @@ class FacialRecognitionSystem:
         
         Args:
             image: Imagen donde dibujar
-            face_info: Información del rostro
-            is_match: Si hubo coincidencia
-            similarity: Puntuación de similitud
+            face_info: Información del rostro (dict con bbox, landmarks, confidence)
+            is_match: Si hubo coincidencia en reconocimiento
+            similarity: Puntuación de similitud (0.0 - 1.0)
             
         Returns:
             numpy.ndarray: Imagen con el cuadro dibujado
@@ -308,8 +299,8 @@ class FacialRecognitionSystem:
             for point in face_info['landmarks']:
                 cv2.circle(image, tuple(point), 2, color, -1)
         
-        # Agregar texto con la confianza
-        text = f"Conf: {face_info['confidence']:.2f}"
+        # Agregar texto con la confianza y similitud
+        text = f"Det: {face_info['confidence']:.2f}"
         if similarity > 0:
             text += f" | Sim: {similarity:.2f}"
         
@@ -318,30 +309,30 @@ class FacialRecognitionSystem:
         
         return image
     
-    def serialize_descriptor(self, descriptor_data):
+    def serialize_embedding(self, embedding_data):
         """
-        Serializa el descriptor para almacenar en base de datos
+        Serializa el embedding para almacenar en base de datos
         
         Args:
-            descriptor_data: Diccionario con descriptor y metadatos
+            embedding_data: Diccionario con embedding y metadatos
             
         Returns:
-            str: JSON string del descriptor
+            str: JSON string del embedding
         """
-        return json.dumps(descriptor_data)
+        return json.dumps(embedding_data)
     
-    def deserialize_descriptor(self, descriptor_json):
+    def deserialize_embedding(self, embedding_json):
         """
-        Deserializa el descriptor desde la base de datos
+        Deserializa el embedding desde la base de datos
         
         Args:
-            descriptor_json: JSON string del descriptor
+            embedding_json: JSON string del embedding
             
         Returns:
-            dict: Diccionario con descriptor y metadatos
+            dict: Diccionario con embedding y metadatos
         """
-        return json.loads(descriptor_json)
+        return json.loads(embedding_json)
 
 
-# Instancia global del sistema de reconocimiento
-facial_system = FacialRecognitionSystem()
+# Instancia global del sistema de reconocimiento facial con ArcFace
+arcface_system = ArcFaceSystem()

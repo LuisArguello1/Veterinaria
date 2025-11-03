@@ -578,8 +578,26 @@ document.addEventListener('DOMContentLoaded', function() {
             if (files && files.length > 0) {
                 const file = files[0];
                 
+                // ✅ VALIDACIÓN: Verificar tipo de archivo
                 if (!file.type.startsWith('image/')) {
-                    alert('Por favor, selecciona una imagen.');
+                    Swal.fire({
+                        title: 'Archivo no válido',
+                        text: 'Por favor, selecciona una imagen válida (JPG, PNG, etc.)',
+                        icon: 'error',
+                        confirmButtonColor: '#EF4444'
+                    });
+                    return;
+                }
+                
+                // ✅ VALIDACIÓN: Verificar tamaño máximo (5MB)
+                const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+                if (file.size > maxSize) {
+                    Swal.fire({
+                        title: 'Imagen demasiado grande',
+                        text: `La imagen no puede ser mayor a 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+                        icon: 'error',
+                        confirmButtonColor: '#EF4444'
+                    });
                     return;
                 }
                 

@@ -1017,9 +1017,26 @@ function initFileUpload() {
     function handleFileSelect(files) {
         if (!files || files.length === 0) return;
         
-        // Validar que no se suban más de 20 imágenes
+        // ✅ VALIDACIÓN: Validar que no se suban más de 20 imágenes
         if (files.length > 20) {
             showToast('Solo puedes subir un máximo de 20 imágenes por vez', 'error');
+            fileInput.value = ''; // Limpiar la selección
+            return;
+        }
+        
+        // ✅ VALIDACIÓN: Verificar tamaño de cada archivo
+        const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        const filesArray = Array.from(files);
+        const oversizedFiles = filesArray.filter(file => file.size > maxSize);
+        
+        if (oversizedFiles.length > 0) {
+            const fileNames = oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)}MB)`).join(', ');
+            Swal.fire({
+                title: 'Imágenes demasiado grandes',
+                html: `Las siguientes imágenes exceden el límite de 5MB:<br><br><small>${fileNames}</small>`,
+                icon: 'error',
+                confirmButtonColor: '#EF4444'
+            });
             fileInput.value = ''; // Limpiar la selección
             return;
         }

@@ -206,6 +206,16 @@ def upload_biometria_image(request):
             if current_count >= 20:
                 break  # Ya se alcanzó el límite máximo de 20, detener
                 
+            # ✅ VALIDACIÓN: Verificar tamaño máximo de archivo (5MB)
+            max_size = 5 * 1024 * 1024  # 5MB en bytes
+            if file.size > max_size:
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': f'Imagen demasiado grande ({file.size / 1024 / 1024:.2f}MB). Máximo permitido: 5MB',
+                    'objeto_detectado': f'Archivo de {file.size / 1024 / 1024:.2f}MB'
+                })
+                continue
+                
             # Verificar que sea una imagen
             if not file.content_type.startswith('image/'):
                 imagenes_rechazadas.append({
@@ -714,6 +724,14 @@ def upload_image_for_recognition(request):
             return JsonResponse({'success': False, 'error': 'No se proporcionó una imagen'}, status=400)
             
         imagen_file = request.FILES['imagen']
+        
+        # ✅ VALIDACIÓN: Verificar tamaño máximo (5MB)
+        max_size = 5 * 1024 * 1024  # 5MB en bytes
+        if imagen_file.size > max_size:
+            return JsonResponse({
+                'success': False, 
+                'error': f'La imagen es demasiado grande ({imagen_file.size / 1024 / 1024:.2f}MB). Máximo permitido: 5MB'
+            }, status=400)
         
         # Verificar que sea una imagen
         if not imagen_file.content_type.startswith('image/'):
