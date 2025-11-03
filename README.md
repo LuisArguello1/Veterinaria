@@ -1,130 +1,297 @@
-# PET FACE ID - Sistema de Gestión Veterinaria
+# Guía de Instalación - PET FACE ID
 
-Sistema de gestión para clínicas veterinarias que permite administrar usuarios, mascotas, citas y más.
+> Sistema de Gestión Veterinaria con Reconocimiento Facial de Mascotas
 
-## 📋 Contenido
+---
 
-- [Instalación](#-instalación)
-- [Características](#-características)
-- [Cómo Colaborar](#-cómo-colaborar-en-el-proyecto)
-- [Convenciones](#-convenciones)
+## Requisitos Previos
 
-## 🚀 Instalación
+Antes de comenzar, asegúrate de tener instalado:
+
+| Software | Versión Mínima | Enlace de Descarga |
+|----------|----------------|-------------------|
+| **Python** | 3.10+ | [python.org](https://www.python.org/downloads/) |
+| **PostgreSQL** | 14+ | [postgresql.org](https://www.postgresql.org/download/) |
+| **Git** | 2.0+ | [git-scm.com](https://git-scm.com/downloads) |
+
+### Verificar Instalaciones
 
 ```bash
-# Clonar el repositorio
+python --version
+psql --version
+git --version
+```
+
+---
+
+## Instalación Paso a Paso
+
+### **Paso 1:** Clonar el Repositorio
+
+```bash
 git clone https://github.com/LuisArguello1/Veterinaria.git
+```
+```bash
 cd Veterinaria
-
-# Crear entorno virtual
-python -m venv venv
-cd venv/scripts
-activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Realizar migraciones
-python manage.py migrate
-
-# Ejecutar servidor
-python manage.py runserver
-
-# Si instalas librerias extras, actualizar los requirements.txt
-pip freeze > requirements.txt
 ```
-
-## ✨ Características
-
-- **Gestión de usuarios con roles**: Administradores, Veterinarios y Dueños de mascotas
-- **Gestión de mascotas**
-- **Interfaz moderna con diseño responsive**
-- **Sistema de autenticación seguro**
-
-## 📌 Cómo Colaborar en el Proyecto
-
-### 🔹 1. Clonar el repositorio
-
-Primero descarga el proyecto en tu máquina:
-
-```bash
-git clone https://github.com/LuisArguello1/Veterinaria.git
-```
-
-### 🔹 2. Actualizar cambios antes de trabajar
-
-Siempre asegúrate de tener la última versión de master:
-
-```bash
-git checkout master
-git pull origin master
-```
-
-### 🔹 3. Crear una nueva rama
-
-Nunca trabajes directo en master.
-Ejemplo si trabajas en el módulo de citas:
-
-```bash
-git checkout -b feature/citas
-```
-
-### 🔹 4. Guardar y subir tus cambios
-
-Agrega tus cambios al repositorio:
-
-```bash
-git add .
-git commit -m "feat: módulo de citas creado"
-git push origin feature/citas
-```
-
-### 🔹 5. Crear un Pull Request (PR)
-
-1. Ve a GitHub → aparecerá la opción **Compare & pull request**
-2. Describe tus cambios claramente
-3. Solicita el merge hacia master
-4. El líder del proyecto revisará y aprobará el merge
-
-## 📌 Convenciones
-
-### Convenciones de Ramas
-
-- `feature/nombre_funcionalidad` → nuevas funcionalidades
-- `fix/nombre_bug` → correcciones de errores
-- `hotfix/nombre_bug` → parches urgentes en producción
-
-**Ejemplos:**
-```bash
-git checkout -b feature/gestion_mascotas
-git checkout -b fix/bug_login
-```
-
-### Convenciones de Commits
-
-Usar prefijos para claridad:
-
-- `feat:` → nueva funcionalidad
-- `fix:` → corrección de errores
-- `refactor:` → mejora de código sin cambiar funcionalidad
-- `style:` → cambios de diseño (HTML, CSS, JS)
-- `docs:` → documentación
-
-**Ejemplos:**
-```bash
-git commit -m "feat: gestión de usuarios con roles ADMIN, OWNER, VET"
-git commit -m "fix: error en validación de cédula"
-```
-
-## 📌 Recomendaciones Rápidas
-
-- **Antes de empezar** → `git pull origin master`
-- **Trabaja siempre en tu propia rama**
-- **Haz commits claros y descriptivos**
-- **Sube tus cambios** → `git push origin tu_rama`
-- **Crea un Pull Request en GitHub**
-- **El líder revisa y hace el merge a master**
 
 
 ---
 
+### **Paso 2:** Crear y Activar el Entorno Virtual
+
+#### En Windows (CMD):
+```cmd
+python -m venv venv
+```
+```cmd
+cd venv/scripts
+```
+```cmd
+activate
+```
+
+#### En Linux/Mac:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+> 💡 **Nota:** Verás `(venv)` al inicio de tu terminal cuando esté activado correctamente.
+
+---
+
+### **Paso 3:** Instalar Dependencias
+
+Con el entorno virtual activado, instala todas las dependencias del proyecto:
+
+```bash
+pip install -r requirements.txt
+```
+
+**Dependencias principales:**
+- Django 5.2.6 (Framework web)
+- psycopg2 (Conexión PostgreSQL)
+- OpenCV (Reconocimiento facial)
+- Django Tailwind (Estilos CSS)
+- Pillow, NumPy (Procesamiento de imágenes)
+
+Este proceso puede tomar algunos minutos...
+
+---
+
+### **Paso 4:** Configurar la Base de Datos
+
+El proyecto utiliza PostgreSQL y las credenciales se encuentran en el archivo `.env` que está incluido en el repositorio.
+
+#### Verificar archivo `.env`
+
+Asegúrate de que el archivo `.env` en la raíz del proyecto contenga las siguientes variables:
+
+```env
+# Django Settings
+SECRET_KEY=tu-clave-secreta
+DEBUG=True
+
+# Database Configuration
+DB_NAME=nombre_de_tu_base_de_datos
+DB_USER=tu_usuario_postgres
+DB_PASSWORD=tu_contraseña
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+#### 🗄️ Crear la Base de Datos en PostgreSQL
+
+Abre **pgAdmin** y crea una nueva base de datos 
+
+> ⚠️ **Importante:** El nombre de la base de datos debe coincidir con `DB_NAME` en tu archivo `.env`
+---
+
+### **Paso 5:** Realizar las Migraciones
+
+Genera y aplica las migraciones para crear las tablas en la base de datos:
+
+```bash
+python manage.py makemigrations
+```
+```bash
+python manage.py migrate
+```
+
+**Salida esperada:**
+```
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying autenticacion.0001_initial... OK
+  Applying mascota.0001_initial... OK
+  ...
+```
+
+---
+
+### **Paso 6:** Crear el Superusuario
+
+Ejecuta el script personalizado para crear el superusuario:
+
+```bash
+python createsuperuser.py
+```
+
+**Credenciales por defecto:**
+- 👤 **Usuario:** Admin
+- 📧 **Email:** admin@gmail.com
+- 🔑 **Contraseña:** admin123
+
+> 💡 **Nota:** Si el usuario ya existe, el script te mostrará la información actual sin crear uno nuevo.
+
+---
+
+### **Paso 7:** Verificar el Proyecto
+
+Ejecuta el siguiente comando para verificar que no hay errores de configuración:
+
+```bash
+python manage.py check
+```
+
+**Salida esperada:**
+```
+System check identified no issues (0 silenced).
+```
+
+✅ Si ves este mensaje, ¡todo está configurado correctamente!
+
+---
+
+### **Paso 8:** Ejecutar el Servidor de Desarrollo
+
+Inicia el servidor de desarrollo de Django:
+
+```bash
+python manage.py runserver
+```
+
+**Salida esperada:**
+```
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+November 01, 2025 - 10:30:00
+Django version 5.2.6, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+```
+
+---
+
+## 🌐 Acceder al Sistema
+
+### Aplicación Principal
+```
+http://127.0.0.1:8000/
+```
+
+### Panel de Administración
+```
+http://127.0.0.1:8000/admin/
+```
+- **Email:** admin@gmail.com
+- **Contraseña:** admin123
+
+---
+
+## 📝 Resumen de Comandos
+
+Para referencia rápida, aquí están todos los comandos en secuencia:
+
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/LuisArguello1/Veterinaria.git
+cd Veterinaria
+
+# 2. Crear y activar entorno virtual
+python -m venv venv
+cd venv/scripts
+activate
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Configurar .env (verificar que exista y esté configurado)
+
+# 5. Realizar migraciones
+python manage.py makemigrations
+python manage.py migrate
+
+# 6. Crear superusuario
+python createsuperuser.py
+
+# 7. Verificar proyecto
+python manage.py check
+
+# 8. Ejecutar servidor
+python manage.py runserver
+```
+
+---
+
+## ❓ Solución de Problemas Comunes
+
+### 🔴 Error: "No module named 'django'"
+
+**Causa:** El entorno virtual no está activado o las dependencias no se instalaron.
+
+**Solución:**
+```bash
+cd venv\Scripts
+activate
+
+pip install -r requirements.txt
+```
+
+---
+
+### 🔴 Error de conexión a PostgreSQL
+
+**Causa:** PostgreSQL no está corriendo o las credenciales en `.env` son incorrectas.
+Verifica que el nombre de la base de datos en el archivo `.env` sea igual a la base de datos que creaste en pgadmin.
+
+
+### 🔴 Error: "SECRET_KEY not found"
+
+**Causa:** El archivo `.env` no existe o no contiene la variable SECRET_KEY.
+
+**Solución:** Verifica que el archivo `.env` esté en la raíz del proyecto con todas las variables necesarias.
+
+---
+
+### 🔴 Error: "El usuario 'admin' ya existe"
+
+**Causa:** Ya ejecutaste el script `createsuperuser.py` anteriormente.
+
+**Solución:** Este no es un error, el script simplemente te informa que el usuario ya existe. Puedes usar las credenciales existentes para iniciar sesión.
+---
+## 👥 Soporte
+
+Si encuentras algún problema durante la instalación:
+
+1. Revisa la sección **Solución de Problemas Comunes**
+2. Verifica que todos los requisitos previos estén instalados
+3. Consulta con el equipo de desarrollo del proyecto
+
+---
+
+## ⚠️ Notas Importantes
+
+- ✅ El archivo `.env` está incluido en el repositorio (para desarrollo)
+- ✅ Asegúrate de tener PostgreSQL corriendo antes de las migraciones
+- ✅ Usa `python createsuperuser.py` en lugar de `manage.py createsuperuser`
+- ✅ Ejecuta `python manage.py check` antes de iniciar el servidor
+- ✅ Los modelos de IA están en la carpeta `/models/`
+
+---
+
+**¡Listo! Ahora puedes comenzar a trabajar con PET FACE ID**
