@@ -17,12 +17,12 @@ def create_superuser():
     """Crear un superusuario con datos predefinidos"""
     
     # Datos del superusuario
-    username = 'Luis'
-    email = 'luisarguello829@gmail.com'
+    username = 'Admin'
+    email = 'admin@gmail.com'
     password = 'admin123'
     first_name = 'Administrador'
     last_name = 'Sistema'
-    dni = '0919504548'
+    dni = '0921235651'
     phone = '0987654321'
     direction = 'Dirección de la Veterinaria'
     
@@ -123,9 +123,9 @@ def create_custom_superuser():
             password=password,
             first_name=first_name,
             last_name=last_name,
-            dni=dni if dni else None,
-            phone=phone if phone else None,
-            direction=direction if direction else None,
+            dni=dni if dni else "0943986778",
+            phone=phone if phone else "00000000",
+            direction=direction if direction else "No colocada",
             role=User.Role.ADMIN
         )
         

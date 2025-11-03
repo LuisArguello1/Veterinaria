@@ -198,8 +198,15 @@ class FacialRecognitionManager {
                 this.drawFaceBox(data.bbox, data.confidence);
             } else {
                 this.faceDetected = false;
-                this.updateStatus('Buscando rostro...', 'detecting');
-                this.clearOverlay();
+                
+                // Manejar error de múltiples rostros
+                if (data.error_type === 'multiple_faces') {
+                    this.updateStatus('⚠️ ' + data.message, 'warning');
+                    this.drawMultipleFacesWarning();
+                } else {
+                    this.updateStatus('Buscando rostro...', 'detecting');
+                    this.clearOverlay();
+                }
             }
             
         } catch (error) {
@@ -257,7 +264,13 @@ class FacialRecognitionManager {
                     window.location.reload();
                 }, 2000);
             } else {
-                this.updateStatus('Error al registrar biometría', 'error');
+                // Manejar diferentes tipos de error
+                if (data.error_type === 'multiple_faces') {
+                    this.updateStatus('⚠️ ' + data.message, 'warning');
+                    this.drawMultipleFacesWarning();
+                } else {
+                    this.updateStatus('Error al registrar biometría', 'error');
+                }
                 this.showNotification('error', data.message);
             }
             
@@ -507,6 +520,50 @@ class FacialRecognitionManager {
     clearOverlay() {
         const ctx = this.overlay.getContext('2d');
         ctx.clearRect(0, 0, this.overlay.width, this.overlay.height);
+    }
+    
+    drawMultipleFacesWarning() {
+        const ctx = this.overlay.getContext('2d');
+        ctx.clearRect(0, 0, this.overlay.width, this.overlay.height);
+        
+        // Overlay rojo semitransparente
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+        ctx.fillRect(0, 0, this.overlay.width, this.overlay.height);
+        
+        // Borde rojo pulsante
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, this.overlay.width - 8, this.overlay.height - 8);
+        
+        // Icono de advertencia centrado
+        const centerX = this.overlay.width / 2;
+        const centerY = this.overlay.height / 2;
+        
+        // Círculo de fondo
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 40, 50, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Símbolo de advertencia (!)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 60px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', centerX, centerY - 40);
+        
+        // Texto de advertencia
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('MÚLTIPLES ROSTROS DETECTADOS', centerX, centerY + 30);
+        
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Solo debe haber UNA persona frente a la cámara', centerX, centerY + 60);
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
     }
     
     updateStatus(message, type) {

@@ -300,6 +300,33 @@ document.addEventListener('DOMContentLoaded', function() {
     fotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            // ✅ VALIDACIÓN: Verificar tamaño máximo (5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+            if (file.size > maxSize) {
+                Swal.fire({
+                    title: 'Imagen demasiado grande',
+                    text: `La imagen no puede ser mayor a 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                fotoInput.value = ''; // Limpiar input
+                resetPhotoUpload();
+                return;
+            }
+            
+            // ✅ VALIDACIÓN: Verificar tipo de archivo
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    title: 'Archivo no válido',
+                    text: 'Por favor selecciona un archivo de imagen válido (JPG, PNG, etc.)',
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                fotoInput.value = ''; // Limpiar input
+                resetPhotoUpload();
+                return;
+            }
+            
             // Procesar y mostrar la imagen seleccionada
             const reader = new FileReader();
             reader.onload = function(e) {
