@@ -40,6 +40,8 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
+BASE_URL = env('BASE_URL', default='http://localhost:8000')
+
 # Definición de aplicaciones
 INSTALLED_APPS = [
     'django.contrib.admin',

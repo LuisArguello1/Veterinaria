@@ -18,9 +18,53 @@
       
       <div>
         <!-- Acciones del usuario -->
-        <div class="ml-2 md:ml-3 lg:ml-4 flex items-center">
+        <div class="ml-2 md:ml-3 lg:ml-4 flex items-center gap-2">
           {% if request.user.is_authenticated %}
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
+              <!-- Notificaciones -->
+              <div class="relative">
+                <button id="notifications-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-primary-700 transition-colors text-white hover:text-secondary-200 relative focus:outline-none focus:ring-2 focus:ring-secondary-400/30" title="Notificaciones">
+                  <i class="fas fa-bell text-base md:text-lg"></i>
+                  <span id="notifications-badge" class="absolute -top-1 -right-1 bg-danger-500 text-white text-xs font-bold rounded-full h-5 w-5 hidden items-center justify-center animate-pulse">0</span>
+                </button>
+                
+                <!-- Dropdown de notificaciones - Posicionado correctamente -->
+                <div id="notifications-dropdown" class="hidden fixed md:absolute 
+                     left-0 right-0 mx-auto md:left-auto md:right-0 md:mx-0
+                     top-16 md:top-auto mt-0 md:mt-2
+                     w-[95vw] max-w-md md:w-96 lg:w-[28rem]
+                     bg-white rounded-lg shadow-2xl border border-neutral-200 z-[9999] overflow-hidden">
+                  <!-- Header fijo -->
+                  <div class="p-3 md:p-4 border-b border-neutral-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50 sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-bell text-primary-600 text-sm md:text-base"></i>
+                      <h3 class="text-sm md:text-base font-semibold text-dark-800">Notificaciones</h3>
+                    </div>
+                    <button id="mark-all-read" class="text-xs md:text-sm text-primary-600 hover:text-primary-800 font-medium transition-colors hover:underline">
+                      <i class="fas fa-check-double text-[10px] md:text-xs mr-1"></i>
+                      <span class="hidden sm:inline">Marcar todas</span>
+                    </button>
+                  </div>
+                  
+                  <!-- Lista con scroll - Max 3 visibles inicialmente -->
+                  <div id="notifications-list" class="max-h-[50vh] md:max-h-[60vh] lg:max-h-[28rem] overflow-y-auto custom-scrollbar">
+                    <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                    <div class="p-6 text-center text-neutral-500 text-sm">
+                      <i class="fas fa-spinner fa-spin mb-2 text-xl text-primary-500"></i>
+                      <p class="font-medium">Cargando notificaciones...</p>
+                    </div>
+                  </div>
+                  
+                  <!-- Footer con indicador de scroll -->
+                  <div class="p-2 md:p-2.5 border-t border-neutral-100 bg-gradient-to-r from-neutral-50 to-primary-50 text-center hidden" id="notifications-footer">
+                    <p class="text-xs text-neutral-500 font-medium animate-bounce">
+                      <i class="fas fa-chevron-down text-[10px] mr-1 text-primary-600"></i>
+                      Desliza para ver más notificaciones
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <!-- Enlace al perfil -->
               <a href="{% url 'auth:profile' %}" class="group flex items-center gap-3 hover:bg-primary-700 py-1.5 px-3 rounded-lg transition-all duration-200" title="Ver mi perfil">
                 <div class="w-9 h-9 bg-gradient-to-br from-secondary-500 to-secondary-700 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg ring-2 ring-secondary-300/20">

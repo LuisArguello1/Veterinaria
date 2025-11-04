@@ -9,6 +9,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from ..models import Mascota
+from apps.autenticacion.utils.notifications_helper import notify_mascota
+from apps.autenticacion.models import Notification
 
 
 def mascota_info_publica(request, mascota_uuid):
@@ -19,6 +21,17 @@ def mascota_info_publica(request, mascota_uuid):
     try:
         # Buscar mascota por UUID (más seguro que por ID)
         mascota = get_object_or_404(Mascota, uuid=mascota_uuid)
+        
+        # Crear notificación al propietario de que alguien escaneó el QR
+        # Solo si no es el propio dueño quien está escaneando
+        if not request.user.is_authenticated or request.user != mascota.propietario:
+            notify_mascota(
+                user=mascota.propietario,
+                title=f"¡Alguien escaneó el QR de {mascota.nombre}!",
+                message=f"El código QR de {mascota.nombre} ha sido escaneado. Puedes ver los detalles en el perfil de tu mascota.",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.INFO
+            )
         
         context = {
             'mascota': mascota,

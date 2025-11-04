@@ -167,26 +167,11 @@
             </div>
             {% endif %}
 
-            <!-- Códigos QR y Biometría -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div class="text-center">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Código QR</h3>
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        {% if mascota.uuid %}
-                            <p class="text-sm text-gray-600 mb-2">Escanea para acceso público</p>
-                            <a href="{% url 'mascota:qr_info_publica' mascota.uuid %}" 
-                               class="text-blue-600 hover:text-blue-800 text-sm">
-                                Ver información pública →
-                            </a>
-                        {% else %}
-                            <p class="text-sm text-gray-500">UUID no asignado</p>
-                        {% endif %}
-                    </div>
-                </div>
-
+            <!-- Estado Biométrico -->
+            <div class="mb-8">
                 <div class="text-center">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Estado Biométrico</h3>
-                    <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="bg-gray-50 p-4 rounded-lg inline-block">
                         <div class="text-sm text-gray-600 mb-2">
                             Imágenes registradas: {{ mascota.imagenes_count }}
                         </div>

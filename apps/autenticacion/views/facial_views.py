@@ -12,12 +12,14 @@ from django.contrib.auth import login
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django_ratelimit.decorators import ratelimit
+from zoneinfo import ZoneInfo
 import json
 import base64
 import logging
 
-from apps.autenticacion.models import User, UserFaceEmbedding
+from apps.autenticacion.models import User, UserFaceEmbedding, Notification
 from apps.autenticacion.utils.facial_recognition import arcface_system
+from apps.autenticacion.utils.notifications_helper import notify_success, notify_warning
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +195,14 @@ class RegisterFacialBiometryView(LoginRequiredMixin, View):
             
             action = "registrada" if created else "actualizada"
             
+            # Crear notificación de registro/actualización de biometría facial
+            notify_success(
+                user=request.user,
+                title=f"¡Biometría facial {action}!",
+                message=f"Tu reconocimiento facial ha sido {action} exitosamente con una confianza del {embedding_data['confidence']*100:.1f}%. Ya puedes iniciar sesión con tu rostro.",
+                category=Notification.NotificationCategory.BIOMETRIA
+            )
+            
             logger.info(f"Biometría {action} para usuario {request.user.username} - Confianza: {embedding_data['confidence']:.2%}")
             
             return JsonResponse({
@@ -290,6 +300,16 @@ class VerifyFacialLoginView(View):
                 # Iniciar sesión
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 
+                # Crear notificación de inicio de sesión facial con hora de Ecuador
+                hora_ecuador = timezone.now().astimezone(ZoneInfo('America/Guayaquil'))
+                
+                notify_success(
+                    user=user,
+                    title="¡Inicio de sesión facial exitoso!",
+                    message=f"Has iniciado sesión mediante reconocimiento facial el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')} con una confianza del {best_similarity*100:.1f}%.",
+                    category=Notification.NotificationCategory.SYSTEM
+                )
+                
                 logger.info(f"✓ Login facial exitoso: {user.username} (similitud: {best_similarity:.3f})")
                 
                 return JsonResponse({
@@ -341,6 +361,14 @@ class DeleteFacialBiometryView(LoginRequiredMixin, View):
             face_embedding.is_active = False
             face_embedding.allow_login = False
             face_embedding.save()
+            
+            # Crear notificación de eliminación de biometría facial
+            notify_warning(
+                user=request.user,
+                title="Biometría facial eliminada",
+                message="Tu reconocimiento facial ha sido desactivado. Ya no podrás iniciar sesión con tu rostro hasta que lo registres nuevamente.",
+                category=Notification.NotificationCategory.BIOMETRIA
+            )
             
             logger.info(f"Biometría eliminada exitosamente para usuario {request.user.username}")
             
