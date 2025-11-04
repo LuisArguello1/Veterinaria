@@ -6,6 +6,8 @@ from django.http import Http404, JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 
 from apps.mascota.models import Mascota, ImagenMascota, EmbeddingStore
+from apps.autenticacion.utils.notifications_helper import notify_mascota, notify_warning
+from apps.autenticacion.models import Notification
 
 
 class MascotaDeleteView(LoginRequiredMixin, DeleteView):
@@ -21,6 +23,14 @@ class MascotaDeleteView(LoginRequiredMixin, DeleteView):
 
         # Eliminar el objeto
         self.object.delete()
+        
+        # Crear notificación de mascota eliminada
+        notify_warning(
+            user=request.user,
+            title=f"{mascota_nombre} ha sido eliminada",
+            message=f"La mascota {mascota_nombre} y todos sus datos han sido eliminados permanentemente del sistema.",
+            category=Notification.NotificationCategory.MASCOTA
+        )
 
         # Si es una petición AJAX
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -76,6 +86,14 @@ class BiometriaDeleteView(LoginRequiredMixin, DeleteView):
         self.object.biometria_entrenada = False
         self.object.confianza_biometrica = None
         self.object.save()
+        
+        # Crear notificación de biometría eliminada
+        notify_warning(
+            user=request.user,
+            title=f"Biometría de {mascota_nombre} eliminada",
+            message=f"Los datos biométricos de {mascota_nombre} han sido eliminados. Se eliminaron {count_imagenes} imágenes y {embeddings_count} embeddings.",
+            category=Notification.NotificationCategory.MASCOTA
+        )
         
         messages.success(
             request, 

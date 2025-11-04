@@ -10,6 +10,8 @@ import json
 from apps.mascota.forms.registro_form import MascotaRegistroForm
 from apps.mascota.services.ai_predictor import predictor
 from apps.mascota.models import Mascota
+from apps.autenticacion.utils.notifications_helper import notify_mascota
+from apps.autenticacion.models import Notification
 
 
 @login_required
@@ -44,6 +46,15 @@ def registro_mascota_view(request):
             mascota = form.save(commit=False)
             mascota.propietario = request.user
             mascota.save()
+            
+            # Crear notificación de mascota registrada
+            notify_mascota(
+                user=request.user,
+                title=f"¡{mascota.nombre} ha sido registrada!",
+                message=f"Tu mascota {mascota.nombre} ha sido registrada exitosamente en el sistema. Ahora puedes generar su carnet digital.",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.SUCCESS
+            )
             
             messages.success(request, f'¡{mascota.nombre} ha sido registrada exitosamente!')
             return redirect('mascota:main_register')

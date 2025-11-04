@@ -7,7 +7,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from apps.autenticacion.forms.login_form import LoginForm
-from apps.autenticacion.models import User
+from apps.autenticacion.models import User, Notification
+from apps.autenticacion.utils.notifications_helper import notify_success
 
 class LoginView(FormView):
     """Vista para el inicio de sesión de usuarios"""
@@ -26,6 +27,21 @@ class LoginView(FormView):
         if user is not None:
             if user.is_active:
                 login(self.request, user)
+                
+                # Crear notificación de inicio de sesión
+                from django.utils import timezone
+                from zoneinfo import ZoneInfo
+                
+                # Obtener hora actual en zona horaria de Ecuador
+                hora_ecuador = timezone.now().astimezone(ZoneInfo('America/Guayaquil'))
+                
+                notify_success(
+                    user=user,
+                    title="¡Bienvenido de nuevo!",
+                    message=f"Has iniciado sesión exitosamente el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')}.",
+                    category=Notification.NotificationCategory.SYSTEM
+                )
+                
                 messages.success(self.request, f'¡Bienvenido {user.get_full_name()}!')
                 return super().form_valid(form)
             else:

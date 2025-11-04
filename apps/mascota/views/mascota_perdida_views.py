@@ -14,6 +14,8 @@ import json
 
 from ..models import Mascota
 from ..services.mascota_perdida_service import MascotaPerdidaService
+from apps.autenticacion.utils.notifications_helper import notify_mascota
+from apps.autenticacion.models import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +62,16 @@ def reportar_perdida(request, mascota_id):
             mascota, request.user, ubicacion_perdida
         )
         
+        # Crear notificación si fue exitoso
+        if exito:
+            notify_mascota(
+                user=request.user,
+                title=f"¡{mascota.nombre} ha sido reportada como perdida!",
+                message=f"Tu mascota {mascota.nombre} ha sido marcada como perdida. La comunidad será notificada y recibirás alertas si alguien la encuentra.",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.WARNING
+            )
+        
         if request.headers.get('Accept') == 'application/json':
             return JsonResponse({
                 'success': exito,
@@ -99,6 +111,16 @@ def cancelar_reporte_perdida(request, mascota_id):
         
         # Cancelar reporte
         exito, mensaje = MascotaPerdidaService.cancelar_reporte_perdida(mascota, request.user)
+        
+        # Crear notificación si fue exitoso (mascota encontrada)
+        if exito:
+            notify_mascota(
+                user=request.user,
+                title=f"¡{mascota.nombre} ha sido encontrada!",
+                message=f"Tu mascota {mascota.nombre} ya no está marcada como perdida. ¡Qué bueno que la encontraste!",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.SUCCESS
+            )
         
         if request.headers.get('Accept') == 'application/json':
             return JsonResponse({

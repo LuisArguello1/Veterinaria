@@ -36,6 +36,8 @@ from ..services.biometria import (
     BiometriaService, 
     DEPS_INSTALLED
 )
+from apps.autenticacion.utils.notifications_helper import notify_mascota, notify_warning
+from apps.autenticacion.models import Notification
 
 # Configurar logger
 logger = logging.getLogger(__name__)
@@ -533,6 +535,15 @@ def train_model(request, pk):
                 mascota.biometria_entrenada = True
                 mascota.confianza_biometrica = modelo.metricas.get('accuracy', 0.0) if modelo.metricas else 0.8
                 mascota.save()
+                
+                # Crear notificación de biometría registrada
+                notify_mascota(
+                    user=request.user,
+                    title=f"¡Biometría de {mascota.nombre} registrada!",
+                    message=f"El reconocimiento facial de {mascota.nombre} ha sido entrenado exitosamente con una confianza del {mascota.confianza_biometrica*100:.1f}%.",
+                    mascota=mascota,
+                    notification_type=Notification.NotificationType.SUCCESS
+                )
                 
                 return JsonResponse({
                     'success': True,

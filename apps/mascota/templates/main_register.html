@@ -295,14 +295,19 @@
                                             {% endif %}
                                         </div>
                                         
-                                        <!-- Nota informativa -->
-                                        <div class="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                            <div class="flex items-start">
-                                                <i class="fas fa-info-circle text-gray-400 mr-3 mt-0.5"></i>
-                                                <div>
-                                                    <p class="text-sm text-gray-600">
-                                                        <strong>Nota importante:</strong> Estas recomendaciones son generales basadas en las características de {{ data.mascota.nombre }}. 
-                                                        Siempre consulte con un veterinario para obtener consejos específicos sobre la salud y cuidado de su mascota.
+                                        <!-- Zona: Pregunta a VisionCan (estilos futuristas) -->
+                                        <div class="mt-6 rounded-xl border border-gray-700/10 bg-gradient-to-r from-slate-900/5 to-white p-5 shadow-2xl ring-1 ring-indigo-500/8 backdrop-blur-sm">
+                                            <div class="flex items-start space-x-4">
+                                                <div class="flex-shrink-0 flex items-center justify-center bg-black rounded-full w-14 h-14 ring-1 ring-indigo-500/12 shadow-inner">
+                                                    <img src="{% static 'img/chat.png' %}" alt="VisionCan" class="h-8 w-8 object-contain rounded-full" oncontextmenu="return false;">
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="text-lg font-semibold text-gray-800">¿Quieres más orientación sobre el cuidado de <span class="font-extrabold text-primary-700">{{ data.mascota.nombre }}</span>?</h4>
+                                                    <p class="mt-2 text-sm text-gray-600">
+                                                        Pregunta a <span class="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500" style="text-shadow:0 6px 18px rgba(79,70,229,0.12);">VisionCan</span>, nuestro asistente experto en cuidado animal, para recibir recomendaciones claras y personalizadas: planes de alimentación, rutinas de ejercicio, pautas de higiene y consejos de salud.
+                                                    </p>
+                                                    <p class="mt-3 text-xs text-gray-500">
+                                                        VisionCan ofrece orientación informativa y no sustituye la consulta veterinaria. Para diagnósticos o tratamiento, consulte a un profesional.
                                                     </p>
                                                 </div>
                                             </div>

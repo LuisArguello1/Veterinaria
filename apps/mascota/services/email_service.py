@@ -7,6 +7,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.contrib.sites.shortcuts import get_current_site
 from typing import Dict, List, Optional
 import logging
 
@@ -16,6 +17,39 @@ User = get_user_model()
 
 class EmailService:
     """Servicio centralizado para el envío de emails del sistema de mascotas perdidas"""
+    
+    @staticmethod
+    def _get_absolute_url(relative_url: Optional[str]) -> Optional[str]:
+        """
+        Convierte una URL relativa a una URL absoluta
+        
+        Args:
+            relative_url: URL relativa (ej: /media/foto.jpg) o URL absoluta de Azure
+            
+        Returns:
+            URL absoluta (ej: http://localhost:8000/media/foto.jpg) o None
+            
+        Note:
+            Si la URL ya es absoluta (empieza con http:// o https://), 
+            la retorna sin cambios. Esto es útil cuando se usa Azure Storage.
+        """
+        if not relative_url:
+            return None
+        
+        # Si ya es una URL absoluta (Azure Storage, etc.), retornarla sin cambios
+        if relative_url.startswith(('http://', 'https://')):
+            return relative_url
+        
+        # Obtener el dominio base desde settings o usar localhost por defecto
+        # En producción, configurar BASE_URL en settings.py
+        base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+        
+        # Asegurarse que la URL relativa empiece con /
+        if not relative_url.startswith('/'):
+            relative_url = '/' + relative_url
+        
+        # Construir URL absoluta
+        return f"{base_url.rstrip('/')}{relative_url}"
     
     @staticmethod
     def enviar_alerta_mascota_perdida(mascota, ubicacion_perdida: Optional[str] = None) -> bool:
@@ -42,7 +76,7 @@ class EmailService:
                 'mascota': mascota,
                 'propietario': mascota.propietario,
                 'ubicacion_perdida': ubicacion_perdida,
-                'foto_url': mascota.foto_perfil.url if mascota.foto_perfil else None,
+                'foto_url': EmailService._get_absolute_url(mascota.foto_perfil.url) if mascota.foto_perfil else None,
                 'contacto_propietario': {
                     'nombre': mascota.propietario.get_full_name() or mascota.propietario.username,
                     'email': mascota.propietario.email,
@@ -110,7 +144,7 @@ class EmailService:
                 'mascota': mascota,
                 'propietario': mascota.propietario,
                 'datos_encuentro': datos_encuentro,
-                'foto_url': mascota.foto_perfil.url if mascota.foto_perfil else None,
+                'foto_url': EmailService._get_absolute_url(mascota.foto_perfil.url) if mascota.foto_perfil else None,
             }
             
             # Renderizar templates
@@ -158,8 +192,8 @@ class EmailService:
             context = {
                 'mascota': mascota,
                 'propietario': mascota.propietario,
-                'foto_url': mascota.foto_perfil.url if mascota.foto_perfil else None,
-                'fecha_reporte': timezone.now()  # Cambiar por tu dominio en producción
+                'foto_url': EmailService._get_absolute_url(mascota.foto_perfil.url) if mascota.foto_perfil else None,
+                'fecha_reporte': timezone.now()
             }
             
             # Renderizar templates

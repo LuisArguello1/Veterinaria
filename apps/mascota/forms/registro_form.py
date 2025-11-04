@@ -39,63 +39,88 @@ class MascotaRegistroForm(forms.ModelForm):
             'nombre': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Nombre de la mascota',
-                'required': True
+                'required': True,
+                'minlength': '2',
+                'maxlength': '50'
             }),
             'raza': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Raza (se puede predecir automáticamente)',
-                'id': 'id_raza'
+                'id': 'id_raza',
+                'maxlength': '100'
             }),
             'etapa_vida': forms.Select(attrs={
                 'class': 'form-select',
-                'id': 'id_etapa_vida'
+                'id': 'id_etapa_vida',
+                'required': True
             }),
             'edad': forms.NumberInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Edad',
-                'min': '0'
+                'min': '0',
+                'max': '30',
+                'step': '1',
+                'required': True,
+                'id': 'id_edad'
             }),
             'edad_unidad': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True,
+                'id': 'id_edad_unidad'
             }),
             'sexo': forms.Select(attrs={
                 'class': 'form-select',
-                'placeholder': 'Sexo de la mascota'
+                'placeholder': 'Sexo de la mascota',
+                'required': True
             }),
             'fecha_nacimiento': forms.DateInput(attrs={
                 'class': 'form-input',
-                'type': 'date'
+                'type': 'date',
+                'max': 'today',
+                'required': True
             }),
             'peso': forms.NumberInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Peso en kg',
                 'step': '0.1',
-                'min': '0'
+                'min': '0.1',
+                'max': '200',
+                'required': True
             }),
             'color': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Color de la mascota'
+                'placeholder': 'Color de la mascota',
+                'maxlength': '50',
+                'required': True
             }),
             'caracteristicas_especiales': forms.Textarea(attrs={
                 'class': 'form-textarea',
                 'placeholder': 'Características especiales',
-                'rows': 3
+                'rows': 3,
+                'maxlength': '500',
+                'required': True
             }),
             'foto_perfil': forms.FileInput(attrs={
                 'class': 'form-file-input',
                 'accept': 'image/*',
-                'id': 'foto_perfil_input'
+                'id': 'foto_perfil_input',
+                'required': True
             }),
             'estado_corporal': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             })
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Hacer el nombre requerido
+        # Hacer campos obligatorios
         self.fields['nombre'].required = True
+        self.fields['color'].required = True
+        self.fields['estado_corporal'].required = True
+        self.fields['fecha_nacimiento'].required = True
+        self.fields['caracteristicas_especiales'].required = True
         
         # Personalizar choices para etapa_vida usando las del modelo de IA
         ai_stage_choices = predictor.get_stage_choices_for_django()
@@ -135,6 +160,54 @@ class MascotaRegistroForm(forms.ModelForm):
             raise ValidationError("La edad no puede ser negativa.")
         
         return edad
+    
+    def clean(self):
+        """Validación general del formulario, incluyendo fecha de nacimiento vs edad"""
+        cleaned_data = super().clean()
+        
+        fecha_nacimiento = cleaned_data.get('fecha_nacimiento')
+        edad = cleaned_data.get('edad')
+        edad_unidad = cleaned_data.get('edad_unidad')
+        
+        if fecha_nacimiento and edad:
+            from datetime import date
+            
+            # Calcular edad desde fecha de nacimiento
+            hoy = date.today()
+            edad_calculada_anios = hoy.year - fecha_nacimiento.year
+            mes_actual = hoy.month
+            mes_nacimiento = fecha_nacimiento.month
+            
+            # Ajustar si aún no ha cumplido años este año
+            if mes_actual < mes_nacimiento or (mes_actual == mes_nacimiento and hoy.day < fecha_nacimiento.day):
+                edad_calculada_anios -= 1
+            
+            # Calcular meses adicionales
+            meses_adicionales = mes_actual - mes_nacimiento
+            if meses_adicionales < 0:
+                meses_adicionales += 12
+            
+            edad_calculada_total_anios = edad_calculada_anios + (meses_adicionales / 12)
+            
+            # Convertir edad ingresada a años para comparación
+            edad_ingresada_en_anios = edad
+            if edad_unidad == 'meses':
+                edad_ingresada_en_anios = edad / 12
+            
+            # Calcular diferencia
+            diferencia = abs(edad_ingresada_en_anios - edad_calculada_total_anios)
+            
+            # Si la diferencia es mayor a 3 meses (0.25 años), mostrar error
+            if diferencia > 0.25:
+                texto_edad_ingresada = f"{edad} {'año' if edad == 1 else 'años'}" if edad_unidad == 'años' else f"{edad} {'mes' if edad == 1 else 'meses'}"
+                texto_edad_calculada = f"{edad_calculada_anios} {'año' if edad_calculada_anios == 1 else 'años'} y {meses_adicionales} {'mes' if meses_adicionales == 1 else 'meses'}"
+                
+                raise ValidationError(
+                    f"La edad ingresada ({texto_edad_ingresada}) no coincide con la fecha de nacimiento ({texto_edad_calculada}). "
+                    f"Por favor verifica que ambos datos sean correctos."
+                )
+        
+        return cleaned_data
     
     def get_ai_predictions(self):
         """
