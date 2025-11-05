@@ -1,5 +1,6 @@
 from django.urls import path, include
 from apps.autenticacion.views.dashboard import Dashboard
+from apps.autenticacion.views.dashboard_admin import admin_dashboard
 from apps.autenticacion.views.login import LoginView, LogoutView
 from apps.autenticacion.views.profile import ProfileView, ProfileUpdateView, ProfilePasswordChangeView
 from apps.autenticacion.views.users import (
@@ -42,6 +43,9 @@ urlpatterns = [
   
   # Dashboard principal
   path('dashboard/', Dashboard, name="Dashboard"),
+  
+  # Dashboard administrativo (solo para admins)
+  path('admin-dashboard/', admin_dashboard, name="admin_dashboard"),
     
   # Perfil de usuario
   path('profile/', ProfileView.as_view(), name='profile'),

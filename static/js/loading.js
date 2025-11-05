@@ -77,7 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const loadingForms = document.querySelectorAll('form[data-loading="true"]');
   
   loadingForms.forEach(form => {
-    form.addEventListener('submit', function() {
+    let isSubmitting = false; // Bandera para prevenir doble envío
+    
+    form.addEventListener('submit', function(e) {
+      // Prevenir doble envío
+      if (isSubmitting) {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Marcar como enviando
+      isSubmitting = true;
+      
       // Obtener clase personalizada si existe
       const loadingClass = this.getAttribute('data-loading-class') || '';
       const loadingTheme = this.getAttribute('data-loading-theme') || '';
@@ -87,6 +98,23 @@ document.addEventListener('DOMContentLoaded', function() {
         theme: loadingTheme,
         customClass: loadingClass
       });
+      
+      // Deshabilitar el botón de envío
+      const submitButton = this.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+      
+      // Si el formulario falla por validación, resetear después de un momento
+      setTimeout(() => {
+        if (document.querySelector('.text-danger-600, .bg-danger-50')) {
+          isSubmitting = false;
+          if (submitButton) {
+            submitButton.disabled = false;
+          }
+          loading.hide();
+        }
+      }, 500);
     });
   });
 });
