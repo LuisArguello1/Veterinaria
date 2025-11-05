@@ -300,15 +300,27 @@ class VerifyFacialLoginView(View):
                 # Iniciar sesión
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 
-                # Crear notificación de inicio de sesión facial con hora de Ecuador
+                # Crear notificación de inicio de sesión facial con hora de Ecuador (prevenir duplicados)
+                from datetime import timedelta
+                
                 hora_ecuador = timezone.now().astimezone(ZoneInfo('America/Guayaquil'))
                 
-                notify_success(
+                # Verificar si ya existe una notificación de login facial reciente (últimos 10 segundos)
+                recent_facial_login = Notification.objects.filter(
                     user=user,
                     title="¡Inicio de sesión facial exitoso!",
-                    message=f"Has iniciado sesión mediante reconocimiento facial el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')} con una confianza del {best_similarity*100:.1f}%.",
-                    category=Notification.NotificationCategory.SYSTEM
-                )
+                    category=Notification.NotificationCategory.SYSTEM,
+                    created_at__gte=timezone.now() - timedelta(seconds=10)
+                ).exists()
+                
+                # Solo crear la notificación si no hay una reciente
+                if not recent_facial_login:
+                    notify_success(
+                        user=user,
+                        title="¡Inicio de sesión facial exitoso!",
+                        message=f"Has iniciado sesión mediante reconocimiento facial el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')} con una confianza del {best_similarity*100:.1f}%.",
+                        category=Notification.NotificationCategory.SYSTEM
+                    )
                 
                 logger.info(f"✓ Login facial exitoso: {user.username} (similitud: {best_similarity:.3f})")
                 

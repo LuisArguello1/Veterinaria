@@ -28,19 +28,30 @@ class LoginView(FormView):
             if user.is_active:
                 login(self.request, user)
                 
-                # Crear notificación de inicio de sesión
+                # Crear notificación de inicio de sesión (prevenir duplicados verificando notificaciones recientes)
                 from django.utils import timezone
                 from zoneinfo import ZoneInfo
+                from datetime import timedelta
                 
                 # Obtener hora actual en zona horaria de Ecuador
                 hora_ecuador = timezone.now().astimezone(ZoneInfo('America/Guayaquil'))
                 
-                notify_success(
+                # Verificar si ya existe una notificación de login reciente (últimos 10 segundos)
+                recent_login_notification = Notification.objects.filter(
                     user=user,
                     title="¡Bienvenido de nuevo!",
-                    message=f"Has iniciado sesión exitosamente el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')}.",
-                    category=Notification.NotificationCategory.SYSTEM
-                )
+                    category=Notification.NotificationCategory.SYSTEM,
+                    created_at__gte=timezone.now() - timedelta(seconds=10)
+                ).exists()
+                
+                # Solo crear la notificación si no hay una reciente
+                if not recent_login_notification:
+                    notify_success(
+                        user=user,
+                        title="¡Bienvenido de nuevo!",
+                        message=f"Has iniciado sesión exitosamente el {hora_ecuador.strftime('%d/%m/%Y a las %H:%M')}.",
+                        category=Notification.NotificationCategory.SYSTEM
+                    )
                 
                 messages.success(self.request, f'¡Bienvenido {user.get_full_name()}!')
                 return super().form_valid(form)
