@@ -1007,8 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Validar foto de perfil
-        const fotoInput = document.getElementById('foto_perfil_input');
+        // Validar foto de perfil (usa la variable fotoInput ya definida al inicio del script)
         if (fotoInput && !fotoInput.files.length) {
             mostrarError(fotoInput, 'Debes subir una foto de tu mascota');
         }
@@ -1025,97 +1024,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Si todo está bien, enviar el formulario
         event.target.submit();
-                            </div>
-                        </div>
-                    `,
-                    icon: 'error',
-                    confirmButtonColor: '#EF4444',
-                    confirmButtonText: 'Entendido, voy a corregir',
-                    width: '650px',
-                    allowOutsideClick: false
-                });
-                
-                return false;
-            }
-        }
-        
-        // Validar foto de perfil
-        const fotoInput = document.getElementById('foto_perfil_input');
-        if (fotoInput && !fotoInput.files.length) {
-            Swal.fire({
-                title: 'Foto requerida',
-                text: 'Debes subir una foto de tu mascota para continuar',
-                icon: 'warning',
-                confirmButtonColor: '#3b82f6'
-            });
-            formularioValido = false;
-        }
-        
-        // Si hay errores, prevenir envío y mostrar mensaje
-        if (!formularioValido) {
-            event.preventDefault();
-            
-            // Determinar si hay errores de validación específicos o solo campos vacíos
-            const camposConErrores = document.querySelectorAll('.border-red-500');
-            let tieneErroresDeValidacion = false;
-            
-            // Verificar si hay errores en peso o edad (validaciones con rangos)
-            if (pesoInput && pesoInput.classList.contains('border-red-500')) {
-                tieneErroresDeValidacion = true;
-            }
-            if (edadInput && edadInput.classList.contains('border-red-500')) {
-                tieneErroresDeValidacion = true;
-            }
-            
-            let mensajeError = 'Por favor completa todos los campos obligatorios marcados con *';
-            if (tieneErroresDeValidacion) {
-                mensajeError = 'Por favor corrige los valores de los campos resaltados en rojo. Revisa los rangos permitidos.';
-            }
-            
-            Swal.fire({
-                title: tieneErroresDeValidacion ? '❌ Datos Inválidos' : '⚠️ Campos Incompletos',
-                html: `
-                    <div class="text-left p-4">
-                        <div class="bg-${tieneErroresDeValidacion ? 'red' : 'yellow'}-50 border-l-4 border-${tieneErroresDeValidacion ? 'red' : 'yellow'}-500 p-4 rounded-lg mb-4">
-                            <div class="flex items-start">
-                                <i class="fas fa-${tieneErroresDeValidacion ? 'exclamation-circle' : 'exclamation-triangle'} text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-500 text-2xl mr-3 mt-1"></i>
-                                <div>
-                                    <p class="font-semibold text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-800 mb-2">
-                                        ${tieneErroresDeValidacion ? 'Valores fuera de rango' : 'Formulario incompleto'}
-                                    </p>
-                                    <p class="text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-700 text-sm">
-                                        ${mensajeError}
-                                    </p>
-                                    <p class="text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-600 text-xs mt-2">
-                                        Hay ${camposConErrores.length} campo${camposConErrores.length !== 1 ? 's' : ''} con error${camposConErrores.length !== 1 ? 'es' : ''}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-lg">
-                            <p class="text-xs text-blue-800">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                <strong>Sugerencia:</strong> Los campos resaltados en <span class="text-red-600 font-bold">rojo</span> necesitan ser corregidos.
-                            </p>
-                        </div>
-                    </div>
-                `,
-                icon: 'error',
-                confirmButtonColor: '#EF4444',
-                confirmButtonText: 'Corregir',
-                width: '600px',
-                allowOutsideClick: false
-            });
-            
-            // Hacer scroll al primer campo con error
-            const primerError = document.querySelector('.border-red-500');
-            if (primerError) {
-                primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                primerError.focus();
-            }
-        }
-        
-        return formularioValido;
     }
     
     // Variable para controlar envío del formulario

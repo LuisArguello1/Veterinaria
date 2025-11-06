@@ -1008,10 +1008,22 @@ function initFileUpload() {
         }, false);
     });
     
+    // Variable para mantener los archivos seleccionados actualizados
+    let selectedFiles = [];
+    
     // Manejar selección de archivos
     fileInput.addEventListener('change', (e) => {
         handleFileSelect(e.target.files);
     });
+    
+    // Función para actualizar el input de archivos con la lista actual
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+        fileInput.files = dataTransfer.files;
+    }
     
     // Función para manejar archivos seleccionados
     function handleFileSelect(files) {
@@ -1021,6 +1033,7 @@ function initFileUpload() {
         if (files.length > 20) {
             showToast('Solo puedes subir un máximo de 20 imágenes por vez', 'error');
             fileInput.value = ''; // Limpiar la selección
+            selectedFiles = [];
             return;
         }
         
@@ -1038,8 +1051,12 @@ function initFileUpload() {
                 confirmButtonColor: '#EF4444'
             });
             fileInput.value = ''; // Limpiar la selección
+            selectedFiles = [];
             return;
         }
+        
+        // Guardar los archivos en el array
+        selectedFiles = Array.from(files);
         
         // Limpiar previsualizaciones anteriores
         const previewGrid = filePreviewContainer.querySelector('div');
@@ -1048,8 +1065,19 @@ function initFileUpload() {
         }
         filePreviewContainer.classList.remove('hidden');
         
+        // Función para actualizar el botón con el contador
+        function updateUploadButton() {
+            if (selectedFiles.length === 0) {
+                uploadFilesBtn.disabled = true;
+                uploadFilesBtn.innerHTML = '<i class="fas fa-upload mr-2"></i> Subir imágenes';
+            } else {
+                uploadFilesBtn.disabled = false;
+                uploadFilesBtn.innerHTML = `<i class="fas fa-cloud-upload-alt mr-2"></i> Subir ${selectedFiles.length} imagen${selectedFiles.length > 1 ? 'es' : ''}`;
+            }
+        }
+        
         // Mostrar previsualizaciones
-        Array.from(files).forEach((file, index) => {
+        selectedFiles.forEach((file, index) => {
             if (!file.type.startsWith('image/')) return;
             
             const reader = new FileReader();
@@ -1057,12 +1085,14 @@ function initFileUpload() {
             reader.onload = (e) => {
                 const preview = document.createElement('div');
                 preview.className = 'relative group';
+                preview.dataset.fileIndex = index;
+                preview.dataset.fileName = file.name; // Guardar nombre para debugging
                 preview.innerHTML = `
                     <div class="h-24 sm:h-32 w-full rounded-md overflow-hidden bg-gray-100 border border-gray-200">
                         <img src="${e.target.result}" alt="Vista previa" class="h-full w-full object-cover">
                     </div>
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <button type="button" class="remove-file-btn bg-red-600 hover:bg-red-700 text-white p-1 rounded-full" data-index="${index}">
+                        <button type="button" class="remove-file-btn bg-red-600 hover:bg-red-700 text-white p-2 rounded-full" data-index="${index}">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -1076,52 +1106,96 @@ function initFileUpload() {
                     filePreviewContainer.appendChild(preview);
                 }
                 
-                // Evento para eliminar archivo
+                // Evento para eliminar archivo - DELEGADO
                 const removeBtn = preview.querySelector('.remove-file-btn');
-                removeBtn.addEventListener('click', () => {
+                removeBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    const fileIndex = parseInt(removeBtn.dataset.index);
+                    const fileName = preview.dataset.fileName;
+                    
+                    console.log('=== ELIMINANDO ARCHIVO ===');
+                    console.log(`Índice a eliminar: ${fileIndex}`);
+                    console.log(`Nombre: ${fileName}`);
+                    console.log(`Archivos antes: ${selectedFiles.length}`);
+                    console.log('Array antes:', selectedFiles.map((f, i) => `${i}: ${f.name}`));
+                    
+                    // Eliminar el archivo del array
+                    selectedFiles = selectedFiles.filter((file, idx) => idx !== fileIndex);
+                    
+                    console.log(`Archivos después: ${selectedFiles.length}`);
+                    console.log('Array después:', selectedFiles.map((f, i) => `${i}: ${f.name}`));
+                    
+                    // Actualizar el input de archivos
+                    updateFileInput();
+                    
+                    // Eliminar el preview visual
                     preview.remove();
                     
-                    // Si no hay más previsualizaciones, ocultar contenedor
-                    if (filePreviewContainer.children.length === 0) {
+                    // Reindexar todos los previews restantes
+                    const remainingPreviews = filePreviewContainer.querySelectorAll('.relative.group');
+                    console.log(`Previews restantes: ${remainingPreviews.length}`);
+                    
+                    remainingPreviews.forEach((p, newIndex) => {
+                        p.dataset.fileIndex = newIndex;
+                        const btn = p.querySelector('.remove-file-btn');
+                        if (btn) {
+                            btn.dataset.index = newIndex;
+                        }
+                    });
+                    
+                    // Actualizar estado de la interfaz
+                    if (selectedFiles.length === 0) {
                         filePreviewContainer.classList.add('hidden');
-                        uploadFilesBtn.disabled = true;
                     }
+                    
+                    // Actualizar botón
+                    updateUploadButton();
+                    
+                    // Mostrar confirmación
+                    showToast(`Archivo eliminado. ${selectedFiles.length} archivo${selectedFiles.length !== 1 ? 's' : ''} seleccionado${selectedFiles.length !== 1 ? 's' : ''}`, 'info');
+                    
+                    console.log('=== FIN ELIMINACIÓN ===');
                 });
             };
             
             reader.readAsDataURL(file);
         });
         
-        // Habilitar botón de subida si hay archivos
-        uploadFilesBtn.disabled = files.length === 0;
+        // Actualizar botón inicial
+        updateUploadButton();
     }
     
     // Evento de envío del formulario
     fileUploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!fileInput.files || fileInput.files.length === 0) return;
+        // Validar que hay archivos seleccionados
+        if (!selectedFiles || selectedFiles.length === 0) {
+            showToast('No hay archivos seleccionados para subir', 'warning');
+            return;
+        }
         
         try {
+            // Primero, asegurar que fileInput.files esté sincronizado
+            updateFileInput();
+            
             // Obtener el ID de la mascota desde múltiples fuentes
             let mascotaId = null;
             
             // 1. Intentar desde el formulario
-            const formData = new FormData(fileUploadForm);
+            let formData = new FormData(fileUploadForm);
             mascotaId = formData.get('mascota_id');
             
             // 2. Si no está en el formulario, intentar desde la variable global
             if (!mascotaId && window.currentMascotaId) {
                 mascotaId = window.currentMascotaId;
-                formData.set('mascota_id', mascotaId);
             }
             
             // 3. Si no está disponible globalmente, intentar desde la URL
             if (!mascotaId) {
                 mascotaId = new URLSearchParams(window.location.search).get('id');
-                if (mascotaId) {
-                    formData.set('mascota_id', mascotaId);
-                }
             }
             
             // 4. Intentar desde el data-attribute del contenedor biométrico
@@ -1129,7 +1203,6 @@ function initFileUpload() {
                 const biometriaContent = document.querySelector('.biometria-content');
                 if (biometriaContent && biometriaContent.getAttribute('data-mascota-id')) {
                     mascotaId = biometriaContent.getAttribute('data-mascota-id');
-                    formData.set('mascota_id', mascotaId);
                 }
             }
             
@@ -1139,10 +1212,21 @@ function initFileUpload() {
                 return;
             }
             
+            // Recrear FormData con los archivos actualizados
+            formData = new FormData();
+            formData.set('mascota_id', mascotaId);
+            
+            // Agregar solo los archivos de selectedFiles
+            selectedFiles.forEach((file, index) => {
+                formData.append('imagenes', file);
+            });
+            
             console.log(`Subiendo archivos para mascota ID: ${mascotaId}`);
+            console.log(`Número de archivos a subir: ${selectedFiles.length}`);
+            console.log(`Archivos en FormData:`, formData.getAll('imagenes').length);
             
             // Mostrar mensaje de carga con número de archivos
-            const fileCount = fileInput.files.length;
+            const fileCount = selectedFiles.length;
             uploadFilesBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Subiendo ${fileCount} imagen${fileCount > 1 ? 'es' : ''}...`;
             uploadFilesBtn.disabled = true;
             
@@ -1177,6 +1261,7 @@ function initFileUpload() {
                     filePreviewContainer.innerHTML = '';
                     filePreviewContainer.classList.add('hidden');
                     fileInput.value = '';
+                    selectedFiles = []; // Limpiar el array de archivos seleccionados
                     
                     // Si hay imágenes rechazadas, mostrar detalle ANTES de recargar
                     if (data.rechazadas && data.rechazadas.length > 0) {
@@ -1256,8 +1341,16 @@ function initFileUpload() {
             console.error('Error al subir imágenes:', err);
             showToast('Error al subir imágenes', 'error');
         } finally {
+            // Restaurar botón y limpiar interfaz
             uploadFilesBtn.innerHTML = '<i class="fas fa-upload mr-2"></i> Subir imágenes';
             uploadFilesBtn.disabled = false;
+            
+            // Si hubo error, limpiar la selección
+            if (fileInput.files.length === 0 || selectedFiles.length === 0) {
+                filePreviewContainer.innerHTML = '';
+                filePreviewContainer.classList.add('hidden');
+                selectedFiles = [];
+            }
         }
     });
 }
