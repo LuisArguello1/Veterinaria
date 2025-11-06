@@ -298,6 +298,108 @@ Si encuentras algún problema durante la instalación:
 
 ---
 
+## � Guía de Ejecución
+
+Una vez completada la instalación, puedes ejecutar el proyecto de diferentes maneras según tus necesidades.
+
+### **1. Ejecutar en Puerto Predeterminado (8000)**
+
+Esta es la forma más común de ejecutar el servidor de desarrollo:
+
+```bash
+python manage.py runserver
+```
+
+**Acceder a la aplicación:**
+- 🌐 **URL:** `http://127.0.0.1:8000/`
+- 🔗 **También funciona:** `http://localhost:8000/`
+
+**Salida esperada:**
+```
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+November 06, 2025 - 10:30:00
+Django version 5.2.6, using settings 'config.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+```
+
+---
+
+### **2. Ejecutar en Puerto Personalizado**
+
+Si el puerto 8000 está ocupado o prefieres usar otro puerto:
+
+```bash
+python manage.py runserver 8080
+```
+
+> 🔢 Puedes usar cualquier puerto disponible: `3000`, `5000`, `8080`, `9000`, etc.
+
+**Ejemplos de puertos alternativos:**
+
+```bash
+# Puerto 3000
+python manage.py runserver 3000
+
+# Puerto 5000
+python manage.py runserver 5000
+
+# Puerto 9000
+python manage.py runserver 9000
+```
+
+**Acceder a la aplicación:**
+- 🌐 **URL:** `http://127.0.0.1:[PUERTO]/`
+- **Ejemplo:** `http://127.0.0.1:8080/`
+
+---
+
+### **4. Detener el Servidor**
+
+Para detener el servidor de desarrollo:
+
+- **Windows (CMD/PowerShell):** Presiona `CTRL + C`
+- **Linux/Mac:** Presiona `CTRL + C`
+
+Verás un mensaje similar a:
+```
+Quit the server with CTRL-C.
+^C
+```
+
+---
+
+### **Comandos Rápidos de Ejecución**
+
+| Comando | Descripción | URL de Acceso |
+|---------|-------------|---------------|
+| `python manage.py runserver` | Puerto predeterminado (8000) | `http://127.0.0.1:8000/` |
+| `python manage.py runserver 3000` | Puerto personalizado (3000) | `http://127.0.0.1:3000/` |
+
+---
+
+### **Consejos de Ejecución**
+
+✅ **Antes de ejecutar el servidor:**
+```bash
+# 1. Activa el entorno virtual
+cd venv\Scripts
+activate
+
+# 2. Verifica que no haya errores
+python manage.py check
+
+# 3. Aplica migraciones pendientes (si las hay)
+python manage.py migrate
+
+# 4. Ejecuta el servidor
+python manage.py runserver
+```
+
+
 # 📖 Manual de Usuario
 
 ## 🚀 Acceso al Sistema
