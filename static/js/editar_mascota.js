@@ -8,7 +8,21 @@
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`El servidor respondió con HTML en lugar de JSON al cargar datos. Status: ${response.status}`);
+            }
+            
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || `Error del servidor: ${response.status}`);
+                });
+            }
+            
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Llenar el formulario con los datos actuales
@@ -45,8 +59,24 @@
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Error al cargar los datos de la mascota');
+            console.error('Error al cargar datos:', error);
+            console.error('Mensaje:', error.message);
+            
+            let errorMessage = 'Error al cargar los datos de la mascota';
+            
+            if (error.message.includes('HTML en lugar de JSON')) {
+                errorMessage = 'Error en el servidor al cargar los datos. El servidor está devolviendo una página de error. Revisa los logs del servidor.';
+            } else {
+                errorMessage = error.message;
+            }
+            
+            Swal.fire({
+                title: 'Error',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonColor: '#EF4444',
+                footer: 'Revisa la consola del navegador (F12) y los logs del servidor para más detalles'
+            });
         });
     };
     
@@ -104,7 +134,22 @@
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // Verificar si la respuesta es JSON antes de parsear
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`El servidor respondió con HTML en lugar de JSON. Status: ${response.status}`);
+            }
+            
+            // Si el status no es OK, lanzar error con el status
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || `Error del servidor: ${response.status}`);
+                });
+            }
+            
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Actualizar los datos en la interfaz
@@ -137,12 +182,26 @@
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error completo:', error);
+            console.error('Mensaje de error:', error.message);
+            
+            let errorMessage = 'Error de conexión al actualizar la mascota';
+            
+            // Determinar el tipo de error
+            if (error.message.includes('HTML en lugar de JSON')) {
+                errorMessage = 'Error en el servidor. Por favor revisa los logs del servidor para más detalles. El servidor está devolviendo HTML (probablemente una página de error) en lugar de JSON.';
+            } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+            } else {
+                errorMessage = error.message;
+            }
+            
             Swal.fire({
                 title: 'Error',
-                text: 'Error de conexión al actualizar la mascota',
+                text: errorMessage,
                 icon: 'error',
-                confirmButtonColor: '#EF4444'
+                confirmButtonColor: '#EF4444',
+                footer: 'Revisa la consola del navegador (F12) para más detalles'
             });
         })
         .finally(() => {

@@ -84,7 +84,12 @@ class SimpleMascotaRegistroForm(forms.ModelForm):
         """Validación personalizada para la foto de perfil"""
         foto = self.cleaned_data.get('foto_perfil')
         
-        if foto:
+        # Si no hay foto o es False (campo vacío), retornar como está
+        if not foto or foto is False:
+            return foto
+        
+        # Solo validar si es un archivo nuevo (UploadedFile tiene content_type y size)
+        if hasattr(foto, 'content_type') and hasattr(foto, 'size'):
             # Validar tamaño (máximo 5MB)
             if foto.size > 5 * 1024 * 1024:
                 raise ValidationError("La imagen no puede ser mayor a 5MB.")
