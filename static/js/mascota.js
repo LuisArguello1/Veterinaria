@@ -1017,9 +1017,26 @@ function initFileUpload() {
     function handleFileSelect(files) {
         if (!files || files.length === 0) return;
         
-        // Validar que no se suban más de 20 imágenes
+        // ✅ VALIDACIÓN: Validar que no se suban más de 20 imágenes
         if (files.length > 20) {
             showToast('Solo puedes subir un máximo de 20 imágenes por vez', 'error');
+            fileInput.value = ''; // Limpiar la selección
+            return;
+        }
+        
+        // ✅ VALIDACIÓN: Verificar tamaño de cada archivo
+        const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        const filesArray = Array.from(files);
+        const oversizedFiles = filesArray.filter(file => file.size > maxSize);
+        
+        if (oversizedFiles.length > 0) {
+            const fileNames = oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)}MB)`).join(', ');
+            Swal.fire({
+                title: 'Imágenes demasiado grandes',
+                html: `Las siguientes imágenes exceden el límite de 5MB:<br><br><small>${fileNames}</small>`,
+                icon: 'error',
+                confirmButtonColor: '#EF4444'
+            });
             fileInput.value = ''; // Limpiar la selección
             return;
         }
@@ -1147,7 +1164,6 @@ function initFileUpload() {
                     if (data.images_count !== undefined) {
                         successMessage += ` (${data.images_count}/20)`;
                     }
-                    showToast(successMessage, 'success');
                     
                     // Actualizar barra de progreso inmediatamente si hay datos
                     if (data.images_count !== undefined) {
@@ -1162,10 +1178,68 @@ function initFileUpload() {
                     filePreviewContainer.classList.add('hidden');
                     fileInput.value = '';
                     
-                    // Recargar la página después de un breve delay para mostrar el toast y la actualización
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
+                    // Si hay imágenes rechazadas, mostrar detalle ANTES de recargar
+                    if (data.rechazadas && data.rechazadas.length > 0) {
+                        successMessage += `. ${data.rechazadas_count} imagen${data.rechazadas_count > 1 ? 'es' : ''} rechazada${data.rechazadas_count > 1 ? 's' : ''}`;
+                        
+                        // Mostrar toast primero
+                        showToast(successMessage, 'success');
+                        
+                        // Mostrar detalle de imágenes rechazadas con SweetAlert2 si está disponible
+                        if (typeof Swal !== 'undefined') {
+                            const rechazadasHTML = data.rechazadas.map(img => `
+                                <div class="text-left bg-orange-50 border-l-4 border-orange-400 p-2 rounded mb-2">
+                                    <p class="text-sm font-semibold text-gray-800">${img.nombre}</p>
+                                    <p class="text-xs text-gray-700">
+                                        <strong>Detectado:</strong> ${img.objeto_detectado}<br>
+                                        <strong>Confianza:</strong> ${img.confianza ? img.confianza.toFixed(1) + '%' : 'N/A'}
+                                    </p>
+                                </div>
+                            `).join('');
+                            
+                            // Mostrar modal INMEDIATAMENTE (sin setTimeout)
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '⚠️ Algunas imágenes fueron rechazadas',
+                                html: `
+                                    <div class="space-y-2">
+                                        <p class="text-sm text-gray-700 mb-3">
+                                            Las siguientes imágenes no fueron aceptadas porque no contienen caninos válidos:
+                                        </p>
+                                        ${rechazadasHTML}
+                                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mt-3">
+                                            <p class="text-xs text-blue-800">
+                                                <strong>💡 Tip:</strong> Solo se aceptan imágenes claras de perros. 
+                                                El sistema rechazó estas imágenes porque no detectó caninos en ellas.
+                                            </p>
+                                        </div>
+                                    </div>
+                                `,
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#3B82F6',
+                                width: '600px',
+                                allowOutsideClick: false
+                            }).then((result) => {
+                                // Recargar SOLO después de que el usuario cierre el modal
+                                if (result.isConfirmed || result.isDismissed) {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            // Si no hay SweetAlert, recargar con delay normal
+                            setTimeout(() => {
+                                location.reload();
+                            }, 2500);
+                        }
+                    } else {
+                        // Si NO hay rechazadas, mostrar toast y recargar normalmente
+                        showToast(successMessage, 'success');
+                        
+                        // Recargar la página después de un breve delay
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
                 } else {
                     // Manejar errores específicos
                     let errorMessage = data.error || 'Error al subir imágenes';

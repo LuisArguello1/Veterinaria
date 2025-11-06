@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from apps.autenticacion.models import User
 
 class RegisterForm(UserCreationForm):
@@ -94,3 +95,23 @@ class RegisterForm(UserCreationForm):
             raise forms.ValidationError("Esta cédula ya está registrada en el sistema")
             
         return dni
+    
+    def clean_image(self):
+        """
+        Valida que la imagen no exceda 5MB y sea del tipo correcto
+        """
+        image = self.cleaned_data.get('image')
+        if image:
+            # Validar tamaño (5MB máximo)
+            if image.size > 5 * 1024 * 1024:  # 5MB en bytes
+                raise ValidationError(
+                    'La imagen es demasiado grande. El tamaño máximo permitido es 5MB.'
+                )
+            
+            # Validar tipo de archivo
+            if not image.content_type.startswith('image/'):
+                raise ValidationError(
+                    'El archivo debe ser una imagen (JPG, PNG, etc.).'
+                )
+        
+        return image

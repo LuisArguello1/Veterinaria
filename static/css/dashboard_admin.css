@@ -1,0 +1,376 @@
+/* ========================================
+   DASHBOARD ADMINISTRATIVO - ESTILOS
+   Sistema de Gestión Veterinaria
+   ======================================== */
+
+/* Container principal */
+.dashboard-admin-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+}
+
+/* Animaciones para las cards de estadísticas */
+.stat-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efecto de hover para números en cards */
+.stat-card h3 {
+  transition: color 0.3s ease;
+}
+
+.stat-card:hover h3 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Badges de estadísticas */
+.stat-card .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* Iconos en cards */
+.stat-card .rounded-full {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .rounded-full {
+  transform: rotate(10deg) scale(1.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Contenedor de gráficos */
+.chart-container {
+  position: relative;
+  width: 100%;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Títulos de gráficos */
+.chart-container h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-container h3 i {
+  font-size: 1.25rem;
+}
+
+/* Badges en títulos de gráficos */
+.chart-container .badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* Tablas */
+.dashboard-admin-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-admin-container table thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.dashboard-admin-container table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.dashboard-admin-container table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-admin-container table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.dashboard-admin-container table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Números de ranking en tablas */
+.dashboard-admin-container table .ranking-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* Badges en tablas */
+.dashboard-admin-container table .badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* Scrollbar personalizado */
+.dashboard-admin-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-admin-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.dashboard-admin-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.dashboard-admin-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Animaciones de entrada para gráficos */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+canvas {
+  animation: chartFadeIn 0.5s ease-out;
+}
+
+/* Efectos de gradiente para backgrounds */
+.gradient-bg-1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-bg-2 {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-bg-3 {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.gradient-bg-4 {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-admin-container h1 {
+    font-size: 1.875rem;
+  }
+  
+  .stat-card {
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container h3 {
+    font-size: 1rem;
+  }
+  
+  .dashboard-admin-container table {
+    font-size: 0.75rem;
+  }
+  
+  .dashboard-admin-container table th,
+  .dashboard-admin-container table td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-admin-container {
+    padding: 1rem;
+  }
+  
+  .stat-card h3 {
+    font-size: 1.5rem;
+  }
+  
+  .grid {
+    gap: 1rem;
+  }
+}
+
+/* Loading state para gráficos */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #9ca3af;
+}
+
+.chart-loading::after {
+  content: "Cargando datos...";
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Tooltips personalizados */
+.custom-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  color: white;
+  font-size: 0.875rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Print styles */
+@media print {
+  .dashboard-admin-container {
+    background: white;
+  }
+  
+  .stat-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .chart-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Ocultar elementos no necesarios en impresión */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Efectos de shimmer para loading */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+  background-size: 1000px 100%;
+}
+
+/* Colores específicos para badges */
+.badge-blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-green {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-yellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-red {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-purple {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+
+.badge-pink {
+  background-color: #fce7f3;
+  color: #9f1239;
+}
+
+.badge-indigo {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+/* Hover effects para botones de acción */
+.action-button {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-button:active {
+  transform: scale(0.95);
+}

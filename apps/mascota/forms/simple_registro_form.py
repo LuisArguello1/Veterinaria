@@ -1,5 +1,5 @@
-# apps/mascota/forms/simple_registro_form.py
 from django import forms
+from django.core.exceptions import ValidationError
 from apps.mascota.models import Mascota
 
 
@@ -79,3 +79,23 @@ class SimpleMascotaRegistroForm(forms.ModelForm):
         self.fields['etapa_vida'].choices = [('', 'Seleccionar etapa de vida')] + list(self.fields['etapa_vida'].choices)
         self.fields['sexo'].choices = [('', 'Seleccionar sexo')] + list(self.fields['sexo'].choices)
         self.fields['estado_corporal'].choices = [('', 'Seleccionar estado corporal')] + list(self.fields['estado_corporal'].choices)
+    
+    def clean_foto_perfil(self):
+        """Validación personalizada para la foto de perfil"""
+        foto = self.cleaned_data.get('foto_perfil')
+        
+        # Si no hay foto o es False (campo vacío), retornar como está
+        if not foto or foto is False:
+            return foto
+        
+        # Solo validar si es un archivo nuevo (UploadedFile tiene content_type y size)
+        if hasattr(foto, 'content_type') and hasattr(foto, 'size'):
+            # Validar tamaño (máximo 5MB)
+            if foto.size > 5 * 1024 * 1024:
+                raise ValidationError("La imagen no puede ser mayor a 5MB.")
+            
+            # Validar tipo de archivo
+            if not foto.content_type.startswith('image/'):
+                raise ValidationError("El archivo debe ser una imagen.")
+        
+        return foto

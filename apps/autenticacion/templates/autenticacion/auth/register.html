@@ -78,7 +78,7 @@
                     Completa tus datos personales para registrarte como dueño de mascota
                 </p>
                 
-                <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
+                <form method="post" enctype="multipart/form-data" novalidate class="space-y-6" data-loading="true">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
@@ -246,6 +246,11 @@
                                     <i class="fas fa-lock text-gray-400"></i>
                                 </div>
                                 {{ form.password1 }}
+                                <button type="button" 
+                                        onclick="togglePasswordVisibility('{{ form.password1.id_for_label }}')"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600">
+                                    <i id="toggle-icon-{{ form.password1.id_for_label }}" class="fas fa-eye"></i>
+                                </button>
                                 {% if form.password1.errors %}
                                     <p class="mt-1 text-sm text-danger-600">{{ form.password1.errors.0 }}</p>
                                 {% endif %}
@@ -261,6 +266,11 @@
                                     <i class="fas fa-lock text-gray-400"></i>
                                 </div>
                                 {{ form.password2 }}
+                                <button type="button" 
+                                        onclick="togglePasswordVisibility('{{ form.password2.id_for_label }}')"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600">
+                                    <i id="toggle-icon-{{ form.password2.id_for_label }}" class="fas fa-eye"></i>
+                                </button>
                                 {% if form.password2.errors %}
                                     <p class="mt-1 text-sm text-danger-600">{{ form.password2.errors.0 }}</p>
                                 {% endif %}
@@ -287,4 +297,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{% static 'js/register_form.js' %}"></script>
+    <script>
+        // Función para mostrar/ocultar contraseña
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById('toggle-icon-' + fieldId);
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 {% endblock %}

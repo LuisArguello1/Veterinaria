@@ -124,8 +124,13 @@ class FacialLoginSystem {
                     window.location.href = data.redirect_url;
                 }, 1000);
             } else {
-                // Continuar buscando
-                this.updateStatus(data.message || 'Buscando rostro...', 'yellow');
+                // Manejar diferentes tipos de error
+                if (data.error_type === 'multiple_faces') {
+                    this.updateStatus('⚠️ ' + data.message, 'red');
+                    this.drawMultipleFacesWarning();
+                } else {
+                    this.updateStatus(data.message || 'Buscando rostro...', 'yellow');
+                }
             }
         } catch (error) {
             console.error('Error en verificación:', error);
@@ -180,6 +185,47 @@ class FacialLoginSystem {
         ctx.lineTo(x + boxWidth, y + boxHeight);
         ctx.lineTo(x + boxWidth, y + boxHeight - cornerLength);
         ctx.stroke();
+    }
+    
+    drawMultipleFacesWarning() {
+        const ctx = this.overlay.getContext('2d');
+        ctx.clearRect(0, 0, this.overlay.width, this.overlay.height);
+        
+        // Overlay rojo semitransparente
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+        ctx.fillRect(0, 0, this.overlay.width, this.overlay.height);
+        
+        // Borde rojo
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, this.overlay.width - 6, this.overlay.height - 6);
+        
+        // Icono de advertencia
+        const centerX = this.overlay.width / 2;
+        const centerY = this.overlay.height / 2;
+        
+        // Círculo de fondo
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 30, 40, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Símbolo de advertencia
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 50px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', centerX, centerY - 30);
+        
+        // Texto
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('MÚLTIPLES ROSTROS', centerX, centerY + 20);
+        ctx.font = '14px sans-serif';
+        ctx.fillText('Solo una persona debe estar presente', centerX, centerY + 45);
+        ctx.shadowBlur = 0;
     }
     
     updateStatus(message, color) {
