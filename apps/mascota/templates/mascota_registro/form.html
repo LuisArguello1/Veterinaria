@@ -891,69 +891,72 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Validar todos los campos requeridos
     function validarFormulario(event) {
-        let formularioValido = true;
+        event.preventDefault();
+        
+        // Limpiar errores previos
+        document.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+        
+        let hayErrores = false;
+        
+        // Función para mostrar error en input
+        function mostrarError(input, mensaje) {
+            input.classList.add('border-red-500');
+            const errorDiv = document.createElement('p');
+            errorDiv.className = 'error-message text-xs text-red-600 mt-1 font-medium';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i>${mensaje}`;
+            input.parentElement.appendChild(errorDiv);
+            hayErrores = true;
+        }
         
         // Validar nombre
         const nombreInput = document.getElementById('id_nombre');
-        if (nombreInput) {
-            if (!nombreInput.value.trim() || nombreInput.value.trim().length < 2) {
-                validarCampo(nombreInput, 'error-nombre');
-                formularioValido = false;
-            }
+        if (nombreInput && (!nombreInput.value.trim() || nombreInput.value.trim().length < 2)) {
+            mostrarError(nombreInput, 'El nombre debe tener al menos 2 caracteres');
         }
         
         // Validar etapa de vida
         const etapaSelect = document.getElementById('id_etapa_vida');
-        if (etapaSelect && !validarCampo(etapaSelect, 'error-etapa')) {
-            formularioValido = false;
+        if (etapaSelect && !etapaSelect.value) {
+            mostrarError(etapaSelect, 'Selecciona la etapa de vida');
         }
         
         // Validar sexo
         const sexoSelect = document.getElementById('id_sexo');
-        if (sexoSelect && !validarCampo(sexoSelect, 'error-sexo')) {
-            formularioValido = false;
+        if (sexoSelect && !sexoSelect.value) {
+            mostrarError(sexoSelect, 'Selecciona el sexo');
         }
         
         // Validar edad
         const edadInput = document.getElementById('id_edad');
-        if (edadInput) {
-            const validacionEdad = (valor) => {
-                const edad = parseFloat(valor);
-                return !isNaN(edad) && edad > 0 && edad <= 30;
-            };
-            if (!validarCampo(edadInput, 'error-edad', validacionEdad)) {
-                formularioValido = false;
-            }
+        const edadValue = parseFloat(edadInput.value);
+        if (edadInput && (isNaN(edadValue) || edadValue <= 0 || edadValue > 30)) {
+            mostrarError(edadInput, `La edad debe estar entre 0 y 30 (ingresaste: ${edadValue || 'vacío'})`);
         }
         
         // Validar peso
         const pesoInput = document.getElementById('id_peso');
-        if (pesoInput) {
-            const validacionPeso = (valor) => {
-                const peso = parseFloat(valor);
-                return !isNaN(peso) && peso >= 0.1 && peso <= 200;
-            };
-            if (!validarCampo(pesoInput, 'error-peso', validacionPeso)) {
-                formularioValido = false;
-            }
+        const pesoValue = parseFloat(pesoInput.value);
+        if (pesoInput && (isNaN(pesoValue) || pesoValue < 0.1 || pesoValue > 200)) {
+            mostrarError(pesoInput, `El peso debe estar entre 0.1 kg y 200 kg (ingresaste: ${pesoValue || 'vacío'} kg)`);
         }
         
         // Validar color
         const colorInput = document.getElementById('id_color');
-        if (colorInput && !validarCampo(colorInput, 'error-color')) {
-            formularioValido = false;
+        if (colorInput && !colorInput.value.trim()) {
+            mostrarError(colorInput, 'El color es obligatorio');
         }
         
         // Validar estado corporal
         const estadoSelect = document.getElementById('id_estado_corporal');
-        if (estadoSelect && !validarCampo(estadoSelect, 'error-estado_corporal')) {
-            formularioValido = false;
+        if (estadoSelect && !estadoSelect.value) {
+            mostrarError(estadoSelect, 'Selecciona el estado corporal');
         }
         
         // Validar fecha de nacimiento
         const fechaInput = document.getElementById('id_fecha_nacimiento');
-        if (fechaInput && !validarCampo(fechaInput, 'error-fecha_nacimiento')) {
-            formularioValido = false;
+        if (fechaInput && !fechaInput.value) {
+            mostrarError(fechaInput, 'La fecha de nacimiento es obligatoria');
         }
         
         // Validar características especiales
@@ -961,19 +964,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (caracteristicasInput) {
             const texto = caracteristicasInput.value.trim();
             if (!texto || texto.length < 5) {
-                validarCampo(caracteristicasInput, 'error-caracteristicas_especiales');
-                formularioValido = false;
+                mostrarError(caracteristicasInput, 'Describe las características (mínimo 5 caracteres)');
             }
         }
         
-        // Validar que fecha de nacimiento coincida con edad
-        const fechaNacimiento = fechaInput ? fechaInput.value : null;
-        const edad = edadInput ? parseFloat(edadInput.value) : null;
-        const unidad = edadUnidadSelect ? edadUnidadSelect.value : null;
-        
-        if (fechaNacimiento && edad && unidad) {
-            const fechaNac = new Date(fechaNacimiento);
+        // Validar coherencia entre fecha de nacimiento y edad
+        const edadUnidadSelect = document.getElementById('id_edad_unidad');
+        if (fechaInput && fechaInput.value && !isNaN(edadValue) && edadValue > 0 && edadUnidadSelect) {
+            const fechaNac = new Date(fechaInput.value);
             const hoy = new Date();
+            const unidad = edadUnidadSelect.value;
             
             // Calcular edad desde fecha de nacimiento
             let edadCalculadaAnios = hoy.getFullYear() - fechaNac.getFullYear();
@@ -990,46 +990,49 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const edadCalculadaTotalAnios = edadCalculadaAnios + (mesesAdicionales / 12);
-            let edadIngresadaEnAnios = edad;
+            let edadIngresadaEnAnios = edadValue;
             if (unidad === 'meses') {
-                edadIngresadaEnAnios = edad / 12;
+                edadIngresadaEnAnios = edadValue / 12;
             }
             
             const diferencia = Math.abs(edadIngresadaEnAnios - edadCalculadaTotalAnios);
             
-            // Debug: mostrar cálculo
-            console.log('=== Validación Edad vs Fecha ===');
-            console.log('Fecha ingresada:', fechaNacimiento);
-            console.log('Edad ingresada:', edad, unidad);
-            console.log('Edad calculada:', edadCalculadaTotalAnios.toFixed(2), 'años');
-            console.log('Diferencia:', diferencia.toFixed(2), 'años');
-            console.log('Tolerancia:', 0.25, 'años (3 meses)');
-            console.log('¿Pasa validación?:', diferencia <= 0.25);
-            console.log('===============================');
-            
-            // Si la diferencia es mayor a 3 meses, no permitir envío
+            // Si la diferencia es mayor a 3 meses, mostrar error
             if (diferencia > 0.25) {
-                formularioValido = false;
-                
-                event.preventDefault();
-                
-                let textoEdadIngresada = unidad === 'años' ? `${edad} año${edad !== 1 ? 's' : ''}` : `${edad} mes${edad !== 1 ? 'es' : ''}`;
+                let textoEdadIngresada = unidad === 'años' ? `${edadValue} año${edadValue !== 1 ? 's' : ''}` : `${edadValue} mes${edadValue !== 1 ? 'es' : ''}`;
                 let textoEdadCalculada = `${edadCalculadaAnios} año${edadCalculadaAnios !== 1 ? 's' : ''} y ${mesesAdicionales} mes${mesesAdicionales !== 1 ? 'es' : ''}`;
                 
-                Swal.fire({
-                    title: 'Discrepancia en la fecha',
-                    html: `
-                        <p class="text-gray-700 mb-3">La edad ingresada (<strong>${textoEdadIngresada}</strong>) no coincide con la fecha de nacimiento (<strong>${textoEdadCalculada}</strong>).</p>
-                        <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                            <p class="text-sm text-yellow-800">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                Por favor corrige la edad o la fecha de nacimiento para que coincidan antes de continuar.
-                            </p>
+                mostrarError(edadInput, `La edad (${textoEdadIngresada}) no coincide con la fecha de nacimiento (${textoEdadCalculada})`);
+                mostrarError(fechaInput, `Verifica que la fecha coincida con la edad ingresada`);
+            }
+        }
+        
+        // Validar foto de perfil
+        const fotoInput = document.getElementById('foto_perfil_input');
+        if (fotoInput && !fotoInput.files.length) {
+            mostrarError(fotoInput, 'Debes subir una foto de tu mascota');
+        }
+        
+        // Si hay errores, no enviar
+        if (hayErrores) {
+            // Hacer scroll al primer error
+            const primerError = document.querySelector('.border-red-500');
+            if (primerError) {
+                primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
+        }
+        
+        // Si todo está bien, enviar el formulario
+        event.target.submit();
+                            </div>
                         </div>
                     `,
                     icon: 'error',
                     confirmButtonColor: '#EF4444',
-                    confirmButtonText: 'Entendido'
+                    confirmButtonText: 'Entendido, voy a corregir',
+                    width: '650px',
+                    allowOutsideClick: false
                 });
                 
                 return false;
@@ -1070,10 +1073,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             Swal.fire({
-                title: tieneErroresDeValidacion ? 'Datos inválidos' : 'Campos incompletos',
-                text: mensajeError,
+                title: tieneErroresDeValidacion ? '❌ Datos Inválidos' : '⚠️ Campos Incompletos',
+                html: `
+                    <div class="text-left p-4">
+                        <div class="bg-${tieneErroresDeValidacion ? 'red' : 'yellow'}-50 border-l-4 border-${tieneErroresDeValidacion ? 'red' : 'yellow'}-500 p-4 rounded-lg mb-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-${tieneErroresDeValidacion ? 'exclamation-circle' : 'exclamation-triangle'} text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-500 text-2xl mr-3 mt-1"></i>
+                                <div>
+                                    <p class="font-semibold text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-800 mb-2">
+                                        ${tieneErroresDeValidacion ? 'Valores fuera de rango' : 'Formulario incompleto'}
+                                    </p>
+                                    <p class="text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-700 text-sm">
+                                        ${mensajeError}
+                                    </p>
+                                    <p class="text-${tieneErroresDeValidacion ? 'red' : 'yellow'}-600 text-xs mt-2">
+                                        Hay ${camposConErrores.length} campo${camposConErrores.length !== 1 ? 's' : ''} con error${camposConErrores.length !== 1 ? 'es' : ''}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-lg">
+                            <p class="text-xs text-blue-800">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <strong>Sugerencia:</strong> Los campos resaltados en <span class="text-red-600 font-bold">rojo</span> necesitan ser corregidos.
+                            </p>
+                        </div>
+                    </div>
+                `,
                 icon: 'error',
-                confirmButtonColor: '#EF4444'
+                confirmButtonColor: '#EF4444',
+                confirmButtonText: 'Corregir',
+                width: '600px',
+                allowOutsideClick: false
             });
             
             // Hacer scroll al primer campo con error
@@ -1087,9 +1118,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return formularioValido;
     }
     
+    // Variable para controlar envío del formulario
+    let formularioEnviando = false;
+    
     // Agregar validación al submit
     if (registroForm) {
-        registroForm.addEventListener('submit', validarFormulario);
+        registroForm.addEventListener('submit', function(event) {
+            // Prevenir múltiples envíos
+            if (formularioEnviando) {
+                event.preventDefault();
+                return false;
+            }
+            
+            // Validar formulario
+            const esValido = validarFormulario(event);
+            
+            if (esValido) {
+                // Marcar como enviando
+                formularioEnviando = true;
+                
+                // Desactivar botón y mostrar estado de carga
+                btnRegistrar.disabled = true;
+                btnRegistrar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+                btnRegistrar.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+        });
     }
     
     // Validación en tiempo real para mejorar UX

@@ -93,36 +93,101 @@
         const guardarBtn = document.getElementById('guardar-cambios-btn');
         const guardarBtnText = document.getElementById('guardar-btn-text');
         
-        // ✅ VALIDACIÓN: Verificar tamaño de imagen si se seleccionó una nueva
-        const fotoInput = document.getElementById('edit_foto_perfil');
-        if (fotoInput && fotoInput.files.length > 0) {
-            const file = fotoInput.files[0];
-            const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        // Limpiar errores previos
+        document.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+        
+        let hayErrores = false;
+        
+        // Función para mostrar error en input
+        function mostrarError(input, mensaje) {
+            input.classList.add('border-red-500');
+            const errorDiv = document.createElement('p');
+            errorDiv.className = 'error-message text-xs text-red-600 mt-1';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i>${mensaje}`;
+            input.parentElement.appendChild(errorDiv);
+            hayErrores = true;
+        }
+        
+        // ✅ VALIDACIÓN: Verificar edad
+        const edadInput = document.getElementById('edit_edad');
+        const edadValue = parseFloat(edadInput.value);
+        if (isNaN(edadValue) || edadValue <= 0 || edadValue > 30) {
+            mostrarError(edadInput, `La edad debe estar entre 0 y 30 (ingresaste: ${edadValue || 'vacío'})`);
+        }
+        
+        // ✅ VALIDACIÓN: Verificar peso
+        const pesoInput = document.getElementById('edit_peso');
+        const pesoValue = parseFloat(pesoInput.value);
+        if (isNaN(pesoValue) || pesoValue < 0.1 || pesoValue > 200) {
+            mostrarError(pesoInput, `El peso debe estar entre 0.1 kg y 200 kg (ingresaste: ${pesoValue || 'vacío'} kg)`);
+        }
+        
+        // ✅ VALIDACIÓN: Verificar coherencia entre fecha de nacimiento y edad
+        const fechaNacimientoInput = document.getElementById('edit_fecha_nacimiento');
+        const edadUnidadInput = document.getElementById('edit_edad_unidad');
+        
+        if (fechaNacimientoInput.value && !isNaN(edadValue) && edadValue > 0) {
+            const fechaNac = new Date(fechaNacimientoInput.value);
+            const hoy = new Date();
+            const unidad = edadUnidadInput.value;
             
-            if (file.size > maxSize) {
-                Swal.fire({
-                    title: 'Imagen demasiado grande',
-                    text: `La imagen no puede ser mayor a 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
-                    icon: 'error',
-                    confirmButtonColor: '#EF4444'
-                });
-                return;
+            // Calcular edad desde fecha de nacimiento
+            let edadCalculadaAnios = hoy.getFullYear() - fechaNac.getFullYear();
+            const mesActual = hoy.getMonth();
+            const mesNacimiento = fechaNac.getMonth();
+            
+            if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNac.getDate())) {
+                edadCalculadaAnios--;
             }
             
-            if (!file.type.startsWith('image/')) {
-                Swal.fire({
-                    title: 'Archivo no válido',
-                    text: 'Por favor selecciona un archivo de imagen válido (JPG, PNG, etc.)',
-                    icon: 'error',
-                    confirmButtonColor: '#EF4444'
-                });
-                return;
+            let mesesAdicionales = mesActual - mesNacimiento;
+            if (mesesAdicionales < 0) {
+                mesesAdicionales += 12;
+            }
+            
+            const edadCalculadaTotalAnios = edadCalculadaAnios + (mesesAdicionales / 12);
+            let edadIngresadaEnAnios = edadValue;
+            if (unidad === 'meses') {
+                edadIngresadaEnAnios = edadValue / 12;
+            }
+            
+            const diferencia = Math.abs(edadIngresadaEnAnios - edadCalculadaTotalAnios);
+            
+            // Si la diferencia es mayor a 3 meses, mostrar error
+            if (diferencia > 0.25) {
+                let textoEdadIngresada = unidad === 'años' ? `${edadValue} año${edadValue !== 1 ? 's' : ''}` : `${edadValue} mes${edadValue !== 1 ? 'es' : ''}`;
+                let textoEdadCalculada = `${edadCalculadaAnios} año${edadCalculadaAnios !== 1 ? 's' : ''} y ${mesesAdicionales} mes${mesesAdicionales !== 1 ? 'es' : ''}`;
+                
+                mostrarError(edadInput, `La edad (${textoEdadIngresada}) no coincide con la fecha de nacimiento (${textoEdadCalculada})`);
+                mostrarError(fechaNacimientoInput, `Verifica que la fecha coincida con la edad ingresada`);
             }
         }
         
-        // Deshabilitar botón y mostrar loading
+        // ✅ VALIDACIÓN: Verificar tamaño de imagen
+        const fotoInput = document.getElementById('edit_foto_perfil');
+        if (fotoInput && fotoInput.files.length > 0) {
+            const file = fotoInput.files[0];
+            const maxSize = 5 * 1024 * 1024;
+            
+            if (file.size > maxSize) {
+                mostrarError(fotoInput, `Imagen muy grande: ${(file.size / 1024 / 1024).toFixed(2)} MB (máximo 5 MB)`);
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                mostrarError(fotoInput, `Debe ser una imagen (JPG, PNG, etc.)`);
+            }
+        }
+        
+        // Si hay errores, no enviar
+        if (hayErrores) {
+            return;
+        }
+        
+        // ✅ SI TODO ESTÁ BIEN: Proceder con el guardado
         guardarBtn.disabled = true;
-        guardarBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Guardando...';
+        guardarBtnText.textContent = 'Guardando...';
+
         
         const formData = new FormData(this);
         
@@ -164,21 +229,60 @@
                     confirmButtonColor: '#3B82F6'
                 });
             } else {
-                // Mostrar errores
+                // Mostrar errores con mejor formato
                 let errorMessage = data.message || 'Error al actualizar la mascota';
-                if (data.errors) {
-                    const errorList = Object.entries(data.errors)
-                        .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
-                        .join('\n');
-                    errorMessage += '\n\n' + errorList;
-                }
+                let errorHtml = '<div class="text-left">';
                 
-                Swal.fire({
-                    title: 'Error',
-                    text: errorMessage,
-                    icon: 'error',
-                    confirmButtonColor: '#EF4444'
-                });
+                if (data.errors) {
+                    errorHtml += '<p class="mb-3">' + errorMessage + '</p>';
+                    errorHtml += '<div class="space-y-2">';
+                    
+                    // Mapeo de nombres de campos a etiquetas amigables
+                    const fieldLabels = {
+                        'nombre': 'Nombre',
+                        'raza': 'Raza',
+                        'edad': 'Edad',
+                        'peso': 'Peso',
+                        'fecha_nacimiento': 'Fecha de Nacimiento',
+                        'color': 'Color',
+                        'sexo': 'Sexo',
+                        'etapa_vida': 'Etapa de Vida',
+                        'estado_corporal': 'Estado Corporal',
+                        'caracteristicas_especiales': 'Características Especiales',
+                        '__all__': 'Error General'
+                    };
+                    
+                    Object.entries(data.errors).forEach(([field, errors]) => {
+                        const fieldLabel = fieldLabels[field] || field;
+                        errors.forEach(error => {
+                            errorHtml += `
+                                <div class="bg-red-50 border-l-4 border-red-400 p-3 rounded">
+                                    <p class="text-sm">
+                                        <strong class="text-red-800">${fieldLabel}:</strong>
+                                        <span class="text-red-700">${error}</span>
+                                    </p>
+                                </div>
+                            `;
+                        });
+                    });
+                    
+                    errorHtml += '</div></div>';
+                    
+                    Swal.fire({
+                        title: 'Error de Validación',
+                        html: errorHtml,
+                        icon: 'error',
+                        confirmButtonColor: '#EF4444',
+                        width: '600px'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonColor: '#EF4444'
+                    });
+                }
             }
         })
         .catch(error => {

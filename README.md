@@ -295,3 +295,135 @@ Si encuentras algún problema durante la instalación:
 ---
 
 **¡Listo! Ahora puedes comenzar a trabajar con PET FACE ID**
+
+---
+
+# 📖 Manual de Usuario
+
+## 🚀 Acceso al Sistema
+
+Accede a: `http://127.0.0.1:8000/`
+
+**Opciones de inicio:**
+- 🔑 Email y contraseña
+- 👤 Reconocimiento facial (si está configurado)
+
+**Credenciales admin:** `admin@gmail.com` / `admin123`
+
+---
+
+## 👥 Registro de Usuarios
+
+1. Clic en **"Registrarse"**
+2. Completa: Email, nombre, teléfono, dirección, contraseña
+3. Confirma contraseña
+4. **"Registrarse"** → Acceso al dashboard
+
+**Opcional:** Configura reconocimiento facial desde tu perfil
+
+---
+
+## 🐾 Registrar Mascota
+
+### Datos Requeridos
+
+**Información básica:**
+- Nombre (mínimo 2 caracteres)
+- Raza
+- Sexo: Macho/Hembra
+- Etapa de vida: Cachorro/Adulto/Senior
+
+**Datos físicos:**
+- **Edad:** 0-30 (años o meses)
+- **Peso:** 0.1-200 kg
+- Color
+- Estado corporal: Delgado/Normal/Sobrepeso/Obeso
+- Fecha de nacimiento (debe coincidir con edad ±3 meses)
+
+**Otros:**
+- Características especiales (mínimo 5 caracteres)
+- Foto de perfil (requerida, máx 5MB)
+
+### Validaciones Automáticas
+
+Al presionar **"Guardar"**, el sistema valida:
+
+✅ **Edad válida (0-30):**
+- ❌ Error: `⚠️ La edad debe estar entre 0 y 30 (ingresaste: 122)`
+
+✅ **Peso válido (0.1-200 kg):**
+- ❌ Error: `⚠️ El peso debe estar entre 0.1 kg y 200 kg (ingresaste: 12333 kg)`
+
+✅ **Coherencia edad/fecha (±3 meses):**
+- ❌ Error: `⚠️ La edad (12 años) no coincide con la fecha de nacimiento (1 año y 0 meses)`
+
+**Los campos con error muestran borde rojo y mensaje específico debajo**
+
+---
+
+## ✏️ Editar Mascota
+
+1. Clic en ✏️ **"Editar"** en la mascota
+2. Modifica los datos necesarios
+3. **"Guardar Cambios"** → Valida automáticamente
+4. Corrige errores (si hay) y guarda nuevamente
+
+---
+
+## 🎯 Reconocimiento Facial
+
+### Configurar Biometría
+
+1. Accede a detalles de mascota
+2. **"Registrar Biometría"**
+3. Sube **15-20 fotos** de diferentes ángulos:
+   - Frontal, lateral izquierdo, lateral derecho
+   - Buena iluminación, fondo uniforme
+   - Mascota tranquila
+4. **"Procesar y Guardar"**
+
+### Usar Escáner
+
+1. **"Escáner Facial"** desde menú
+2. Toma/sube foto de la mascota
+3. Sistema identifica y muestra información
+4. Contacta propietario si es necesario
+
+---
+
+## 🎨 Funcionalidades Extra
+
+- 📄 **Generar carnet** con QR code
+- 🔍 **Buscar mascotas** por nombre, raza, color
+- 📊 **Dashboard** con estadísticas
+- 🔔 **Notificaciones** automáticas
+
+---
+
+## 💡 Consejos Importantes
+
+### ✅ Hacer:
+- Fotos claras y bien iluminadas
+- Datos precisos (peso real, edad correcta)
+- 15-20 fotos para biometría
+
+### ❌ Evitar:
+- Valores extremos: peso 0 o 12333, edad negativa
+- Imágenes >5MB
+- Menos de 15 fotos biométricas
+
+---
+
+## 🆘 Errores Comunes
+
+| Error | Solución |
+|-------|----------|
+| Edad/fecha no coinciden | Verifica que la edad y fecha sean coherentes (±3 meses) |
+| Peso inválido | Ingresa peso entre 0.1 y 200 kg |
+| Imagen muy grande | Comprime foto a menos de 5MB |
+| Pocas imágenes biométricas | Sube al menos 15 fotos |
+
+---
+
+**Soporte:** Contacta al administrador del sistema  
+**Versión:** 1.0 | **Actualizado:** Noviembre 2025
