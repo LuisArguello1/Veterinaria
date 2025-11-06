@@ -47,7 +47,7 @@
             <div class="bg-white p-4 rounded-lg shadow-sm border border-primary-100">
                 <h3 class="text-md font-semibold text-gray-800 mb-3 flex items-center">
                     <i class="fas fa-camera text-primary-600 mr-2"></i>
-                    Foto de Perfil
+                    Foto de Perfil <span class="text-red-500">*</span>
                     <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Con IA</span>
                 </h3>
                 
@@ -79,9 +79,9 @@
                                 <div id="upload-placeholder">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-1"></i>
                                     <div class="flex text-sm text-gray-600 justify-center">
-                                        <label for="{{ form.foto_perfil.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
+                                        <span class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
                                             <span>Subir archivo</span>
-                                        </label>
+                                        </span>
                                     </div>
                                     <p class="text-xs text-gray-500">PNG, JPG hasta 5MB</p>
                                 </div>
@@ -106,6 +106,33 @@
                             <i class="fas fa-magic text-purple-600 mr-2"></i>
                             Predicciones
                         </h4>
+                        
+                        <!-- Panel de error de validación -->
+                        <div id="prediction-error-panel" class="hidden mb-4 p-5 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-300 shadow-sm">
+                            <div class="flex items-start mb-3">
+                                <div class="flex-shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-paw text-white text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="font-bold text-orange-900 text-lg mb-1">¡Ups! Esta imagen no puede ser analizada</h5>
+                                    <p class="text-orange-800 text-sm">Necesitamos una foto que cumpla con los requisitos del sistema</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg p-4 mb-3 border border-orange-200">
+                                <p id="prediction-error-message" class="text-gray-800 text-sm font-medium mb-3"></p>
+                                <div id="prediction-error-details" class="space-y-2"></div>
+                            </div>
+                            
+                            <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                <div class="flex items-start">
+                                    <i class="fas fa-lightbulb text-blue-500 mt-0.5 mr-2 flex-shrink-0"></i>
+                                    <p class="text-blue-800 text-xs font-medium">
+                                        <strong>Tip:</strong> Para obtener los mejores resultados, asegúrate de subir una foto clara de un perro de raza <strong>Chihuahua</strong>, <strong>Golden Retriever</strong> o <strong>Bulldog</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Predicción de raza -->
                         <div id="breed-prediction" class="mb-3 p-3 bg-orange-50 rounded-lg border border-orange-200 hidden">
@@ -150,9 +177,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre *
+                            Nombre <span class="text-red-500">*</span>
                         </label>
                         {{ form.nombre }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-nombre">El nombre es obligatorio (mínimo 2 caracteres)</p>
                     </div>
                     
                     <div>
@@ -164,28 +192,31 @@
                     
                     <div>
                         <label for="{{ form.etapa_vida.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Etapa de Vida <span class="text-xs text-blue-600">(IA)</span>
+                            Etapa de Vida <span class="text-xs text-blue-600">(IA)</span> <span class="text-red-500">*</span>
                         </label>
                         {{ form.etapa_vida }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-etapa">Selecciona una etapa de vida</p>
                     </div>
                     
                     <div>
                         <label for="{{ form.sexo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Sexo
+                            Sexo <span class="text-red-500">*</span>
                         </label>
                         {{ form.sexo }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-sexo">Selecciona el sexo de la mascota</p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label for="{{ form.edad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                                Edad
+                                Edad Humana <span class="text-red-500">*</span>
                             </label>
                             {{ form.edad }}
+                            <p class="text-xs text-red-500 mt-1 hidden" id="error-edad">La edad debe estar entre 0 y 30</p>
                         </div>
                         <div>
                             <label for="{{ form.edad_unidad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                                Unidad
+                                Unidad <span class="text-red-500">*</span>
                             </label>
                             {{ form.edad_unidad }}
                         </div>
@@ -193,9 +224,26 @@
                     
                     <div>
                         <label for="{{ form.peso.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Peso (kg)
+                            Peso (kg) <span class="text-red-500">*</span>
                         </label>
                         {{ form.peso }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-peso">El peso debe estar entre 0.1 y 200 kg</p>
+                    </div>
+                </div>
+                
+                <!-- Visualizador de edad humana equivalente -->
+                <div id="edad-canina-display" class="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 hidden">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-birthday-cake text-blue-600 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-700 mb-1">
+                                Edad Canina Equivalente
+                            </p>
+                            <p class="text-xl font-semibold text-blue-600" id="edad-canina-value">-- años</p>
+                            <p class="text-xs text-gray-600 mt-1" id="edad-canina-explanation"></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,30 +258,34 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Color
+                            Color <span class="text-red-500">*</span>
                         </label>
                         {{ form.color }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-color">El color es obligatorio</p>
                     </div>
                     
                     <div>
                         <label for="{{ form.estado_corporal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Estado Corporal <span class="text-xs text-blue-600">(IA)</span>
+                            Estado Corporal <span class="text-red-500">*</span> <span class="text-xs text-blue-600">(IA)</span>
                         </label>
                         {{ form.estado_corporal }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-estado_corporal">Selecciona el estado corporal</p>
                     </div>
                     
                     <div>
                         <label for="{{ form.fecha_nacimiento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Fecha de Nacimiento
+                            Fecha de Nacimiento <span class="text-red-500">*</span>
                         </label>
                         {{ form.fecha_nacimiento }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-fecha_nacimiento">La fecha de nacimiento es obligatoria</p>
                     </div>
                     
                     <div class="md:col-span-3">
                         <label for="{{ form.caracteristicas_especiales.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Características Especiales
+                            Características Especiales <span class="text-red-500">*</span>
                         </label>
                         {{ form.caracteristicas_especiales }}
+                        <p class="text-xs text-red-500 mt-1 hidden" id="error-caracteristicas_especiales">Las características especiales son obligatorias (mínimo 5 caracteres)</p>
                     </div>
                 </div>
             </div>
@@ -273,6 +325,33 @@ document.addEventListener('DOMContentLoaded', function() {
     fotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+            // ✅ VALIDACIÓN: Verificar tamaño máximo (5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+            if (file.size > maxSize) {
+                Swal.fire({
+                    title: 'Imagen demasiado grande',
+                    text: `La imagen no puede ser mayor a 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                fotoInput.value = ''; // Limpiar input
+                resetPhotoUpload();
+                return;
+            }
+            
+            // ✅ VALIDACIÓN: Verificar tipo de archivo
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    title: 'Archivo no válido',
+                    text: 'Por favor selecciona un archivo de imagen válido (JPG, PNG, etc.)',
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                fotoInput.value = ''; // Limpiar input
+                resetPhotoUpload();
+                return;
+            }
+            
             // Procesar y mostrar la imagen seleccionada
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -367,12 +446,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentPredictions = data.predictions;
                 showPredictions(data.predictions);
             } else {
-                alert('Error en predicción: ' + data.error);
+                // Mostrar error en el panel en lugar de alert
+                showPredictionError(data);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error en la conexión');
+            showPredictionError({
+                message: 'Error de conexión con el servidor',
+                details: {
+                    explanation: 'No se pudo conectar con el servicio de predicción. Por favor, intenta nuevamente.'
+                }
+            });
         })
         .finally(() => {
             predictBtn.disabled = false;
@@ -380,8 +465,123 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    function showPredictionError(data) {
+        // Mostrar el panel de predicciones y el panel de error
+        predictionsPanel.classList.remove('hidden');
+        
+        // Ocultar todos los paneles de predicción exitosa
+        document.getElementById('breed-prediction').classList.add('hidden');
+        document.getElementById('stage-prediction').classList.add('hidden');
+        document.getElementById('body-condition-prediction').classList.add('hidden');
+        
+        // Mostrar panel de error
+        const errorPanel = document.getElementById('prediction-error-panel');
+        const errorMessage = document.getElementById('prediction-error-message');
+        const errorDetails = document.getElementById('prediction-error-details');
+        
+        // Mensaje principal amigable
+        let mainMessage = 'No pudimos analizar esta imagen con suficiente certeza 🤔';
+        if (data.details && data.details.explanation) {
+            mainMessage = data.details.explanation;
+        } else if (data.message) {
+            mainMessage = data.message;
+        }
+        errorMessage.textContent = mainMessage;
+        
+        // Detalles adicionales con diseño mejorado
+        let detailsHTML = '';
+        
+        if (data.details) {
+            // Mostrar confianza con barras de progreso visuales
+            if (data.details.confidence_detected && data.details.confidence_required) {
+                const detected = parseFloat(data.details.confidence_detected);
+                const required = parseFloat(data.details.confidence_required);
+                const percentage = (detected / required) * 100;
+                
+                detailsHTML += `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-medium text-gray-700">Nivel de certeza detectado:</span>
+                            <span class="text-lg font-bold text-orange-600">${detected}%</span>
+                        </div>
+                        
+                        <!-- Barra de progreso visual -->
+                        <div class="relative h-8 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="absolute inset-0 flex items-center justify-between px-3 text-xs font-medium z-10">
+                                <span class="text-gray-600">Detectado: ${detected}%</span>
+                                <span class="text-gray-700">Meta: ${required}%</span>
+                            </div>
+                            <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500" 
+                                 style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-info-circle text-orange-500"></i>
+                            <span>Necesitamos al menos <strong>${required}%</strong> de certeza para garantizar resultados precisos</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Mostrar probabilidades por raza si están disponibles
+            if (data.details.breed_probabilities) {
+                detailsHTML += `
+                    <div class="mt-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-chart-bar text-blue-600"></i>
+                            <span class="font-semibold text-blue-900">Probabilidades detectadas:</span>
+                        </div>
+                        <div class="space-y-2">
+                `;
+                
+                for (const [breed, prob] of Object.entries(data.details.breed_probabilities)) {
+                    const percentage = (prob * 100).toFixed(1);
+                    detailsHTML += `
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 w-32">${breed}:</span>
+                            <div class="flex-1 h-6 bg-white rounded-full overflow-hidden border border-blue-200">
+                                <div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-end px-2 transition-all duration-500" 
+                                     style="width: ${percentage}%">
+                                    <span class="text-xs font-bold text-white">${percentage}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                detailsHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Recomendación amigable
+            if (data.details.recommendation) {
+                detailsHTML += `
+                    <div class="mt-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-lightbulb text-white text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-green-900 mb-1">💡 Consejo útil:</h6>
+                                <p class="text-sm text-green-800">${data.details.recommendation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        errorDetails.innerHTML = detailsHTML;
+        errorPanel.classList.remove('hidden');
+    }
+    
     function showPredictions(predictions) {
         predictionsPanel.classList.remove('hidden');
+        
+        // Ocultar panel de error si estaba visible
+        document.getElementById('prediction-error-panel').classList.add('hidden');
         
         // Mostrar predicción de raza
         if (predictions.breed) {
@@ -468,6 +668,471 @@ document.addEventListener('DOMContentLoaded', function() {
             bodyConditionPanel.classList.remove('hidden');
         }
     }
+    
+    // ========================================
+    // CÁLCULO DE EDAD CANINA (EDAD HUMANA → EDAD CANINA)
+    // ========================================
+    
+    const edadInput = document.getElementById('id_edad');
+    const edadUnidadSelect = document.getElementById('id_edad_unidad');
+    const fechaNacimientoInput = document.getElementById('id_fecha_nacimiento');
+    const edadCaninaDisplay = document.getElementById('edad-canina-display');
+    const edadCaninaValue = document.getElementById('edad-canina-value');
+    const edadCaninaExplanation = document.getElementById('edad-canina-explanation');
+    
+    // Función para calcular edad canina desde edad real del perro
+    function calcularEdadCanina() {
+        const edadReal = parseFloat(edadInput.value);
+        const unidad = edadUnidadSelect.value;
+        
+        if (!edadReal || edadReal <= 0) {
+            edadCaninaDisplay.classList.add('hidden');
+            return;
+        }
+        
+        let edadEnAnios = 0;
+        
+        // Convertir a años si está en meses
+        if (unidad === 'meses') {
+            edadEnAnios = edadReal / 12;
+        } else {
+            edadEnAnios = edadReal;
+        }
+        
+        let edadCanina = 0;
+        let explicacion = '';
+        let etapa = '';
+        
+        // Fórmula tradicional de años caninos
+        // Edad ingresada = edad REAL del perro
+        // Calculamos = equivalente en años caninos (edad humana equivalente)
+        if (edadEnAnios < 1) {
+            // Primer año: cada mes = 1.25 años caninos (15/12)
+            edadCanina = edadEnAnios * 15;
+            explicacion = 'Tu perro es un cachorro en desarrollo';
+            etapa = 'Cachorro';
+        } else if (edadEnAnios < 2) {
+            // Segundo año: 15 + (meses adicionales * 0.75)
+            edadCanina = 15 + ((edadEnAnios - 1) * 9);
+            explicacion = 'Tu perro es joven y activo';
+            etapa = 'Joven';
+        } else {
+            // Años adicionales: 24 + (años adicionales * 5)
+            edadCanina = 24 + ((edadEnAnios - 2) * 5);
+            if (edadCanina < 40) {
+                explicacion = 'Tu perro es adulto y maduro';
+                etapa = 'Adulto';
+            } else {
+                explicacion = 'Tu perro es senior, cuídalo mucho';
+                etapa = 'Senior';
+            }
+        }
+        
+        // Mostrar resultado
+        const edadCaninaAnios = Math.floor(edadCanina);
+        const edadCaninaMeses = Math.round((edadCanina - edadCaninaAnios) * 12);
+        
+        let textoEdad = '';
+        if (edadCaninaAnios === 0) {
+            textoEdad = `${edadCaninaMeses} ${edadCaninaMeses === 1 ? 'mes' : 'meses'}`;
+        } else if (edadCaninaMeses === 0) {
+            textoEdad = `${edadCaninaAnios} ${edadCaninaAnios === 1 ? 'año' : 'años'}`;
+        } else {
+            textoEdad = `${edadCaninaAnios} ${edadCaninaAnios === 1 ? 'año' : 'años'} y ${edadCaninaMeses} ${edadCaninaMeses === 1 ? 'mes' : 'meses'}`;
+        }
+        
+        edadCaninaValue.textContent = textoEdad;
+        
+        // Explicación
+        let textoEdadReal = unidad === 'meses' ? `${edadReal} ${edadReal === 1 ? 'mes' : 'meses'}` : `${edadReal} ${edadReal === 1 ? 'año' : 'años'}`;
+        edadCaninaExplanation.textContent = `${textoEdadReal} equivalen a ${textoEdad} en edad humana. ${explicacion}`;
+        
+        edadCaninaDisplay.classList.remove('hidden');
+        
+        // Validar con fecha de nacimiento si existe
+        validarEdadConFechaNacimiento();
+    }
+    
+    // Función para validar edad con fecha de nacimiento
+    function validarEdadConFechaNacimiento() {
+        if (!fechaNacimientoInput || !fechaNacimientoInput.value || !edadInput || !edadInput.value) return;
+        
+        const fechaNacimiento = new Date(fechaNacimientoInput.value);
+        const hoy = new Date();
+        const edadIngresada = parseFloat(edadInput.value);
+        const unidadEdad = edadUnidadSelect.value;
+        
+        // Calcular edad real desde la fecha de nacimiento
+        let edadCalculadaAnios = hoy.getFullYear() - fechaNacimiento.getFullYear();
+        const mesActual = hoy.getMonth();
+        const mesNacimiento = fechaNacimiento.getMonth();
+        
+        // Ajustar si aún no ha cumplido años este año
+        if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNacimiento.getDate())) {
+            edadCalculadaAnios--;
+        }
+        
+        // Calcular meses adicionales
+        let mesesAdicionales = mesActual - mesNacimiento;
+        if (mesesAdicionales < 0) {
+            mesesAdicionales += 12;
+        }
+        
+        const edadCalculadaTotalAnios = edadCalculadaAnios + (mesesAdicionales / 12);
+        const edadCalculadaTotalMeses = (edadCalculadaAnios * 12) + mesesAdicionales;
+        
+        // Convertir edad ingresada a años para comparación
+        let edadIngresadaEnAnios = edadIngresada;
+        if (unidadEdad === 'meses') {
+            edadIngresadaEnAnios = edadIngresada / 12;
+        }
+        
+        const diferencia = Math.abs(edadIngresadaEnAnios - edadCalculadaTotalAnios);
+        
+        // Remover alerta anterior si existe
+        const alertaAnterior = edadCaninaDisplay.querySelector('.bg-yellow-50');
+        if (alertaAnterior) {
+            alertaAnterior.remove();
+        }
+        
+        // Alerta si hay una diferencia mayor a 3 meses (0.25 años)
+        if (diferencia > 0.25) {
+            const mensajeAlerta = document.createElement('div');
+            mensajeAlerta.className = 'mt-2 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded';
+            
+            let textoEdadIngresada, textoEdadCalculada;
+            if (unidadEdad === 'años') {
+                textoEdadIngresada = `${edadIngresada} año${edadIngresada !== 1 ? 's' : ''}`;
+            } else {
+                textoEdadIngresada = `${edadIngresada} mes${edadIngresada !== 1 ? 'es' : ''}`;
+            }
+            textoEdadCalculada = `${edadCalculadaAnios} año${edadCalculadaAnios !== 1 ? 's' : ''} y ${mesesAdicionales} mes${mesesAdicionales !== 1 ? 'es' : ''}`;
+            
+            mensajeAlerta.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5 mr-2"></i>
+                    <div class="text-sm text-yellow-800">
+                        <p class="font-medium">Posible inconsistencia detectada</p>
+                        <p class="mt-1">La edad ingresada (${textoEdadIngresada}) no coincide con la fecha de nacimiento (${textoEdadCalculada}). Por favor verifica los datos.</p>
+                    </div>
+                </div>
+            `;
+            
+            edadCaninaDisplay.appendChild(mensajeAlerta);
+        }
+    }
+    
+    
+    // Escuchar cambios en edad y unidad
+    if (edadInput && edadUnidadSelect) {
+        edadInput.addEventListener('input', function() {
+            calcularEdadCanina();
+            validarEdadConFechaNacimiento();
+        });
+        
+        edadUnidadSelect.addEventListener('change', function() {
+            calcularEdadCanina();
+            validarEdadConFechaNacimiento();
+        });
+        
+        // Calcular inicialmente si hay valores
+        if (edadInput.value) {
+            calcularEdadCanina();
+        }
+    }
+    
+    // Validar cuando se cambia la fecha de nacimiento
+    if (fechaNacimientoInput) {
+        fechaNacimientoInput.addEventListener('change', function() {
+            calcularEdadCanina();
+            validarEdadConFechaNacimiento();
+        });
+    }
+    
+    // ========================================
+    // VALIDACIONES DEL FORMULARIO
+    // ========================================
+    
+    const registroForm = document.getElementById('registro-form');
+    const btnRegistrar = document.getElementById('btn-registrar');
+    
+    // Función para validar campo individual
+    function validarCampo(campo, errorId, validacionCustom) {
+        const errorElement = document.getElementById(errorId);
+        const valor = campo.value.trim();
+        let esValido = true;
+        
+        // Si se proporciona una función de validación custom, usarla
+        if (typeof validacionCustom === 'function') {
+            esValido = validacionCustom(valor, campo);
+        } else {
+            // Validación básica: campo no vacío
+            if (!valor || (campo.tagName === 'SELECT' && valor === '')) {
+                esValido = false;
+            }
+        }
+        
+        if (!esValido) {
+            campo.classList.add('border-red-500');
+            campo.classList.remove('border-gray-300');
+            if (errorElement) {
+                errorElement.classList.remove('hidden');
+            }
+            return false;
+        } else {
+            campo.classList.remove('border-red-500');
+            campo.classList.add('border-gray-300');
+            if (errorElement) {
+                errorElement.classList.add('hidden');
+            }
+            return true;
+        }
+    }
+    
+    // Validar todos los campos requeridos
+    function validarFormulario(event) {
+        let formularioValido = true;
+        
+        // Validar nombre
+        const nombreInput = document.getElementById('id_nombre');
+        if (nombreInput) {
+            if (!nombreInput.value.trim() || nombreInput.value.trim().length < 2) {
+                validarCampo(nombreInput, 'error-nombre');
+                formularioValido = false;
+            }
+        }
+        
+        // Validar etapa de vida
+        const etapaSelect = document.getElementById('id_etapa_vida');
+        if (etapaSelect && !validarCampo(etapaSelect, 'error-etapa')) {
+            formularioValido = false;
+        }
+        
+        // Validar sexo
+        const sexoSelect = document.getElementById('id_sexo');
+        if (sexoSelect && !validarCampo(sexoSelect, 'error-sexo')) {
+            formularioValido = false;
+        }
+        
+        // Validar edad
+        const edadInput = document.getElementById('id_edad');
+        if (edadInput) {
+            const validacionEdad = (valor) => {
+                const edad = parseFloat(valor);
+                return !isNaN(edad) && edad > 0 && edad <= 30;
+            };
+            if (!validarCampo(edadInput, 'error-edad', validacionEdad)) {
+                formularioValido = false;
+            }
+        }
+        
+        // Validar peso
+        const pesoInput = document.getElementById('id_peso');
+        if (pesoInput) {
+            const validacionPeso = (valor) => {
+                const peso = parseFloat(valor);
+                return !isNaN(peso) && peso >= 0.1 && peso <= 200;
+            };
+            if (!validarCampo(pesoInput, 'error-peso', validacionPeso)) {
+                formularioValido = false;
+            }
+        }
+        
+        // Validar color
+        const colorInput = document.getElementById('id_color');
+        if (colorInput && !validarCampo(colorInput, 'error-color')) {
+            formularioValido = false;
+        }
+        
+        // Validar estado corporal
+        const estadoSelect = document.getElementById('id_estado_corporal');
+        if (estadoSelect && !validarCampo(estadoSelect, 'error-estado_corporal')) {
+            formularioValido = false;
+        }
+        
+        // Validar fecha de nacimiento
+        const fechaInput = document.getElementById('id_fecha_nacimiento');
+        if (fechaInput && !validarCampo(fechaInput, 'error-fecha_nacimiento')) {
+            formularioValido = false;
+        }
+        
+        // Validar características especiales
+        const caracteristicasInput = document.getElementById('id_caracteristicas_especiales');
+        if (caracteristicasInput) {
+            const texto = caracteristicasInput.value.trim();
+            if (!texto || texto.length < 5) {
+                validarCampo(caracteristicasInput, 'error-caracteristicas_especiales');
+                formularioValido = false;
+            }
+        }
+        
+        // Validar que fecha de nacimiento coincida con edad
+        const fechaNacimiento = fechaInput ? fechaInput.value : null;
+        const edad = edadInput ? parseFloat(edadInput.value) : null;
+        const unidad = edadUnidadSelect ? edadUnidadSelect.value : null;
+        
+        if (fechaNacimiento && edad && unidad) {
+            const fechaNac = new Date(fechaNacimiento);
+            const hoy = new Date();
+            
+            // Calcular edad desde fecha de nacimiento
+            let edadCalculadaAnios = hoy.getFullYear() - fechaNac.getFullYear();
+            const mesActual = hoy.getMonth();
+            const mesNacimiento = fechaNac.getMonth();
+            
+            if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNac.getDate())) {
+                edadCalculadaAnios--;
+            }
+            
+            let mesesAdicionales = mesActual - mesNacimiento;
+            if (mesesAdicionales < 0) {
+                mesesAdicionales += 12;
+            }
+            
+            const edadCalculadaTotalAnios = edadCalculadaAnios + (mesesAdicionales / 12);
+            let edadIngresadaEnAnios = edad;
+            if (unidad === 'meses') {
+                edadIngresadaEnAnios = edad / 12;
+            }
+            
+            const diferencia = Math.abs(edadIngresadaEnAnios - edadCalculadaTotalAnios);
+            
+            // Debug: mostrar cálculo
+            console.log('=== Validación Edad vs Fecha ===');
+            console.log('Fecha ingresada:', fechaNacimiento);
+            console.log('Edad ingresada:', edad, unidad);
+            console.log('Edad calculada:', edadCalculadaTotalAnios.toFixed(2), 'años');
+            console.log('Diferencia:', diferencia.toFixed(2), 'años');
+            console.log('Tolerancia:', 0.25, 'años (3 meses)');
+            console.log('¿Pasa validación?:', diferencia <= 0.25);
+            console.log('===============================');
+            
+            // Si la diferencia es mayor a 3 meses, no permitir envío
+            if (diferencia > 0.25) {
+                formularioValido = false;
+                
+                event.preventDefault();
+                
+                let textoEdadIngresada = unidad === 'años' ? `${edad} año${edad !== 1 ? 's' : ''}` : `${edad} mes${edad !== 1 ? 'es' : ''}`;
+                let textoEdadCalculada = `${edadCalculadaAnios} año${edadCalculadaAnios !== 1 ? 's' : ''} y ${mesesAdicionales} mes${mesesAdicionales !== 1 ? 'es' : ''}`;
+                
+                Swal.fire({
+                    title: 'Discrepancia en la fecha',
+                    html: `
+                        <p class="text-gray-700 mb-3">La edad ingresada (<strong>${textoEdadIngresada}</strong>) no coincide con la fecha de nacimiento (<strong>${textoEdadCalculada}</strong>).</p>
+                        <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <p class="text-sm text-yellow-800">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Por favor corrige la edad o la fecha de nacimiento para que coincidan antes de continuar.
+                            </p>
+                        </div>
+                    `,
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444',
+                    confirmButtonText: 'Entendido'
+                });
+                
+                return false;
+            }
+        }
+        
+        // Validar foto de perfil
+        const fotoInput = document.getElementById('foto_perfil_input');
+        if (fotoInput && !fotoInput.files.length) {
+            Swal.fire({
+                title: 'Foto requerida',
+                text: 'Debes subir una foto de tu mascota para continuar',
+                icon: 'warning',
+                confirmButtonColor: '#3b82f6'
+            });
+            formularioValido = false;
+        }
+        
+        // Si hay errores, prevenir envío y mostrar mensaje
+        if (!formularioValido) {
+            event.preventDefault();
+            
+            // Determinar si hay errores de validación específicos o solo campos vacíos
+            const camposConErrores = document.querySelectorAll('.border-red-500');
+            let tieneErroresDeValidacion = false;
+            
+            // Verificar si hay errores en peso o edad (validaciones con rangos)
+            if (pesoInput && pesoInput.classList.contains('border-red-500')) {
+                tieneErroresDeValidacion = true;
+            }
+            if (edadInput && edadInput.classList.contains('border-red-500')) {
+                tieneErroresDeValidacion = true;
+            }
+            
+            let mensajeError = 'Por favor completa todos los campos obligatorios marcados con *';
+            if (tieneErroresDeValidacion) {
+                mensajeError = 'Por favor corrige los valores de los campos resaltados en rojo. Revisa los rangos permitidos.';
+            }
+            
+            Swal.fire({
+                title: tieneErroresDeValidacion ? 'Datos inválidos' : 'Campos incompletos',
+                text: mensajeError,
+                icon: 'error',
+                confirmButtonColor: '#EF4444'
+            });
+            
+            // Hacer scroll al primer campo con error
+            const primerError = document.querySelector('.border-red-500');
+            if (primerError) {
+                primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                primerError.focus();
+            }
+        }
+        
+        return formularioValido;
+    }
+    
+    // Agregar validación al submit
+    if (registroForm) {
+        registroForm.addEventListener('submit', validarFormulario);
+    }
+    
+    // Validación en tiempo real para mejorar UX
+    const validacionesPorCampo = {
+        'id_edad': (valor) => {
+            const edad = parseFloat(valor);
+            return !isNaN(edad) && edad > 0 && edad <= 30;
+        },
+        'id_peso': (valor) => {
+            const peso = parseFloat(valor);
+            return !isNaN(peso) && peso >= 0.1 && peso <= 200;
+        },
+        'id_nombre': (valor) => {
+            return valor.trim().length >= 2;
+        },
+        'id_caracteristicas_especiales': (valor) => {
+            return valor.trim().length >= 5;
+        }
+    };
+    
+    ['id_nombre', 'id_etapa_vida', 'id_sexo', 'id_edad', 'id_peso', 'id_color', 'id_estado_corporal', 'id_fecha_nacimiento', 'id_caracteristicas_especiales'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) {
+            campo.addEventListener('blur', function() {
+                const errorId = 'error-' + id.replace('id_', '');
+                const validacionCustom = validacionesPorCampo[id];
+                validarCampo(campo, errorId, validacionCustom);
+            });
+            
+            // Limpiar error al escribir
+            campo.addEventListener('input', function() {
+                if (campo.classList.contains('border-red-500')) {
+                    campo.classList.remove('border-red-500');
+                    campo.classList.add('border-gray-300');
+                    const errorId = 'error-' + id.replace('id_', '');
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement) {
+                        errorElement.classList.add('hidden');
+                    }
+                }
+            });
+        }
+    });
 });
 </script>
 

@@ -10,6 +10,8 @@ import json
 from apps.mascota.forms.registro_form import MascotaRegistroForm
 from apps.mascota.services.ai_predictor import predictor
 from apps.mascota.models import Mascota
+from apps.autenticacion.utils.notifications_helper import notify_mascota
+from apps.autenticacion.models import Notification
 
 
 @login_required
@@ -45,10 +47,26 @@ def registro_mascota_view(request):
             mascota.propietario = request.user
             mascota.save()
             
+            # Crear notificación de mascota registrada
+            notify_mascota(
+                user=request.user,
+                title=f"¡{mascota.nombre} ha sido registrada!",
+                message=f"Tu mascota {mascota.nombre} ha sido registrada exitosamente en el sistema. Ahora puedes generar su carnet digital.",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.SUCCESS
+            )
+            
             messages.success(request, f'¡{mascota.nombre} ha sido registrada exitosamente!')
             return redirect('mascota:main_register')
         else:
-            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+            # Mostrar errores específicos de cada campo
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, error)
+                    else:
+                        field_label = form.fields[field].label if field in form.fields else field
+                        messages.error(request, f'{field_label}: {error}')
     else:
         form = MascotaRegistroForm()
 

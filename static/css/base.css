@@ -105,10 +105,197 @@ button, a, select, input {
   padding: 0 1rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   .container {
-    padding: 0 1.5rem;
+    padding: 0 2rem;
   }
+}
+
+/* ========================================
+   ESTILOS PARA NOTIFICACIONES
+   ======================================== */
+
+/* Scrollbar personalizado para notificaciones */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* Animación del badge de notificaciones */
+@keyframes pulse-notification {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+#notifications-badge {
+  animation: pulse-notification 2s ease-in-out infinite;
+}
+
+/* Estilos para las notificaciones individuales */
+.notification-item {
+  position: relative;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Hover effect para notificaciones */
+.notification-item:hover {
+  background: linear-gradient(to right, #f9fafb 0%, #f3f4f6 100%);
+}
+
+/* Responsive: ajuste del dropdown en mobile */
+@media (max-width: 768px) {
+  #notifications-dropdown {
+    /* Centrado en mobile */
+    transform: translateX(-50%);
+    left: 50% !important;
+    right: auto !important;
+    margin: 0 !important;
+  }
+  
+  .notification-item {
+    padding: 0.875rem !important;
+  }
+  
+  .notification-item .flex {
+    gap: 0.625rem !important;
+  }
+  
+  .notification-item h4 {
+    font-size: 0.8125rem !important;
+  }
+  
+  .notification-item p {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* En desktop: mejor alineación a la derecha */
+@media (min-width: 769px) {
+  #notifications-dropdown {
+    transform-origin: top right;
+    animation: slideDown 0.2s ease-out;
+  }
+  
+  /* Overlay sutil solo para desktop */
+  body.notifications-open::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  #notifications-dropdown {
+    z-index: 9999 !important;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Prevenir scroll en el body cuando las notificaciones están abiertas */
+body.notifications-open {
+  overflow: hidden !important;
+  height: 100vh;
+}
+
+/* En mobile: sin overlay, solo animación */
+@media (max-width: 768px) {
+  #notifications-dropdown {
+    position: fixed !important;
+    z-index: 9999 !important;
+    animation: slideInFromTop 0.3s ease-out;
+  }
+  
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -20px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+}
+
+/* Estado de carga */
+#notifications-list .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Indicador de "más contenido" al hacer scroll */
+#notifications-list::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: transparent;
 }
 
 @media (min-width: 1024px) {

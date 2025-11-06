@@ -6,6 +6,7 @@ También incluye vistas para la gestión de mascotas como el detalle y listado.
 
 import base64
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
@@ -35,6 +36,11 @@ from ..services.biometria import (
     BiometriaService, 
     DEPS_INSTALLED
 )
+from apps.autenticacion.utils.notifications_helper import notify_mascota, notify_warning
+from apps.autenticacion.models import Notification
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -190,6 +196,11 @@ def upload_biometria_image(request):
         # Subir imágenes de forma optimizada
         count = 0
         imagenes_creadas = []
+        imagenes_rechazadas = []
+        
+        # Obtener validador para verificar que sean imágenes de perros
+        from ..services.canine_validator import get_validator
+        validator = get_validator()
         
         for file in files:
             # Verificar límite durante el proceso
@@ -197,9 +208,48 @@ def upload_biometria_image(request):
             if current_count >= 20:
                 break  # Ya se alcanzó el límite máximo de 20, detener
                 
+            # ✅ VALIDACIÓN: Verificar tamaño máximo de archivo (5MB)
+            max_size = 5 * 1024 * 1024  # 5MB en bytes
+            if file.size > max_size:
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': f'Imagen demasiado grande ({file.size / 1024 / 1024:.2f}MB). Máximo permitido: 5MB',
+                    'objeto_detectado': f'Archivo de {file.size / 1024 / 1024:.2f}MB'
+                })
+                continue
+                
             # Verificar que sea una imagen
             if not file.content_type.startswith('image/'):
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': 'Tipo de archivo no válido',
+                    'objeto_detectado': 'No es una imagen'
+                })
                 continue
+            
+            # ✨ VALIDACIÓN CANINA - Verificar que la imagen sea de un perro
+            try:
+                resultado_validacion = validator.validar_desde_file(file)
+            except Exception as e:
+                logger.error(f"Error al validar imagen '{file.name}': {e}", exc_info=True)
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': f'Error al procesar imagen: {str(e)}',
+                    'objeto_detectado': 'Error de validación'
+                })
+                continue
+            
+            if not resultado_validacion['es_canino']:
+                logger.warning(f"Imagen '{file.name}' rechazada: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
+                imagenes_rechazadas.append({
+                    'nombre': file.name,
+                    'razon': resultado_validacion['mensaje'],
+                    'objeto_detectado': resultado_validacion['objeto_detectado'],
+                    'confianza': resultado_validacion['confianza']
+                })
+                continue
+            
+            logger.info(f"Imagen '{file.name}' validada: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
                 
             # Crear objeto ImagenMascota (sin procesar aún)
             imagen = ImagenMascota.objects.create(
@@ -233,11 +283,22 @@ def upload_biometria_image(request):
             
         # Obtener conteo final
         final_count = mascota.imagenes.filter(is_biometrica=True).count()
+        
+        # Construir mensaje de respuesta
+        mensaje_partes = []
+        if count > 0:
+            mensaje_partes.append(f'{count} imagen{"es" if count != 1 else ""} subida{"s" if count != 1 else ""} correctamente')
+        if imagenes_rechazadas:
+            mensaje_partes.append(f'{len(imagenes_rechazadas)} imagen{"es" if len(imagenes_rechazadas) != 1 else ""} rechazada{"s" if len(imagenes_rechazadas) != 1 else ""}')
+        
+        mensaje_final = ' y '.join(mensaje_partes) if mensaje_partes else 'No se subieron imágenes'
             
         return JsonResponse({
             'success': True, 
-            'count': count, 
-            'message': f'{count} imágenes subidas correctamente',
+            'count': count,
+            'rechazadas_count': len(imagenes_rechazadas),
+            'rechazadas': imagenes_rechazadas,
+            'message': mensaje_final,
             'images_count': final_count,
             'images_remaining': max(0, 20 - final_count),
             'limit_reached': final_count >= 20,
@@ -284,6 +345,41 @@ def upload_biometria_base64(request):
             
         # Decodificar base64
         imagen_data = base64.b64decode(imagen_base64)
+        
+        # ✨ VALIDACIÓN CANINA - Verificar que la imagen sea de un perro
+        try:
+            from ..services.canine_validator import get_validator
+            validator = get_validator()
+            resultado_validacion = validator.validar_desde_bytes(imagen_data)
+        except Exception as e:
+            logger.error(f"Error al validar imagen biométrica: {e}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': 'Error al validar imagen',
+                'validation_error': True,
+                'details': {
+                    'mensaje': f'Error al procesar imagen: {str(e)}',
+                    'objeto_detectado': 'Error de validación',
+                    'confianza': 0.0,
+                    'recomendacion': 'Por favor, intenta con otra imagen o contacta al administrador.'
+                }
+            }, status=500)
+        
+        if not resultado_validacion['es_canino']:
+            logger.warning(f"Imagen rechazada en biometría: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
+            return JsonResponse({
+                'success': False,
+                'error': 'Imagen no válida',
+                'validation_error': True,
+                'details': {
+                    'mensaje': resultado_validacion['mensaje'],
+                    'objeto_detectado': resultado_validacion['objeto_detectado'],
+                    'confianza': resultado_validacion['confianza'],
+                    'recomendacion': 'Por favor, sube una imagen clara de un perro. El sistema detectó que esta imagen no contiene un canino válido.'
+                }
+            }, status=400)
+        
+        logger.info(f"Imagen validada exitosamente: {resultado_validacion['objeto_detectado']} ({resultado_validacion['confianza']}%)")
         
         # Crear nombre de archivo único
         filename = f"{uuid.uuid4().hex}.jpg"
@@ -439,6 +535,15 @@ def train_model(request, pk):
                 mascota.biometria_entrenada = True
                 mascota.confianza_biometrica = modelo.metricas.get('accuracy', 0.0) if modelo.metricas else 0.8
                 mascota.save()
+                
+                # Crear notificación de biometría registrada
+                notify_mascota(
+                    user=request.user,
+                    title=f"¡Biometría de {mascota.nombre} registrada!",
+                    message=f"El reconocimiento facial de {mascota.nombre} ha sido entrenado exitosamente con una confianza del {mascota.confianza_biometrica*100:.1f}%.",
+                    mascota=mascota,
+                    notification_type=Notification.NotificationType.SUCCESS
+                )
                 
                 return JsonResponse({
                     'success': True,
@@ -630,6 +735,14 @@ def upload_image_for_recognition(request):
             return JsonResponse({'success': False, 'error': 'No se proporcionó una imagen'}, status=400)
             
         imagen_file = request.FILES['imagen']
+        
+        # ✅ VALIDACIÓN: Verificar tamaño máximo (5MB)
+        max_size = 5 * 1024 * 1024  # 5MB en bytes
+        if imagen_file.size > max_size:
+            return JsonResponse({
+                'success': False, 
+                'error': f'La imagen es demasiado grande ({imagen_file.size / 1024 / 1024:.2f}MB). Máximo permitido: 5MB'
+            }, status=400)
         
         # Verificar que sea una imagen
         if not imagen_file.content_type.startswith('image/'):

@@ -1,5 +1,6 @@
 from django.urls import path, include
 from apps.autenticacion.views.dashboard import Dashboard
+from apps.autenticacion.views.dashboard_admin import admin_dashboard
 from apps.autenticacion.views.login import LoginView, LogoutView
 from apps.autenticacion.views.profile import ProfileView, ProfileUpdateView, ProfilePasswordChangeView
 from apps.autenticacion.views.users import (
@@ -25,6 +26,13 @@ from apps.autenticacion.views.password_recovery import (
   PasswordRecoveryConfirmView,
   PasswordRecoveryCompleteView
 )
+from apps.autenticacion.views.notifications import (
+  NotificationListView,
+  NotificationCountView,
+  NotificationMarkReadView,
+  NotificationMarkAllReadView,
+  NotificationDeleteView
+)
 
 app_name='auth'
 
@@ -35,6 +43,9 @@ urlpatterns = [
   
   # Dashboard principal
   path('dashboard/', Dashboard, name="Dashboard"),
+  
+  # Dashboard administrativo (solo para admins)
+  path('admin-dashboard/', admin_dashboard, name="admin_dashboard"),
     
   # Perfil de usuario
   path('profile/', ProfileView.as_view(), name='profile'),
@@ -65,6 +76,13 @@ urlpatterns = [
   path('password-recovery/done/', PasswordRecoveryDoneView.as_view(), name='password_recovery_done'),
   path('password-recovery/confirm/<uidb64>/<token>/', PasswordRecoveryConfirmView.as_view(), name='password_recovery_confirm'),
   path('password-recovery/complete/', PasswordRecoveryCompleteView.as_view(), name='password_recovery_complete'),
+  
+  # Notificaciones
+  path('notifications/list/', NotificationListView.as_view(), name='notifications_list'),
+  path('notifications/count/', NotificationCountView.as_view(), name='notifications_count'),
+  path('notifications/<int:notification_id>/mark-read/', NotificationMarkReadView.as_view(), name='notification_mark_read'),
+  path('notifications/mark-all-read/', NotificationMarkAllReadView.as_view(), name='notifications_mark_all_read'),
+  path('notifications/<int:notification_id>/delete/', NotificationDeleteView.as_view(), name='notification_delete'),
   
   # APIs para integración con chatbot
   path('api/', include('apps.autenticacion.urls_chatbot')),

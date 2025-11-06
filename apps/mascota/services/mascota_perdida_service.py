@@ -7,6 +7,8 @@ from django.utils import timezone
 from typing import Dict, Optional, Tuple
 import logging
 from .email_service import EmailService
+from apps.autenticacion.utils.notifications_helper import notify_mascota
+from apps.autenticacion.models import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +82,20 @@ class MascotaPerdidaService:
             mascota.reportar_perdida = False
             mascota.save(update_fields=['reportar_perdida'])
             
-            # Enviar notificación al propietario
+            # Crear notificación in-app al propietario
+            ubicacion_texto = ""
+            if ubicacion_data and 'lat' in ubicacion_data and 'lng' in ubicacion_data:
+                ubicacion_texto = f" cerca de las coordenadas {ubicacion_data['lat']:.4f}, {ubicacion_data['lng']:.4f}"
+            
+            notify_mascota(
+                user=mascota.propietario,
+                title=f"¡Alguien encontró a {mascota.nombre}!",
+                message=f"¡Buenas noticias! Alguien ha reportado haber encontrado a {mascota.nombre}{ubicacion_texto}. Revisa tu email para más detalles.",
+                mascota=mascota,
+                notification_type=Notification.NotificationType.SUCCESS
+            )
+            
+            # Enviar notificación por email
             exito_email = EmailService.enviar_notificacion_mascota_encontrada(mascota, datos_encuentro)
             
             mensaje_base = f"¡{mascota.nombre} ha sido reportada como encontrada! El propietario ha sido notificado."

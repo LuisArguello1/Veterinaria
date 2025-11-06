@@ -63,6 +63,33 @@
         const guardarBtn = document.getElementById('guardar-cambios-btn');
         const guardarBtnText = document.getElementById('guardar-btn-text');
         
+        // ✅ VALIDACIÓN: Verificar tamaño de imagen si se seleccionó una nueva
+        const fotoInput = document.getElementById('edit_foto_perfil');
+        if (fotoInput && fotoInput.files.length > 0) {
+            const file = fotoInput.files[0];
+            const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+            
+            if (file.size > maxSize) {
+                Swal.fire({
+                    title: 'Imagen demasiado grande',
+                    text: `La imagen no puede ser mayor a 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    title: 'Archivo no válido',
+                    text: 'Por favor selecciona un archivo de imagen válido (JPG, PNG, etc.)',
+                    icon: 'error',
+                    confirmButtonColor: '#EF4444'
+                });
+                return;
+            }
+        }
+        
         // Deshabilitar botón y mostrar loading
         guardarBtn.disabled = true;
         guardarBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Guardando...';

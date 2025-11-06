@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserFaceEmbedding
+from .models import User, UserFaceEmbedding, Notification
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'dni', 'role', 'is_staff')
@@ -57,3 +57,55 @@ class UserFaceEmbeddingAdmin(admin.ModelAdmin):
         return False
 
 admin.site.register(User, CustomUserAdmin)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'user', 'notification_type', 'category', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'category', 'is_read', 'created_at')
+    search_fields = ('title', 'message', 'user__username', 'user__email')
+    readonly_fields = ('created_at', 'read_at')
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Destinatario', {
+            'fields': ('user',)
+        }),
+        ('Contenido', {
+            'fields': ('notification_type', 'category', 'title', 'message', 'action_url')
+        }),
+        ('Relación', {
+            'fields': ('content_type', 'object_id'),
+            'classes': ('collapse',)
+        }),
+        ('Estado', {
+            'fields': ('is_read', 'read_at')
+        }),
+        ('Metadatos', {
+            'fields': ('metadata', 'expires_at'),
+            'classes': ('collapse',)
+        }),
+        ('Fechas', {
+            'fields': ('created_at',)
+        }),
+    )
+    
+    actions = ['mark_as_read', 'mark_as_unread', 'delete_selected']
+    
+    def mark_as_read(self, request, queryset):
+        count = 0
+        for notification in queryset:
+            if not notification.is_read:
+                notification.mark_as_read()
+                count += 1
+        self.message_user(request, f'{count} notificaciones marcadas como leídas.')
+    mark_as_read.short_description = "Marcar como leídas"
+    
+    def mark_as_unread(self, request, queryset):
+        count = 0
+        for notification in queryset:
+            if notification.is_read:
+                notification.mark_as_unread()
+                count += 1
+        self.message_user(request, f'{count} notificaciones marcadas como no leídas.')
+    mark_as_unread.short_description = "Marcar como no leídas"

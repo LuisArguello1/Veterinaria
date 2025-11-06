@@ -46,7 +46,15 @@
         <a href="{% url 'auth:Dashboard' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
             <i class="fas fa-tachometer-alt text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
             <span>Dashboard</span>
-        </a> 
+        </a>
+        
+        <!-- Dashboard Admin (solo para administradores) -->
+        {% if request.user.role == 'ADMIN' %}
+        <a href="{% url 'auth:admin_dashboard' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
+            <i class="fas fa-chart-line text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <span>Dashboard Admin</span>
+        </a>
+        {% endif %}
 
         <!-- Gestion de usuarios -->
         {% if request.user.role == 'VET' or request.user.role == 'ADMIN' %}

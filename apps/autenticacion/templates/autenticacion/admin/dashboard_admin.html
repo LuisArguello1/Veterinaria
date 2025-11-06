@@ -1,0 +1,480 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Administrativo - PetFace ID{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard_admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 dashboard-admin-container">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+        <i class="fas fa-chart-line text-white text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard Administrativo</h1>
+        <p class="text-sm text-gray-600">Vista completa de métricas y estadísticas del sistema</p>
+      </div>
+    </div>
+    <div class="mt-4 md:mt-0">
+      <p class="text-sm text-gray-600">
+        <i class="fas fa-calendar-alt mr-2"></i>
+        <span id="current-date">{% now "d/m/Y H:i" %}</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Grid de Estadísticas Principales (Cards) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    
+    <!-- Card: Total Mascotas -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Total Mascotas</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ total_mascotas }}</h3>
+          <p class="text-xs text-green-600 mt-2">
+            <i class="fas fa-arrow-up"></i> +{{ nuevas_mascotas_mes }} este mes
+          </p>
+        </div>
+        <div class="rounded-full bg-blue-100 p-3">
+          <i class="fas fa-paw text-blue-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Reconocimientos Hoy -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Escaneos Hoy</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ reconocimientos_hoy }}</h3>
+          <p class="text-xs text-gray-600 mt-2">
+            <i class="fas fa-calendar-month"></i> {{ reconocimientos_mes }} este mes
+          </p>
+        </div>
+        <div class="rounded-full bg-green-100 p-3">
+          <i class="fas fa-qrcode text-green-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Usuarios Activos -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Usuarios Activos</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ total_usuarios }}</h3>
+          <p class="text-xs text-green-600 mt-2">
+            <i class="fas fa-user-plus"></i> +{{ nuevos_usuarios_mes }} este mes
+          </p>
+        </div>
+        <div class="rounded-full bg-purple-100 p-3">
+          <i class="fas fa-users text-purple-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Tasa de Éxito -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-amber-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Tasa de Éxito</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ tasa_exito }}%</h3>
+          <p class="text-xs text-gray-600 mt-2">
+            <i class="fas fa-clock"></i> {{ tiempo_promedio }}s promedio
+          </p>
+        </div>
+        <div class="rounded-full bg-amber-100 p-3">
+          <i class="fas fa-check-circle text-amber-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Segunda fila de estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    
+    <!-- Card: Mascotas con Biometría -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-emerald-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Con Biometría</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ mascotas_con_biometria }}</h3>
+          <p class="text-xs text-emerald-600 mt-2">
+            <i class="fas fa-percentage"></i> {{ porcentaje_biometria }}% del total
+          </p>
+        </div>
+        <div class="rounded-full bg-emerald-100 p-3">
+          <i class="fas fa-fingerprint text-emerald-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Mascotas Perdidas -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Mascotas Perdidas</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ mascotas_perdidas }}</h3>
+          <p class="text-xs text-red-600 mt-2">
+            <i class="fas fa-exclamation-triangle"></i> Requiere atención
+          </p>
+        </div>
+        <div class="rounded-full bg-red-100 p-3">
+          <i class="fas fa-search text-red-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Usuarios con Facial -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Login Facial</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ usuarios_con_facial }}</h3>
+          <p class="text-xs text-indigo-600 mt-2">
+            <i class="fas fa-percentage"></i> {{ porcentaje_facial }}% usuarios
+          </p>
+        </div>
+        <div class="rounded-full bg-indigo-100 p-3">
+          <i class="fas fa-user-lock text-indigo-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Notificaciones -->
+    <div class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-pink-500 hover:shadow-xl transition-shadow">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm font-medium text-gray-500 mb-1">Notificaciones</p>
+          <h3 class="text-3xl font-bold text-gray-800">{{ notificaciones_sin_leer }}</h3>
+          <p class="text-xs text-gray-600 mt-2">
+            <i class="fas fa-bell"></i> {{ notificaciones_mes }} este mes
+          </p>
+        </div>
+        <div class="rounded-full bg-pink-100 p-3">
+          <i class="fas fa-bell text-pink-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Grid de Gráficos 2x2 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Gráfico 1: Escaneos Diarios (30 días) -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-chart-area text-green-500 mr-2"></i>
+          Escaneos Diarios (30 días)
+        </h3>
+        <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+          Reconocimientos
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="escaneosDiariosChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 2: Top 10 Razas -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-trophy text-amber-500 mr-2"></i>
+          Top 10 Razas Registradas
+        </h3>
+        <span class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
+          Popularidad
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="topRazasChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 3: Distribución por Etapa de Vida -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-birthday-cake text-purple-500 mr-2"></i>
+          Distribución por Etapa de Vida
+        </h3>
+        <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">
+          Edades
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="etapasVidaChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 4: Estado Corporal -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-weight text-blue-500 mr-2"></i>
+          Estado Corporal de Mascotas
+        </h3>
+        <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+          Salud
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="estadoCorporalChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Grid de Gráficos 2x2 (Segunda fila) -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Gráfico 5: Registros por Mes -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-calendar-plus text-blue-500 mr-2"></i>
+          Registros de Mascotas por Mes
+        </h3>
+        <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+          6 meses
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="registrosMesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 6: Actividad por Hora -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-clock text-indigo-500 mr-2"></i>
+          Actividad por Hora del Día
+        </h3>
+        <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">
+          Heatmap
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="actividadHoraChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 7: Usuarios por Rol -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-users-cog text-purple-500 mr-2"></i>
+          Distribución de Usuarios por Rol
+        </h3>
+        <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">
+          Roles
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="usuariosRolChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfico 8: Tasa de Éxito por Día -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-800">
+          <i class="fas fa-chart-line text-green-500 mr-2"></i>
+          Tasa de Éxito en Reconocimientos
+        </h3>
+        <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+          30 días
+        </span>
+      </div>
+      <div class="h-80">
+        <canvas id="tasaExitoChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tablas de Top 5 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Top 5 Mascotas Más Reconocidas -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">
+        <i class="fas fa-medal text-amber-500 mr-2"></i>
+        Top 5 Mascotas Más Reconocidas
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raza</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Escaneos</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for mascota in mascotas_mas_reconocidas %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold text-sm">
+                  {{ forloop.counter }}
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ mascota.mascota_predicha__nombre }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{ mascota.mascota_predicha__raza|default:"No especificada" }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  {{ mascota.total }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-4 py-3 text-center text-sm text-gray-500">
+                No hay datos disponibles
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top 5 Usuarios Más Activos -->
+    <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">
+        <i class="fas fa-star text-indigo-500 mr-2"></i>
+        Top 5 Usuarios Más Activos
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actividad</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for usuario in usuarios_activos %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-800 font-bold text-sm">
+                  {{ forloop.counter }}
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ usuario.usuario__username }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm text-gray-500">
+                  {{ usuario.usuario__first_name }} {{ usuario.usuario__last_name }}
+                </div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                  {{ usuario.total }} escaneos
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-4 py-3 text-center text-sm text-gray-500">
+                No hay datos disponibles
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Gráfico de Notificaciones por Categoría -->
+  <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-gray-800">
+        <i class="fas fa-bell text-pink-500 mr-2"></i>
+        Notificaciones por Categoría
+      </h3>
+      <span class="text-xs bg-pink-100 text-pink-700 px-3 py-1 rounded-full font-medium">
+        Todas las categorías
+      </span>
+    </div>
+    <div class="h-80">
+      <canvas id="notificacionesCategoriaChart"></canvas>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/dashboard_admin.js' %}"></script>
+<script>
+  // Pasar datos del backend al JavaScript
+  const dashboardData = {
+    // Escaneos diarios
+    escaneosDiariosLabels: {{ escaneos_diarios_labels|safe }},
+    escaneosDiariosValues: {{ escaneos_diarios_values|safe }},
+    
+    // Top Razas
+    razasLabels: {{ razas_labels|safe }},
+    razasValues: {{ razas_values|safe }},
+    
+    // Etapas de vida
+    etapasLabels: {{ etapas_labels|safe }},
+    etapasValues: {{ etapas_values|safe }},
+    etapasColors: {{ etapas_colors|safe }},
+    
+    // Estado corporal
+    estadosLabels: {{ estados_labels|safe }},
+    estadosValues: {{ estados_values|safe }},
+    estadosColors: {{ estados_colors|safe }},
+    
+    // Registros por mes
+    registrosMesLabels: {{ registros_mes_labels|safe }},
+    registrosMesValues: {{ registros_mes_values|safe }},
+    
+    // Actividad por hora
+    horasLabels: {{ horas_labels|safe }},
+    horasValues: {{ horas_values|safe }},
+    
+    // Usuarios por rol
+    rolesLabels: {{ roles_labels|safe }},
+    rolesValues: {{ roles_values|safe }},
+    rolesColors: {{ roles_colors|safe }},
+    
+    // Tasa de éxito
+    tasaExitoLabels: {{ reconocimientos_tasa_labels|safe }},
+    tasaExitoValues: {{ reconocimientos_tasa_exito|safe }},
+    
+    // Notificaciones por categoría
+    notifCatLabels: {{ notif_cat_labels|safe }},
+    notifCatValues: {{ notif_cat_values|safe }}
+  };
+  
+  // Inicializar los gráficos cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', function() {
+    initDashboardCharts(dashboardData);
+  });
+</script>
+{% endblock %}

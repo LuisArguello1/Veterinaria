@@ -300,10 +300,12 @@ class Mascota(models.Model):
             imagen.delete()
             
         # Eliminar foto de perfil si existe
-        if self.foto_perfil and hasattr(self.foto_perfil, 'path'):
+        if self.foto_perfil:
             try:
-                if os.path.isfile(self.foto_perfil.path):
-                    os.remove(self.foto_perfil.path)
+                # Usar storage.delete() en lugar de os.remove() para compatibilidad con Azure Storage
+                if self.foto_perfil.name:
+                    self.foto_perfil.storage.delete(self.foto_perfil.name)
+                    print(f"Foto de perfil eliminada: {self.foto_perfil.name}")
             except Exception as e:
                 print(f"Error al eliminar foto de perfil: {e}")
                 
@@ -371,13 +373,14 @@ class ImagenMascota(models.Model):
     
     def delete(self, *args, **kwargs):
         """Elimina el archivo de imagen al eliminar el objeto"""
-        if self.imagen and hasattr(self.imagen, 'path'):
+        if self.imagen:
             try:
-                if os.path.isfile(self.imagen.path):
-                    os.remove(self.imagen.path)
-                    print(f"Archivo eliminado: {self.imagen.path}")
+                # Usar storage.delete() en lugar de os.remove() para compatibilidad con Azure Storage
+                if self.imagen.name:
+                    self.imagen.storage.delete(self.imagen.name)
+                    print(f"Archivo eliminado: {self.imagen.name}")
             except Exception as e:
-                print(f"Error al eliminar archivo de imagen {self.imagen.path}: {e}")
+                print(f"Error al eliminar archivo de imagen {self.imagen.name}: {e}")
         super().delete(*args, **kwargs)
     
     class Meta:

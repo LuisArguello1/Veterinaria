@@ -19,11 +19,16 @@
     <!-- CSS base y mensajes -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/message.css' %}">
+    <link rel="stylesheet" href="{% static 'css/loading.css' %}">
+
 
     <!-- Agregar extras al head -->
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-neutral-50">
+    <!-- Componente de Loading -->
+    {% include "components/loading.html" %}
+
     <!-- Incluir sistema de alertas/mensajes -->
     {% include "fragments/alerts.html" %}
 
