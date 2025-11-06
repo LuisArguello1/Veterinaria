@@ -1087,9 +1087,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return formularioValido;
     }
     
+    // Variable para controlar envío del formulario
+    let formularioEnviando = false;
+    
     // Agregar validación al submit
     if (registroForm) {
-        registroForm.addEventListener('submit', validarFormulario);
+        registroForm.addEventListener('submit', function(event) {
+            // Prevenir múltiples envíos
+            if (formularioEnviando) {
+                event.preventDefault();
+                return false;
+            }
+            
+            // Validar formulario
+            const esValido = validarFormulario(event);
+            
+            if (esValido) {
+                // Marcar como enviando
+                formularioEnviando = true;
+                
+                // Desactivar botón y mostrar estado de carga
+                btnRegistrar.disabled = true;
+                btnRegistrar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+                btnRegistrar.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+        });
     }
     
     // Validación en tiempo real para mejorar UX
