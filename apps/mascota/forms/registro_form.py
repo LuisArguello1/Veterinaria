@@ -147,8 +147,17 @@ class MascotaRegistroForm(forms.ModelForm):
         """Validación para el peso"""
         peso = self.cleaned_data.get('peso')
         
-        if peso is not None and peso <= 0:
+        if peso is None:
+            raise ValidationError("El peso es obligatorio.")
+        
+        if peso <= 0:
             raise ValidationError("El peso debe ser mayor a 0.")
+        
+        if peso < 0.1:
+            raise ValidationError("El peso debe ser al menos 0.1 kg.")
+        
+        if peso > 200:
+            raise ValidationError("El peso no puede ser mayor a 200 kg.")
         
         return peso
     
@@ -156,8 +165,17 @@ class MascotaRegistroForm(forms.ModelForm):
         """Validación para la edad"""
         edad = self.cleaned_data.get('edad')
         
-        if edad is not None and edad < 0:
+        if edad is None:
+            raise ValidationError("La edad es obligatoria.")
+        
+        if edad < 0:
             raise ValidationError("La edad no puede ser negativa.")
+        
+        if edad == 0:
+            raise ValidationError("La edad debe ser mayor a 0.")
+        
+        if edad > 30:
+            raise ValidationError("La edad no puede ser mayor a 30.")
         
         return edad
     

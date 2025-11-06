@@ -59,7 +59,14 @@ def registro_mascota_view(request):
             messages.success(request, f'¡{mascota.nombre} ha sido registrada exitosamente!')
             return redirect('mascota:main_register')
         else:
-            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+            # Mostrar errores específicos de cada campo
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, error)
+                    else:
+                        field_label = form.fields[field].label if field in form.fields else field
+                        messages.error(request, f'{field_label}: {error}')
     else:
         form = MascotaRegistroForm()
 
