@@ -99,3 +99,87 @@ class SimpleMascotaRegistroForm(forms.ModelForm):
                 raise ValidationError("El archivo debe ser una imagen.")
         
         return foto
+    
+    def clean_peso(self):
+        """Validación para el peso"""
+        peso = self.cleaned_data.get('peso')
+        
+        if peso is None:
+            raise ValidationError("El peso es obligatorio.")
+        
+        if peso <= 0:
+            raise ValidationError("El peso debe ser mayor a 0.")
+        
+        if peso < 0.1:
+            raise ValidationError("El peso debe ser al menos 0.1 kg.")
+        
+        if peso > 200:
+            raise ValidationError("El peso no puede ser mayor a 200 kg.")
+        
+        return peso
+    
+    def clean_edad(self):
+        """Validación para la edad"""
+        edad = self.cleaned_data.get('edad')
+        
+        if edad is None:
+            raise ValidationError("La edad es obligatoria.")
+        
+        if edad < 0:
+            raise ValidationError("La edad no puede ser negativa.")
+        
+        if edad == 0:
+            raise ValidationError("La edad debe ser mayor a 0.")
+        
+        if edad > 30:
+            raise ValidationError("La edad no puede ser mayor a 30.")
+        
+        return edad
+    
+    def clean(self):
+        """Validación general del formulario, incluyendo fecha de nacimiento vs edad"""
+        cleaned_data = super().clean()
+        
+        fecha_nacimiento = cleaned_data.get('fecha_nacimiento')
+        edad = cleaned_data.get('edad')
+        edad_unidad = cleaned_data.get('edad_unidad')
+        
+        if fecha_nacimiento and edad:
+            from datetime import date
+            
+            # Calcular edad desde fecha de nacimiento
+            hoy = date.today()
+            edad_calculada_anios = hoy.year - fecha_nacimiento.year
+            mes_actual = hoy.month
+            mes_nacimiento = fecha_nacimiento.month
+            
+            # Ajustar si aún no ha cumplido años este año
+            if mes_actual < mes_nacimiento or (mes_actual == mes_nacimiento and hoy.day < fecha_nacimiento.day):
+                edad_calculada_anios -= 1
+            
+            # Calcular meses adicionales
+            meses_adicionales = mes_actual - mes_nacimiento
+            if meses_adicionales < 0:
+                meses_adicionales += 12
+            
+            edad_calculada_total_anios = edad_calculada_anios + (meses_adicionales / 12)
+            
+            # Convertir edad ingresada a años para comparación
+            edad_ingresada_en_anios = edad
+            if edad_unidad == 'meses':
+                edad_ingresada_en_anios = edad / 12
+            
+            # Calcular diferencia
+            diferencia = abs(edad_ingresada_en_anios - edad_calculada_total_anios)
+            
+            # Si la diferencia es mayor a 3 meses (0.25 años), mostrar error
+            if diferencia > 0.25:
+                texto_edad_ingresada = f"{edad} {'año' if edad == 1 else 'años'}" if edad_unidad == 'años' else f"{edad} {'mes' if edad == 1 else 'meses'}"
+                texto_edad_calculada = f"{edad_calculada_anios} {'año' if edad_calculada_anios == 1 else 'años'} y {meses_adicionales} {'mes' if meses_adicionales == 1 else 'meses'}"
+                
+                raise ValidationError(
+                    f"La edad ingresada ({texto_edad_ingresada}) no coincide con la fecha de nacimiento ({texto_edad_calculada}). "
+                    f"Por favor verifica que ambos datos sean correctos."
+                )
+        
+        return cleaned_data
