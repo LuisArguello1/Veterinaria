@@ -91,7 +91,7 @@
         <!-- Carnet -->
         {% if request.user.role == 'OWNER' or request.user.role == 'ADMIN' or request.user.role == 'VET' %}
         <a href="{% url 'mascota:mapa_mascotas' %}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-white hover:bg-primary-700 hover:text-secondary-300 transition-all duration-200 group">
-            <i class="fas fa-radar text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
+            <i class="fas fa-satellite-dish text-primary-300 group-hover:text-secondary-300 transition-colors"></i>
             <span>Radar Inteligente</span>
         </a>
         {% endif %}
