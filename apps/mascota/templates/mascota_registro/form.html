@@ -1007,8 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Validar foto de perfil
-        const fotoInput = document.getElementById('foto_perfil_input');
+        // Validar foto de perfil (usa la variable fotoInput ya definida al inicio del script)
         if (fotoInput && !fotoInput.files.length) {
             mostrarError(fotoInput, 'Debes subir una foto de tu mascota');
         }
