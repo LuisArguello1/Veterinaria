@@ -474,13 +474,11 @@ def confirmar_reporte_encontrada(request, reporte_id):
                 'error': 'No tienes permiso para confirmar este reporte'
             }, status=403)
         
-        # Confirmar el reporte
-        reporte.confirmar()
+        # Confirmar el reporte (pasando el propietario como argumento)
+        reporte.confirmar(propietario=request.user)
         
-        # Cambiar estado de la mascota a encontrada
+        # La mascota ya se marca como encontrada dentro del método confirmar()
         mascota = reporte.mascota
-        mascota.reportar_perdida = False
-        mascota.save()
         
         # Crear notificación de éxito
         notify_mascota(
