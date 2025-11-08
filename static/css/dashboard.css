@@ -15,3 +15,29 @@
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     min-height: calc(100vh - 4rem);
   }
+
+  /* Animación de radar para la tarjeta del mapa */
+  @keyframes radar-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+
+  .animate-ping {
+    animation: radar-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Efecto adicional para la tarjeta del mapa */
+  a.stat-card {
+    text-decoration: none;
+    display: block;
+  }
+  
+  a.stat-card:hover {
+    transform: translateY(-5px) scale(1.02);
+  }

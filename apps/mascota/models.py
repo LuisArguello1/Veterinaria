@@ -112,6 +112,33 @@ class Mascota(models.Model):
         help_text="Indica si la mascota ha sido reportada como perdida"
     )
     
+    # Campos de geolocalización para mascotas perdidas/encontradas
+    latitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Latitud de la ubicación donde se reportó la mascota"
+    )
+    longitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Longitud de la ubicación donde se reportó la mascota"
+    )
+    ubicacion_descripcion = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Descripción de la ubicación (dirección, referencia)"
+    )
+    fecha_ubicacion = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Fecha y hora cuando se registró la última ubicación"
+    )
+    
     def get_biometric_image_count(self):
         """Retorna el número de imágenes biométricas de la mascota"""
         return self.imagenes.filter(is_biometrica=True).count()
@@ -316,6 +343,162 @@ class Mascota(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Mascota"
         verbose_name_plural = "Mascotas"
+
+
+class ReporteMascotaEncontrada(models.Model):
+    """
+    Modelo para registrar reportes de mascotas encontradas.
+    Permite que cualquier persona reporte haber encontrado una mascota perdida,
+    sin cambiar automáticamente su estado. El propietario decide si es su mascota.
+    """
+    mascota = models.ForeignKey(
+        'Mascota',
+        on_delete=models.CASCADE,
+        related_name='reportes_encontrada',
+        help_text="Mascota que fue reportada como encontrada"
+    )
+    
+    # Datos del reporte
+    fecha_reporte = models.DateTimeField(
+        default=timezone.now,
+        help_text="Fecha y hora del reporte"
+    )
+    
+    # Ubicación donde se encontró
+    latitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Latitud donde se encontró la mascota"
+    )
+    longitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Longitud donde se encontró la mascota"
+    )
+    ubicacion_descripcion = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Descripción de la ubicación"
+    )
+    
+    # Foto del reporte (la imagen escaneada)
+    foto_reporte = models.ImageField(
+        upload_to='reportes_encontrada/',
+        blank=True,
+        null=True,
+        help_text="Foto de la mascota al momento del reporte"
+    )
+    
+    # Datos de quien reportó (opcional, puede ser anónimo)
+    reportado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reportes_realizados',
+        help_text="Usuario que realizó el reporte (si está autenticado)"
+    )
+    nombre_reportante = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        help_text="Nombre de quien reporta (si no está autenticado)"
+    )
+    telefono_reportante = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text="Teléfono de contacto del reportante"
+    )
+    email_reportante = models.EmailField(
+        blank=True,
+        null=True,
+        help_text="Email de contacto del reportante"
+    )
+    
+    # Información técnica del reporte
+    ip_address = models.GenericIPAddressField(
+        blank=True,
+        null=True,
+        help_text="Dirección IP desde donde se hizo el reporte"
+    )
+    user_agent = models.TextField(
+        blank=True,
+        null=True,
+        help_text="User agent del navegador"
+    )
+    
+    # Estado del reporte
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente de revisión'),
+        ('confirmado', 'Confirmado por propietario'),
+        ('descartado', 'Descartado'),
+    ]
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='pendiente',
+        help_text="Estado del reporte"
+    )
+    
+    # Notas del propietario
+    notas_propietario = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Notas adicionales del propietario"
+    )
+    fecha_revision = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Fecha en que el propietario revisó el reporte"
+    )
+    
+    # Metadata
+    metadata = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="Datos adicionales del reporte en formato JSON"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-fecha_reporte']
+        verbose_name = 'Reporte de Mascota Encontrada'
+        verbose_name_plural = 'Reportes de Mascotas Encontradas'
+        indexes = [
+            models.Index(fields=['mascota', 'estado']),
+            models.Index(fields=['fecha_reporte']),
+        ]
+    
+    def __str__(self):
+        return f"Reporte de {self.mascota.nombre} - {self.fecha_reporte.strftime('%d/%m/%Y %H:%M')}"
+    
+    def confirmar(self, propietario, notas=None):
+        """Marca el reporte como confirmado por el propietario"""
+        self.estado = 'confirmado'
+        self.fecha_revision = timezone.now()
+        if notas:
+            self.notas_propietario = notas
+        self.save()
+        
+        # Marcar la mascota como encontrada
+        self.mascota.reportar_perdida = False
+        self.mascota.save()
+    
+    def descartar(self, propietario, notas=None):
+        """Marca el reporte como descartado"""
+        self.estado = 'descartado'
+        self.fecha_revision = timezone.now()
+        if notas:
+            self.notas_propietario = notas
+        self.save()
 
 
 class ImagenMascota(models.Model):

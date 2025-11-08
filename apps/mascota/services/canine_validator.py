@@ -32,7 +32,10 @@ class CanineValidator:
     DOG_CLASSES_RANGE = (151, 268)
     
     # Umbral mínimo de confianza para considerar válida la detección
-    MIN_CONFIDENCE = 30.0  # 30%
+    MIN_CONFIDENCE = 15.0  # 15% - Más permisivo para capturar más casos
+    
+    # Número de predicciones top a evaluar
+    TOP_K = 5  # Evaluar las 5 predicciones más probables
     
     def __init__(self):
         """Inicializa el validador con el modelo ImageNet."""
@@ -51,10 +54,21 @@ class CanineValidator:
             self.model = models.mobilenet_v2(weights=weights)
             self.model.eval()  # Modo evaluación
             
-            # Transformaciones estándar de ImageNet
+            # Transformaciones mejoradas de ImageNet
+            # Usar múltiples crops para mejor detección
             self.transform = transforms.Compose([
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                )
+            ])
+            
+            # Transformación alternativa sin crop (para imágenes ya cuadradas)
+            self.transform_no_crop = transforms.Compose([
+                transforms.Resize((224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406],
@@ -119,38 +133,84 @@ class CanineValidator:
                 output = self.model(img_tensor)
                 probabilities = torch.nn.functional.softmax(output[0], dim=0)
             
-            # Obtener top-1 predicción
-            top_prob, top_class = probabilities.max(0)
-            top_prob = top_prob.item() * 100  # Convertir a porcentaje
-            top_class = top_class.item()
+            # Obtener top-K predicciones (evaluar las 5 más probables)
+            top_probs, top_classes = probabilities.topk(self.TOP_K)
             
-            # Verificar si está en el rango de clases de perros (151-268)
-            es_perro = self.DOG_CLASSES_RANGE[0] <= top_class <= self.DOG_CLASSES_RANGE[1]
+            # Convertir a listas de Python
+            top_probs = [p.item() * 100 for p in top_probs]
+            top_classes = [c.item() for c in top_classes]
             
-            # Obtener nombre de la clase
-            nombre_clase = IMAGENET_CLASSES.get(top_class, f'Clase_{top_class}')
+            # ESTRATEGIA MEJORADA: Verificar si alguna de las top-K es un perro
+            perros_detectados = []
+            confianza_total_perros = 0.0
             
-            # Validar confianza mínima
-            confianza_suficiente = top_prob >= self.MIN_CONFIDENCE
+            for idx, (prob, clase) in enumerate(zip(top_probs, top_classes)):
+                es_perro = self.DOG_CLASSES_RANGE[0] <= clase <= self.DOG_CLASSES_RANGE[1]
+                if es_perro:
+                    nombre = IMAGENET_CLASSES.get(clase, f'Perro_Clase_{clase}')
+                    perros_detectados.append({
+                        'clase': clase,
+                        'nombre': nombre,
+                        'confianza': prob,
+                        'posicion': idx + 1
+                    })
+                    confianza_total_perros += prob
             
-            # Construir resultado
-            if es_perro and confianza_suficiente:
-                mensaje = f'Canino detectado: {nombre_clase}'
-                logger.info(f"✓ Validación exitosa: {nombre_clase} ({top_prob:.1f}%)")
-            elif es_perro and not confianza_suficiente:
-                mensaje = f'Canino detectado pero con baja confianza ({top_prob:.1f}%)'
-                logger.warning(f"⚠ Confianza baja: {nombre_clase} ({top_prob:.1f}%)")
+            # Determinar si la imagen es válida
+            tiene_perro = len(perros_detectados) > 0
+            
+            if tiene_perro:
+                # Usar el perro con mayor confianza
+                mejor_perro = perros_detectados[0]
+                confianza_principal = mejor_perro['confianza']
+                nombre_clase = mejor_perro['nombre']
+                clase_id = mejor_perro['clase']
+                
+                # Validar confianza mínima
+                # Si hay múltiples perros detectados, ser más permisivo
+                if len(perros_detectados) > 1:
+                    # Si hay múltiples clases de perro, sumar confianzas
+                    confianza_efectiva = confianza_total_perros
+                    mensaje_extra = f" ({len(perros_detectados)} razas detectadas, confianza combinada: {confianza_total_perros:.1f}%)"
+                else:
+                    confianza_efectiva = confianza_principal
+                    mensaje_extra = ""
+                
+                es_valido = confianza_efectiva >= self.MIN_CONFIDENCE
+                
+                if es_valido:
+                    mensaje = f'Canino detectado: {nombre_clase}{mensaje_extra}'
+                    logger.info(f"✓ Validación exitosa: {nombre_clase} ({confianza_principal:.1f}%){mensaje_extra}")
+                else:
+                    mensaje = f'Canino detectado pero con muy baja confianza ({confianza_efectiva:.1f}%)'
+                    logger.warning(f"⚠ Confianza muy baja: {nombre_clase} ({confianza_principal:.1f}%)")
+                
+                return {
+                    'es_canino': es_valido,
+                    'confianza': round(confianza_principal, 2),
+                    'confianza_total': round(confianza_total_perros, 2) if len(perros_detectados) > 1 else round(confianza_principal, 2),
+                    'clase_id': clase_id,
+                    'objeto_detectado': nombre_clase,
+                    'perros_detectados': perros_detectados,
+                    'mensaje': mensaje
+                }
             else:
-                mensaje = f'No es un canino. Detectado: {nombre_clase}'
-                logger.info(f"✗ Imagen rechazada: {nombre_clase} ({top_prob:.1f}%)")
-            
-            return {
-                'es_canino': es_perro and confianza_suficiente,
-                'confianza': round(top_prob, 2),
-                'clase_id': top_class,
-                'objeto_detectado': nombre_clase,
-                'mensaje': mensaje
-            }
+                # No se detectó ningún perro en top-K
+                top_clase = top_classes[0]
+                top_prob = top_probs[0]
+                nombre_clase = IMAGENET_CLASSES.get(top_clase, f'Clase_{top_clase}')
+                mensaje = f'No es un canino. Detectado: {nombre_clase} ({top_prob:.1f}%)'
+                logger.info(f"✗ Imagen rechazada: {nombre_clase} ({top_prob:.1f}%) - No hay perros en top-{self.TOP_K}")
+                
+                return {
+                    'es_canino': False,
+                    'confianza': 0.0,
+                    'confianza_total': 0.0,
+                    'clase_id': top_clase,
+                    'objeto_detectado': nombre_clase,
+                    'perros_detectados': [],
+                    'mensaje': mensaje
+                }
             
         except Exception as e:
             logger.error(f"Error durante validación de imagen: {e}", exc_info=True)
@@ -165,26 +225,28 @@ class CanineValidator:
     
     def _cargar_imagen(self, imagen_input: Union[bytes, str, Any]) -> Image.Image:
         """
-        Carga una imagen desde diferentes tipos de input.
+        Carga una imagen desde diferentes tipos de input con preprocesamiento mejorado.
         
         Args:
             imagen_input: Bytes, path, PIL Image, o Django UploadedFile
             
         Returns:
-            PIL.Image: Imagen cargada en modo RGB, o None si falla
+            PIL.Image: Imagen cargada en modo RGB con orientación corregida, o None si falla
         """
         try:
+            img = None
+            
             # Si ya es una imagen PIL
             if isinstance(imagen_input, Image.Image):
-                return imagen_input.convert('RGB')
+                img = imagen_input
             
             # Si es bytes
             elif isinstance(imagen_input, bytes):
-                return Image.open(BytesIO(imagen_input)).convert('RGB')
+                img = Image.open(BytesIO(imagen_input))
             
             # Si es un path (str)
             elif isinstance(imagen_input, str):
-                return Image.open(imagen_input).convert('RGB')
+                img = Image.open(imagen_input)
             
             # Si es un Django UploadedFile
             elif hasattr(imagen_input, 'read'):
@@ -193,11 +255,46 @@ class CanineValidator:
                 # IMPORTANTE: Resetear el puntero del archivo para futuros usos
                 if hasattr(imagen_input, 'seek'):
                     imagen_input.seek(0)
-                return Image.open(BytesIO(contenido)).convert('RGB')
+                img = Image.open(BytesIO(contenido))
             
             else:
                 logger.error(f"Tipo de input no soportado: {type(imagen_input)}")
                 return None
+            
+            # Corregir orientación EXIF si existe
+            try:
+                from PIL import ImageOps
+                img = ImageOps.exif_transpose(img)
+            except Exception as e:
+                logger.debug(f"No se pudo corregir orientación EXIF: {e}")
+            
+            # Convertir a RGB
+            img = img.convert('RGB')
+            
+            # Mejorar contraste si la imagen es muy oscura o muy clara
+            try:
+                from PIL import ImageEnhance
+                np_img = np.array(img)
+                brightness = np_img.mean()
+                
+                # Si la imagen es muy oscura (< 80) o muy clara (> 200), ajustar
+                if brightness < 80:
+                    enhancer = ImageEnhance.Brightness(img)
+                    img = enhancer.enhance(1.3)  # Aumentar brillo 30%
+                    logger.debug(f"Imagen oscura detectada (brillo: {brightness:.1f}), ajustando brillo")
+                elif brightness > 200:
+                    enhancer = ImageEnhance.Brightness(img)
+                    img = enhancer.enhance(0.85)  # Reducir brillo 15%
+                    logger.debug(f"Imagen muy clara detectada (brillo: {brightness:.1f}), ajustando brillo")
+                
+                # Mejorar contraste ligeramente
+                enhancer = ImageEnhance.Contrast(img)
+                img = enhancer.enhance(1.1)  # Aumentar contraste 10%
+                
+            except Exception as e:
+                logger.debug(f"No se pudo mejorar contraste/brillo: {e}")
+            
+            return img
                 
         except Exception as e:
             logger.error(f"Error al cargar imagen: {e}", exc_info=True)

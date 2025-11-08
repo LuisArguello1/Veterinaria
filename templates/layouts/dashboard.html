@@ -91,6 +91,29 @@
         </div>
       </div>
       {% endif %}
+
+      <!-- Tarjeta: Mapa de Mascotas -->
+      <a href="{% url 'mascota:mapa_mascotas' %}" class="bg-gradient-to-br from-cyan-50 to-blue-100 rounded-lg shadow-md p-6 stat-card border-l-4 border-cyan-500 hover:shadow-lg transition-all duration-300 cursor-pointer group">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-600 mb-1">Mapa de Mascotas</p>
+            <h3 class="text-lg font-semibold text-gray-800 group-hover:text-cyan-600 transition-colors">Ver Ubicaciones</h3>
+          </div>
+          <div class="rounded-full bg-cyan-100 p-3 group-hover:bg-cyan-200 transition-colors relative overflow-hidden">
+            <i class="fas fa-map-marked-alt text-cyan-600 relative z-10"></i>
+            <!-- Efecto radar animado -->
+            <div class="absolute inset-0 rounded-full bg-cyan-400 opacity-20 animate-ping"></div>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+          <div class="flex-1 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full opacity-30"></div>
+          <i class="fas fa-arrow-right text-cyan-600 text-sm group-hover:translate-x-1 transition-transform"></i>
+        </div>
+        <p class="text-xs text-gray-600 mt-2">
+          <i class="fas fa-map-pin text-cyan-500 mr-1"></i>
+          Explora las mascotas perdidas y encontradas
+        </p>
+      </a>
     </div>
   </div>
 

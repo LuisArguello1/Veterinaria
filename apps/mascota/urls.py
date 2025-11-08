@@ -27,7 +27,9 @@ from apps.mascota.views.mascota_perdida_views import (
     reportar_encontrada,
     verificar_estado_perdida,
     listar_mascotas_perdidas,
-    api_mascotas_perdidas
+    api_mascotas_perdidas,
+    confirmar_reporte_encontrada,
+    descartar_reporte_encontrada
 )
 
 from apps.mascota.views.carnet import (
@@ -45,6 +47,11 @@ from apps.mascota.views.registro_view import (
 
 from apps.mascota.views.editar_mascota import editar_mascota
 
+from apps.mascota.views.mapa_views import (
+    mapa_mascotas,
+    api_mascotas_mapa,
+    api_mascota_detalle_mapa
+)
 
 
 app_name='mascota'
@@ -103,5 +110,14 @@ urlpatterns = [
     path('carnet/<int:mascota_id>/', detalle_carnet, name='detalle_carnet'),
     path('carnet/<int:mascota_id>/pdf/', descargar_carnet_pdf, name='descargar_carnet_pdf'),
     path('carnet/<int:mascota_id>/preview/', vista_previa_carnet, name='vista_previa_carnet'),
+
+    # Mapa interactivo de mascotas
+    path('mapa/', mapa_mascotas, name='mapa_mascotas'),
+    path('api/mapa/mascotas/', api_mascotas_mapa, name='api_mascotas_mapa'),
+    path('api/mapa/detalle/<int:mascota_id>/', api_mascota_detalle_mapa, name='api_mascota_detalle_mapa'),
+    
+    # Gestión de reportes de encontrada
+    path('api/reporte/<int:reporte_id>/confirmar/', confirmar_reporte_encontrada, name='confirmar_reporte_encontrada'),
+    path('api/reporte/<int:reporte_id>/descartar/', descartar_reporte_encontrada, name='descartar_reporte_encontrada'),
 
 ]

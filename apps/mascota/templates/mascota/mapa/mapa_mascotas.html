@@ -1,0 +1,196 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<!-- Mapbox GL JS CSS - Versión 3.7.0 (estable y probada) -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/mapa-mascotas.css' %}">
+{% endblock %}
+
+{% block title %}{{ page_title|default:"Mapa de Mascotas" }}{% endblock %}
+
+{% block content %}
+<div class="mapa-container">
+    <!-- Header -->
+    <div class="mapa-header">
+        <h1 class="mapa-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Mascotas Perdidas y Encontradas
+        </h1>
+        <p class="mapa-subtitle">
+            Visualiza en tiempo real las mascotas reportadas como perdidas o encontradas en Ecuador
+        </p>
+    </div>
+
+    <!-- Controles y filtros -->
+    <div class="mapa-controls">
+        <div class="filter-group">
+            <label class="filter-label">
+                <i class="fas fa-filter"></i>
+                Filtrar por estado:
+            </label>
+            <div class="filter-buttons">
+                <button id="filtro-todas" class="filter-btn active" data-filtro="todas">
+                    <i class="fas fa-globe"></i>
+                    Todas
+                </button>
+                <button id="filtro-perdidas" class="filter-btn" data-filtro="perdidas">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Perdidas
+                </button>
+                <button id="filtro-encontradas" class="filter-btn" data-filtro="encontradas">
+                    <i class="fas fa-check-circle"></i>
+                    Encontradas
+                </button>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3 class="legend-title">Leyenda</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-marker perdida"></span>
+                    <span>Mascota Perdida</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker encontrada"></span>
+                    <span>Mascota Encontrada</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <span class="stat-value" id="total-mascotas">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-item perdidas">
+                <span class="stat-value" id="total-perdidas">0</span>
+                <span class="stat-label">Perdidas</span>
+            </div>
+            <div class="stat-item encontradas">
+                <span class="stat-value" id="total-encontradas">0</span>
+                <span class="stat-label">Encontradas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información sobre precisión de ubicación - Dropdown -->
+    <div class="info-precision-container">
+        <button class="info-precision-toggle" id="toggleInfoPrecision" aria-expanded="false">
+            <div class="toggle-header">
+                <div class="toggle-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <span class="toggle-title">
+                    <i class="fas fa-satellite-dish"></i>
+                    Acerca de la precisión de ubicaciones
+                </span>
+                <i class="fas fa-chevron-down toggle-arrow"></i>
+            </div>
+        </button>
+        
+        <div class="info-precision-content" id="infoPrecisionContent">
+            <div class="info-body">
+                <div class="info-item">
+                    <div class="info-badge mobile">
+                        <i class="fas fa-mobile-alt"></i>
+                        Dispositivos Móviles
+                    </div>
+                    <p class="info-text">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Alta precisión (5-30 metros):</strong> Los teléfonos móviles utilizan GPS satelital que proporciona ubicaciones muy precisas.
+                    </p>
+                </div>
+                <div class="info-item">
+                    <div class="info-badge desktop">
+                        <i class="fas fa-laptop"></i>
+                        Computadoras
+                    </div>
+                    <p class="info-text">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <strong>Precisión limitada (50-500 metros o más):</strong> Las computadoras no tienen GPS y utilizan triangulación WiFi o geolocalización por IP, lo que resulta en ubicaciones aproximadas.
+                    </p>
+                </div>
+                <div class="info-recommendation">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Recomendación:</strong> Para reportar ubicaciones precisas de mascotas perdidas o encontradas, utiliza tu dispositivo móvil con GPS activado. Las ubicaciones reportadas desde computadoras deben considerarse como aproximadas.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de reportes de mascotas encontradas (solo para el propietario) -->
+    <div id="reportes-container" class="reportes-container" style="display: none;">
+        <div class="reportes-header">
+            <h2 class="reportes-title">
+                <i class="fas fa-bell"></i>
+                Reportes de tus mascotas encontradas
+            </h2>
+            <p class="reportes-subtitle">
+                Personas han reportado haber encontrado tus mascotas. Revisa y confirma si son correctas.
+            </p>
+        </div>
+        <div id="reportes-list" class="reportes-list">
+            <!-- Los reportes se cargarán dinámicamente aquí -->
+        </div>
+    </div>
+
+    <!-- Mapa -->
+    <div id="mapa" class="mapa-canvas"></div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p>Cargando mascotas...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Mapbox GL JS - Versión 3.7.0 (estable y probada) -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
+<!-- SweetAlert2 para notificaciones -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Script del mapa -->
+<script>
+    // Configuración global del mapa
+    window.MAPBOX_CONFIG = {
+        token: '{{ mapbox_token|safe }}',
+        apiEndpoint: '{% url "mascota:api_mascotas_mapa" %}',
+        detalleEndpoint: '/mascota/api/mapa/detalle/',
+        centerEcuador: [-78.4678, -1.8312], // Coordenadas de Ecuador (Quito)
+        zoom: 6
+    };
+
+    // Validación del token en el cliente
+    console.log('=== CONFIGURACIÓN DEL MAPA ===');
+    console.log('Token presente:', window.MAPBOX_CONFIG.token ? 'Sí' : 'No');
+    console.log('Token length:', window.MAPBOX_CONFIG.token ? window.MAPBOX_CONFIG.token.length : 0);
+    console.log('API Endpoint:', window.MAPBOX_CONFIG.apiEndpoint);
+    console.log('================================');
+    
+    {% if not mapbox_token %}
+    console.error('⚠️ ADVERTENCIA: Token de Mapbox no configurado en el servidor');
+    {% endif %}
+    
+    // Toggle para el dropdown de información de precisión
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleInfoPrecision');
+        const content = document.getElementById('infoPrecisionContent');
+        
+        if (toggleBtn && content) {
+            toggleBtn.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('expanded');
+                this.classList.toggle('active');
+            });
+        }
+    });
+</script>
+<script src="{% static 'js/mapa-mascotas.js' %}"></script>
+{% endblock %}

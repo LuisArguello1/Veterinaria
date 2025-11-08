@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Mapbox - Diagnóstico</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .diagnostico {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #667eea;
+            color: white;
+        }
+        button:hover { background: #5568d3; }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Test de Mapbox - Diagnóstico Completo</h1>
+            <p>Esta página te ayudará a diagnosticar problemas con Mapbox</p>
+            
+            <label for="token-input">Ingresa tu token de Mapbox:</label><br>
+            <input type="text" id="token-input" 
+                   placeholder="pk.eyJ1Ijoi..." 
+                   style="width: 70%; padding: 10px; margin: 10px 0;">
+            <button onclick="probarToken()">🔍 Probar Token</button>
+            <button onclick="limpiarMapa()">🗑️ Limpiar</button>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="diagnostico">
+            <h2>📊 Resultados del Diagnóstico</h2>
+            <div id="resultados"></div>
+        </div>
+    </div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
+    <script>
+        let map = null;
+        const resultadosDiv = document.getElementById('resultados');
+
+        function log(mensaje, tipo = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${tipo}`;
+            div.textContent = mensaje;
+            resultadosDiv.appendChild(div);
+            console.log(mensaje);
+        }
+
+        function limpiarResultados() {
+            resultadosDiv.innerHTML = '';
+        }
+
+        function limpiarMapa() {
+            if (map) {
+                map.remove();
+                map = null;
+            }
+            limpiarResultados();
+            log('Mapa y resultados limpiados', 'info');
+        }
+
+        async function probarToken() {
+            limpiarResultados();
+            
+            const token = document.getElementById('token-input').value.trim();
+            
+            log('🔍 Iniciando diagnóstico...', 'info');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+
+            // 1. Verificar token
+            log('1️⃣ Verificando token...', 'info');
+            if (!token) {
+                log('❌ ERROR: Token no proporcionado', 'error');
+                return;
+            }
+            
+            if (!token.startsWith('pk.')) {
+                log('⚠️ ADVERTENCIA: El token no comienza con "pk." - puede ser inválido', 'warning');
+            } else {
+                log('✅ Token tiene formato correcto (comienza con pk.)', 'success');
+            }
+            
+            log(`📏 Longitud del token: ${token.length} caracteres`, 'info');
+
+            // 2. Verificar librería Mapbox
+            log('2️⃣ Verificando librería Mapbox GL JS...', 'info');
+            if (typeof mapboxgl === 'undefined') {
+                log('❌ ERROR: Mapbox GL JS no está cargado', 'error');
+                return;
+            }
+            log(`✅ Mapbox GL JS cargado - Versión: ${mapboxgl.version}`, 'success');
+
+            // 3. Probar acceso al API
+            log('3️⃣ Probando acceso al API de Mapbox...', 'info');
+            try {
+                const testUrl = `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8.json?access_token=${token}`;
+                const response = await fetch(testUrl);
+                
+                if (response.ok) {
+                    log('✅ API de Mapbox responde correctamente', 'success');
+                    const data = await response.json();
+                    log(`📦 Datos recibidos: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
+                } else {
+                    log(`❌ ERROR: API respondió con código ${response.status} (${response.statusText})`, 'error');
+                    
+                    if (response.status === 401) {
+                        log('💡 Token no autorizado - verifica que sea correcto', 'warning');
+                    } else if (response.status === 403) {
+                        log('💡 Token sin permisos - verifica los scopes del token', 'warning');
+                    }
+                }
+            } catch (error) {
+                log(`❌ ERROR al acceder al API: ${error.message}`, 'error');
+            }
+
+            // 4. Intentar crear el mapa
+            log('4️⃣ Intentando crear mapa interactivo...', 'info');
+            
+            if (map) {
+                map.remove();
+            }
+
+            try {
+                mapboxgl.accessToken = token;
+                
+                // Estilos para probar
+                const estilos = [
+                    { nombre: 'Streets v12', url: 'mapbox://styles/mapbox/streets-v12' },
+                    { nombre: 'Streets v11', url: 'mapbox://styles/mapbox/streets-v11' },
+                    { nombre: 'Light v11', url: 'mapbox://styles/mapbox/light-v11' },
+                    { nombre: 'Outdoors v12', url: 'mapbox://styles/mapbox/outdoors-v12' }
+                ];
+
+                let estiloExitoso = null;
+
+                for (let i = 0; i < estilos.length; i++) {
+                    const estilo = estilos[i];
+                    log(`🎨 Probando estilo: ${estilo.nombre}...`, 'info');
+                    
+                    try {
+                        map = new mapboxgl.Map({
+                            container: 'map',
+                            style: estilo.url,
+                            center: [-78.4678, -1.8312], // Ecuador
+                            zoom: 6
+                        });
+
+                        // Esperar a que cargue
+                        await new Promise((resolve, reject) => {
+                            const timeout = setTimeout(() => reject(new Error('Timeout')), 5000);
+                            
+                            map.on('load', () => {
+                                clearTimeout(timeout);
+                                resolve();
+                            });
+                            
+                            map.on('error', (e) => {
+                                clearTimeout(timeout);
+                                reject(e.error);
+                            });
+                        });
+
+                        log(`✅ ÉXITO: Mapa cargado con estilo "${estilo.nombre}"`, 'success');
+                        estiloExitoso = estilo.nombre;
+                        
+                        // Agregar controles
+                        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                        map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+                        
+                        // Agregar marcador de ejemplo
+                        new mapboxgl.Marker({ color: '#667eea' })
+                            .setLngLat([-78.4678, -1.8312])
+                            .setPopup(new mapboxgl.Popup().setHTML('<h3>¡Funciona!</h3><p>Quito, Ecuador</p>'))
+                            .addTo(map);
+                        
+                        log('📍 Marcador de prueba agregado', 'success');
+                        break;
+                        
+                    } catch (error) {
+                        log(`❌ Falló con "${estilo.nombre}": ${error.message}`, 'error');
+                        if (map) {
+                            map.remove();
+                            map = null;
+                        }
+                    }
+                }
+
+                if (!estiloExitoso) {
+                    log('❌ ERROR: No se pudo cargar ningún estilo de mapa', 'error');
+                    log('💡 Posibles soluciones:', 'warning');
+                    log('   1. Verifica que el token sea válido en https://account.mapbox.com/', 'warning');
+                    log('   2. Crea un nuevo token con todos los permisos', 'warning');
+                    log('   3. Verifica que no tengas restricciones de URL', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ ERROR al crear mapa: ${error.message}`, 'error');
+            }
+
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            log('✅ Diagnóstico completado', 'success');
+        }
+
+        // Cargar token desde localStorage si existe
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('mapbox_token');
+            if (savedToken) {
+                document.getElementById('token-input').value = savedToken;
+            }
+        });
+
+        // Guardar token en localStorage
+        document.getElementById('token-input').addEventListener('change', (e) => {
+            localStorage.setItem('mapbox_token', e.target.value);
+        });
+
+        // Instrucciones iniciales
+        log('👋 Bienvenido al diagnóstico de Mapbox', 'info');
+        log('📝 Ingresa tu token y haz clic en "Probar Token"', 'info');
+        log('🔑 Obtén tu token en: https://account.mapbox.com/access-tokens/', 'info');
+    </script>
+</body>
+</html>
