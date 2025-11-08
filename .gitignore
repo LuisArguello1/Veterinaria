@@ -36,3 +36,8 @@ staticfiles/
 
 # Archivos de configuración local
 local_settings.py
+
+*.env
+.env
+*.env_backups
+.env_backups
