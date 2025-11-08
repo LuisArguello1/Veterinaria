@@ -17,7 +17,7 @@ class MascotaPerdidaService:
     """Servicio para manejar la lógica de mascotas perdidas"""
     
     @staticmethod
-    def reportar_como_perdida(mascota, usuario_reporte, ubicacion_perdida: Optional[str] = None) -> Tuple[bool, str]:
+    def reportar_como_perdida(mascota, usuario_reporte, ubicacion_perdida: Optional[str] = None, latitud: Optional[float] = None, longitud: Optional[float] = None) -> Tuple[bool, str]:
         """
         Reporta una mascota como perdida
         
@@ -25,6 +25,8 @@ class MascotaPerdidaService:
             mascota: Instancia del modelo Mascota
             usuario_reporte: Usuario que reporta (debe ser el propietario)
             ubicacion_perdida: Descripción de la ubicación donde se perdió
+            latitud: Latitud de la ubicación donde se perdió
+            longitud: Longitud de la ubicación donde se perdió
             
         Returns:
             Tuple[bool, str]: (éxito, mensaje)
@@ -38,9 +40,46 @@ class MascotaPerdidaService:
             if mascota.reportar_perdida:
                 return False, f"{mascota.nombre} ya está reportada como perdida"
             
-            # Marcar como perdida
+            # Marcar como perdida y guardar ubicación
             mascota.reportar_perdida = True
-            mascota.save(update_fields=['reportar_perdida'])
+            
+            # Log para debugging
+            logger.info(f"💾 Guardando datos de mascota perdida: {mascota.nombre}")
+            logger.info(f"   - Ubicación descripción: {ubicacion_perdida}")
+            logger.info(f"   - Latitud: {latitud}")
+            logger.info(f"   - Longitud: {longitud}")
+            
+            # Guardar ubicación si se proporcionó
+            if latitud is not None and longitud is not None:
+                mascota.latitud = latitud
+                mascota.longitud = longitud
+                mascota.fecha_ubicacion = timezone.now()
+                logger.info(f"   ✅ Coordenadas asignadas al modelo")
+            else:
+                logger.warning(f"   ⚠️ No se guardaron coordenadas (no proporcionadas)")
+            
+            if ubicacion_perdida:
+                mascota.ubicacion_descripcion = ubicacion_perdida
+                logger.info(f"   ✅ Descripción de ubicación asignada")
+            
+            # Guardar todos los cambios
+            campos_actualizar = ['reportar_perdida']
+            if latitud is not None and longitud is not None:
+                campos_actualizar.extend(['latitud', 'longitud', 'fecha_ubicacion'])
+            if ubicacion_perdida:
+                campos_actualizar.append('ubicacion_descripcion')
+            
+            logger.info(f"   📝 Campos a actualizar: {campos_actualizar}")
+            mascota.save(update_fields=campos_actualizar)
+            logger.info(f"   ✅ Mascota guardada en BD")
+            
+            # Verificar que se guardó correctamente
+            mascota.refresh_from_db()
+            logger.info(f"   🔍 Verificación post-guardado:")
+            logger.info(f"      - reportar_perdida: {mascota.reportar_perdida}")
+            logger.info(f"      - latitud: {mascota.latitud}")
+            logger.info(f"      - longitud: {mascota.longitud}")
+            logger.info(f"      - fecha_ubicacion: {mascota.fecha_ubicacion}")
             
             # Enviar confirmación al propietario
             EmailService.enviar_confirmacion_reporte_perdida(mascota)
@@ -48,7 +87,7 @@ class MascotaPerdidaService:
             # Enviar alerta a todos los usuarios
             EmailService.enviar_alerta_mascota_perdida(mascota, ubicacion_perdida)
             
-            logger.info(f"Mascota {mascota.nombre} (ID: {mascota.id}) reportada como perdida por {usuario_reporte.username}")
+            logger.info(f"✅ Mascota {mascota.nombre} (ID: {mascota.id}) reportada como perdida por {usuario_reporte.username}")
             
             return True, f"{mascota.nombre} ha sido reportada como perdida. Se ha enviado una alerta a todos los usuarios."
             
@@ -57,30 +96,57 @@ class MascotaPerdidaService:
             return False, f"Error interno del servidor: {str(e)}"
     
     @staticmethod
-    def reportar_como_encontrada(mascota, ip_address: Optional[str] = None, user_agent: Optional[str] = None, ubicacion_data: Optional[Dict] = None) -> Tuple[bool, str]:
+    def reportar_como_encontrada(mascota, ip_address: Optional[str] = None, user_agent: Optional[str] = None, ubicacion_data: Optional[Dict] = None, foto_reporte=None, usuario_reportante=None) -> Tuple[bool, str, Optional[int]]:
         """
-        Reporta una mascota como encontrada
+        Crea un reporte de mascota encontrada sin cambiar el estado de la mascota.
+        El propietario debe confirmar manualmente el reporte.
         
         Args:
             mascota: Instancia del modelo Mascota
             ip_address: Dirección IP del usuario que encontró la mascota
             user_agent: User agent del navegador
             ubicacion_data: Diccionario con datos de geolocalización
+            foto_reporte: Archivo de imagen del reporte (opcional)
+            usuario_reportante: Usuario autenticado que hace el reporte (opcional)
             
         Returns:
-            Tuple[bool, str]: (éxito, mensaje)
+            Tuple[bool, str, Optional[int]]: (éxito, mensaje, id_reporte)
         """
         try:
+            # Importar el modelo aquí para evitar importación circular
+            from ..models import ReporteMascotaEncontrada
+            
             # Verificar que la mascota esté reportada como perdida
             if not mascota.reportar_perdida:
-                return False, f"{mascota.nombre} no está reportada como perdida"
+                return False, f"{mascota.nombre} no está reportada como perdida", None
             
-            # Obtener datos de ubicación y tiempo del encuentro
-            datos_encuentro = MascotaPerdidaService._obtener_datos_encuentro(ip_address, user_agent, ubicacion_data)
+            # Crear el reporte
+            reporte = ReporteMascotaEncontrada(
+                mascota=mascota,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                reportado_por=usuario_reportante,
+                estado='pendiente'
+            )
             
-            # Marcar como encontrada (quitar el flag de perdida)
-            mascota.reportar_perdida = False
-            mascota.save(update_fields=['reportar_perdida'])
+            # Agregar ubicación si se proporcionó
+            if ubicacion_data:
+                if 'lat' in ubicacion_data and 'lng' in ubicacion_data:
+                    reporte.latitud = ubicacion_data['lat']
+                    reporte.longitud = ubicacion_data['lng']
+                    logger.info(f"📍 Guardando coordenadas del reporte: lat={ubicacion_data['lat']}, lng={ubicacion_data['lng']}")
+                
+                if 'descripcion' in ubicacion_data:
+                    reporte.ubicacion_descripcion = ubicacion_data['descripcion']
+            
+            # Agregar foto si se proporcionó
+            if foto_reporte:
+                reporte.foto_reporte = foto_reporte
+                logger.info(f"📸 Foto del reporte guardada")
+            
+            # Guardar el reporte
+            reporte.save()
+            logger.info(f"✅ Reporte de mascota encontrada creado: ID={reporte.id}")
             
             # Crear notificación in-app al propietario
             ubicacion_texto = ""
@@ -90,26 +156,30 @@ class MascotaPerdidaService:
             notify_mascota(
                 user=mascota.propietario,
                 title=f"¡Alguien encontró a {mascota.nombre}!",
-                message=f"¡Buenas noticias! Alguien ha reportado haber encontrado a {mascota.nombre}{ubicacion_texto}. Revisa tu email para más detalles.",
+                message=f"¡Buenas noticias! Alguien ha reportado haber encontrado a {mascota.nombre}{ubicacion_texto}. Revisa los reportes para confirmar.",
                 mascota=mascota,
                 notification_type=Notification.NotificationType.SUCCESS
             )
             
+            # Obtener datos del encuentro para el email
+            datos_encuentro = MascotaPerdidaService._obtener_datos_encuentro(ip_address, user_agent, ubicacion_data)
+            datos_encuentro['reporte_id'] = reporte.id
+            
             # Enviar notificación por email
             exito_email = EmailService.enviar_notificacion_mascota_encontrada(mascota, datos_encuentro)
             
-            mensaje_base = f"¡{mascota.nombre} ha sido reportada como encontrada! El propietario ha sido notificado."
+            mensaje_base = f"¡Reporte de {mascota.nombre} registrado exitosamente! El propietario ha sido notificado y revisará el reporte."
             
             if not exito_email:
                 mensaje_base += " (Nota: No se pudo enviar el email de notificación)"
             
-            logger.info(f"Mascota {mascota.nombre} (ID: {mascota.id}) reportada como encontrada")
+            logger.info(f"Reporte de mascota encontrada creado para {mascota.nombre} (ID: {mascota.id}), Reporte ID: {reporte.id}")
             
-            return True, mensaje_base
+            return True, mensaje_base, reporte.id
             
         except Exception as e:
-            logger.error(f"Error reportando mascota encontrada: {str(e)}")
-            return False, f"Error interno del servidor: {str(e)}"
+            logger.error(f"Error creando reporte de mascota encontrada: {str(e)}")
+            return False, f"Error interno del servidor: {str(e)}", None
     
     @staticmethod
     def cancelar_reporte_perdida(mascota, usuario_cancelacion) -> Tuple[bool, str]:
@@ -169,10 +239,11 @@ class MascotaPerdidaService:
         # Procesar datos de geolocalización del dispositivo (GPS)
         if ubicacion_data:
             try:
-                latitud = ubicacion_data.get('latitud')
-                longitud = ubicacion_data.get('longitud')
+                # Soportar ambos formatos: 'lat'/'lng' (del request) y 'latitud'/'longitud' (legacy)
+                latitud = ubicacion_data.get('lat') or ubicacion_data.get('latitud')
+                longitud = ubicacion_data.get('lng') or ubicacion_data.get('longitud')
                 precision = ubicacion_data.get('precision')
-                direccion = ubicacion_data.get('direccion')
+                direccion = ubicacion_data.get('descripcion') or ubicacion_data.get('direccion')
                 
                 if latitud and longitud:
                     datos['coordenadas'] = {

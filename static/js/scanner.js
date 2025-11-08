@@ -616,6 +616,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Función para procesar reconocimiento
         async function processRecognition(imageData) {
             try {
+                // Guardar imagen para reportes posteriores
+                lastCapturedImage = imageData;
+                console.log('📸 Imagen guardada para posibles reportes');
+                
                 // Obtener referencias a los elementos de UI
                 const recognitionResult = document.getElementById('recognition-result');
                 const resultLoading = document.getElementById('result-loading');
@@ -863,6 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variables globales para mascota actual
     let currentMascotaUuid = null;
     let currentMascotaNombre = null;
+    let lastCapturedImage = null; // Guardar última imagen capturada para reportes
     
     /**
      * Verifica el estado de perdida de una mascota y muestra la alerta si es necesario
@@ -993,11 +998,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // Intentar obtener ubicación
+                console.log('📍 Iniciando obtención de ubicación...');
                 ubicacionData = await obtenerUbicacionUsuario();
-                console.log('📍 Ubicación obtenida:', ubicacionData);
+                console.log('📍 Ubicación obtenida exitosamente:', ubicacionData);
             } catch (error) {
-                console.log('📍 No se pudo obtener ubicación:', error);
-                // Continuar sin ubicación
+                console.error('❌ Error obteniendo ubicación:', error);
+                console.error('❌ Error message:', error.message);
+                console.error('❌ Error stack:', error.stack);
+                
+                // Mostrar advertencia al usuario
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Sin ubicación GPS',
+                    html: `
+                        <p>No se pudo obtener tu ubicación GPS.</p>
+                        <p class="text-sm text-gray-600 mt-2">Motivo: ${error.message}</p>
+                        <p class="text-sm text-gray-600 mt-2">El reporte se enviará sin información de ubicación.</p>
+                    `,
+                    confirmButtonText: 'Continuar de todas formas',
+                    confirmButtonColor: '#10b981'
+                });
             }
 
             // Actualizar loading
@@ -1012,16 +1032,43 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             try {
+                // Preparar datos de ubicación y foto
+                const formData = new FormData();
+                
+                if (ubicacionData) {
+                    if (ubicacionData.latitud && ubicacionData.longitud) {
+                        formData.append('latitud', ubicacionData.latitud);
+                        formData.append('longitud', ubicacionData.longitud);
+                        console.log('📍 Enviando coordenadas:', {
+                            lat: ubicacionData.latitud,
+                            lng: ubicacionData.longitud
+                        });
+                    }
+                    if (ubicacionData.direccion) {
+                        formData.append('ubicacion_encontrada', ubicacionData.direccion);
+                        console.log('📍 Enviando dirección:', ubicacionData.direccion);
+                    }
+                }
+                
+                // Agregar foto del reporte si existe
+                if (lastCapturedImage) {
+                    try {
+                        // Convertir base64 a Blob
+                        const blob = await base64ToBlob(lastCapturedImage);
+                        formData.append('foto_reporte', blob, 'reporte_mascota.jpg');
+                        console.log('📸 Foto del reporte agregada al formulario');
+                    } catch (error) {
+                        console.warn('⚠️ No se pudo agregar la foto al reporte:', error);
+                        // Continuar sin foto
+                    }
+                }
+                
                 const response = await fetch(`/perdida/${mascotaUuid}/reportar-encontrada/`, {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken')
                     },
-                    body: JSON.stringify({
-                        ubicacion: ubicacionData
-                    })
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -1075,54 +1122,78 @@ document.addEventListener('DOMContentLoaded', function() {
      * @returns {Promise<Object>} Datos de ubicación
      */
     async function obtenerUbicacionUsuario() {
+        console.log('🔍 obtenerUbicacionUsuario - Iniciando...');
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
+                console.error('❌ Geolocalización NO soportada');
                 reject(new Error('Geolocalización no soportada por el navegador'));
                 return;
             }
 
+            console.log('✅ Geolocalización soportada');
             const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000 // 5 minutos
+                enableHighAccuracy: true, // Forzar uso de GPS para mayor precisión
+                timeout: 20000, // 20 segundos para dar tiempo al GPS
+                maximumAge: 0 // NO usar ubicación cacheada, siempre obtener nueva ubicación
             };
+            console.log('📍 Opciones de geolocalización (alta precisión):', options);
 
+            console.log('📍 Llamando a navigator.geolocation.getCurrentPosition...');
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    console.log('✅ getCurrentPosition - Success callback');
+                    console.log('📍 Position object:', position);
+                    console.log('📍 Coords:', position.coords);
+                    
                     const ubicacion = {
                         latitud: position.coords.latitude,
                         longitud: position.coords.longitude,
                         precision: position.coords.accuracy,
                         timestamp: new Date().toISOString()
                     };
+                    
+                    console.log('✅ Ubicación construida:', ubicacion);
 
                     // Intentar obtener dirección legible
+                    console.log('🔍 Intentando geocodificación inversa...');
                     obtenerDireccionPorCoordenadas(ubicacion.latitud, ubicacion.longitud)
                         .then(direccion => {
+                            console.log('✅ Dirección obtenida:', direccion);
                             ubicacion.direccion = direccion;
+                            console.log('✅ Resolviendo con ubicacion completa:', ubicacion);
                             resolve(ubicacion);
                         })
-                        .catch(() => {
+                        .catch((geocodeError) => {
+                            console.warn('⚠️ Geocodificación falló:', geocodeError);
                             // Si falla la geocodificación inversa, devolver solo coordenadas
+                            console.log('✅ Resolviendo con solo coordenadas:', ubicacion);
                             resolve(ubicacion);
                         });
                 },
                 (error) => {
-                    console.error('Error obteniendo ubicación:', error);
+                    console.error('❌ getCurrentPosition - Error callback');
+                    console.error('❌ Error code:', error.code);
+                    console.error('❌ Error message:', error.message);
+                    console.error('❌ Error object:', error);
+                    
                     let mensaje = 'Error desconocido';
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            mensaje = 'Permisos de ubicación denegados';
+                            mensaje = 'Permisos de ubicación denegados. Por favor, permite el acceso a tu ubicación en la configuración del navegador.';
+                            console.error('❌ Usuario denegó permisos');
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            mensaje = 'Ubicación no disponible';
+                            mensaje = 'Ubicación no disponible. Asegúrate de que el GPS esté activado.';
+                            console.error('❌ Posición no disponible');
                             break;
                         case error.TIMEOUT:
-                            mensaje = 'Tiempo de espera agotado';
+                            mensaje = 'Tiempo de espera agotado. Intenta de nuevo.';
+                            console.error('❌ Timeout obteniendo ubicación');
                             break;
                     }
                     
+                    console.error('❌ Rechazando promise con:', mensaje);
                     reject(new Error(mensaje));
                 },
                 options

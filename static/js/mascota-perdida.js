@@ -9,7 +9,7 @@
  * @param {string} mascotaNombre - Nombre de la mascota
  */
 async function reportarMascotaPerdida(mascotaId, mascotaNombre) {
-    // Mostrar modal de confirmación con opción de ubicación
+    // Mostrar modal de confirmación con opción de ubicación y geolocalización
     const { value: formValues } = await Swal.fire({
         title: `¿Reportar ${mascotaNombre} como perdida?`,
         html: `
@@ -19,14 +19,32 @@ async function reportarMascotaPerdida(mascotaId, mascotaNombre) {
                     para ayudar en la búsqueda de ${mascotaNombre}.
                 </p>
                 <label for="ubicacion-perdida" class="block text-sm font-medium text-gray-700 mb-2">
-                    Ubicación donde se perdió (opcional):
+                    Ubicación donde se perdió:
                 </label>
                 <input 
                     id="ubicacion-perdida" 
                     type="text" 
                     class="swal2-input w-full" 
                     placeholder="Ej: Cerca del parque central, Barrio Los Álamos..."
-                    maxlength="255">
+                    maxlength="255"
+                    required>
+                
+                <div class="mt-4">
+                    <label class="flex items-center justify-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            id="usar-ubicacion-actual" 
+                            class="w-5 h-5 text-blue-600 rounded"
+                            checked>
+                        <span class="text-sm text-gray-700">
+                            <i class="fas fa-map-marker-alt text-blue-500"></i>
+                            Usar mi ubicación actual para mostrar en el mapa
+                        </span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-2 text-center">
+                        Esto ayudará a otros usuarios a ver dónde se perdió tu mascota
+                    </p>
+                </div>
             </div>
         `,
         focusConfirm: false,
@@ -36,14 +54,61 @@ async function reportarMascotaPerdida(mascotaId, mascotaNombre) {
         confirmButtonColor: '#dc2626',
         cancelButtonColor: '#6b7280',
         preConfirm: () => {
+            const ubicacion = document.getElementById('ubicacion-perdida').value.trim();
+            const usarUbicacion = document.getElementById('usar-ubicacion-actual').checked;
+            
+            if (!ubicacion) {
+                Swal.showValidationMessage('Por favor, describe dónde se perdió tu mascota');
+                return false;
+            }
+            
             return {
-                ubicacion: document.getElementById('ubicacion-perdida').value.trim()
+                ubicacion: ubicacion,
+                usarUbicacion: usarUbicacion
             };
         }
     });
 
     if (formValues) {
-        // Mostrar loading
+        // Si el usuario quiere usar su ubicación actual, obtenerla primero
+        let coordenadas = null;
+        
+        if (formValues.usarUbicacion) {
+            // Mostrar loading mientras obtenemos ubicación
+            Swal.fire({
+                title: 'Obteniendo ubicación...',
+                html: 'Por favor, permite el acceso a tu ubicación',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            try {
+                coordenadas = await obtenerUbicacionActual();
+                console.log('📍 Ubicación obtenida:', coordenadas);
+            } catch (error) {
+                console.error('Error obteniendo ubicación:', error);
+                // Continuar sin ubicación si hay error
+                const continuarSinUbicacion = await Swal.fire({
+                    title: 'No se pudo obtener ubicación',
+                    text: '¿Deseas continuar sin agregar la ubicación al mapa?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, continuar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280'
+                });
+                
+                if (!continuarSinUbicacion.isConfirmed) {
+                    return;
+                }
+            }
+        }
+        
+        // Mostrar loading final
         Swal.fire({
             title: 'Reportando mascota perdida...',
             html: 'Enviando alertas a todos los usuarios...',
@@ -57,8 +122,13 @@ async function reportarMascotaPerdida(mascotaId, mascotaNombre) {
         try {
             const formData = new FormData();
             formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
-            if (formValues.ubicacion) {
-                formData.append('ubicacion_perdida', formValues.ubicacion);
+            formData.append('ubicacion_perdida', formValues.ubicacion);
+            
+            // Agregar coordenadas si se obtuvieron
+            if (coordenadas) {
+                formData.append('latitud', coordenadas.lat);
+                formData.append('longitud', coordenadas.lng);
+                console.log('📤 Enviando coordenadas:', coordenadas);
             }
 
             const response = await fetch(`/mascota/${mascotaId}/reportar-perdida/`, {
@@ -274,6 +344,55 @@ async function reportarMascotaEncontrada(mascotaUuid, mascotaNombre) {
             });
         }
     }
+}
+
+/**
+ * Obtiene la ubicación actual del usuario usando Geolocation API
+ * @returns {Promise<Object>} Objeto con lat y lng
+ */
+function obtenerUbicacionActual() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocalización no disponible en este navegador'));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                console.log('📍 Ubicación obtenida:', {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                });
+                resolve({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                });
+            },
+            (error) => {
+                console.error('❌ Error de geolocalización:', error);
+                let errorMessage = 'Error obteniendo ubicación';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Permiso de ubicación denegado. Por favor, permite el acceso a tu ubicación en la configuración del navegador.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Ubicación no disponible. Asegúrate de que el GPS esté activado.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Tiempo de espera agotado obteniendo ubicación precisa. Intenta de nuevo.';
+                        break;
+                }
+                reject(new Error(errorMessage));
+            },
+            {
+                enableHighAccuracy: true, // Forzar uso de GPS para mayor precisión
+                timeout: 20000, // 20 segundos para dar tiempo al GPS
+                maximumAge: 0 // NO usar ubicación cacheada, siempre obtener nueva
+            }
+        );
+    });
 }
 
 /**

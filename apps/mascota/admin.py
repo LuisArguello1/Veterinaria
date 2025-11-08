@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from apps.mascota.models import Mascota, ImagenMascota, ModeloGlobal, EmbeddingStore, RegistroReconocimiento
+from apps.mascota.models import Mascota, ImagenMascota, ModeloGlobal, EmbeddingStore, RegistroReconocimiento, ReporteMascotaEncontrada
 
 # Registro de modelos para el panel administrativo
 
@@ -144,3 +144,58 @@ class RegistroReconocimientoAdmin(admin.ModelAdmin):
     mascota_predicha_nombre.short_description = 'Mascota'
     confianza_percent.short_description = 'Confianza'
     preview_imagen.short_description = 'Imagen'
+
+
+@admin.register(ReporteMascotaEncontrada)
+class ReporteMascotaEncontradaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'mascota_nombre', 'estado', 'reportado_por_nombre', 'fecha_reporte', 'preview_foto')
+    list_filter = ('estado', 'fecha_reporte')
+    search_fields = ('mascota__nombre', 'reportado_por__username', 'reportado_por__email', 'ubicacion_descripcion')
+    readonly_fields = ('fecha_reporte', 'preview_foto_grande', 'ip_address', 'user_agent', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Información del Reporte', {
+            'fields': ('mascota', 'estado', 'fecha_reporte')
+        }),
+        ('Ubicación', {
+            'fields': ('latitud', 'longitud', 'ubicacion_descripcion')
+        }),
+        ('Foto del Reporte', {
+            'fields': ('foto_reporte', 'preview_foto_grande')
+        }),
+        ('Información del Reportante', {
+            'fields': ('reportado_por', 'nombre_reportante', 'telefono_reportante', 'email_reportante', 'ip_address', 'user_agent')
+        }),
+        ('Revisión del Propietario', {
+            'fields': ('notas_propietario', 'fecha_revision')
+        }),
+        ('Metadatos', {
+            'classes': ('collapse',),
+            'fields': ('metadata', 'created_at', 'updated_at')
+        }),
+    )
+    
+    def mascota_nombre(self, obj):
+        if obj.mascota:
+            return obj.mascota.nombre
+        return "-"
+    
+    def reportado_por_nombre(self, obj):
+        if obj.reportado_por:
+            return obj.reportado_por.username
+        return "Anónimo"
+    
+    def preview_foto(self, obj):
+        if obj.foto_reporte:
+            return format_html('<img src="{}" height="50" />', obj.foto_reporte.url)
+        return "Sin foto"
+    
+    def preview_foto_grande(self, obj):
+        if obj.foto_reporte:
+            return format_html('<img src="{}" height="200" />', obj.foto_reporte.url)
+        return "Sin foto"
+    
+    mascota_nombre.short_description = 'Mascota'
+    reportado_por_nombre.short_description = 'Reportado por'
+    preview_foto.short_description = 'Foto'
+    preview_foto_grande.short_description = 'Vista previa de foto'
