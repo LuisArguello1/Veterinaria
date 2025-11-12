@@ -1222,3 +1222,745 @@ document.addEventListener('DOMContentLoaded', function() {
             return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         }
     }
+
+    // ============================================
+    // SCANNER CONTINUO - Reconocimiento en tiempo real
+    // ============================================
+    
+    let continuousScannerStream = null;
+    let continuousScannerInterval = null;
+    let continuousScannerActive = false;
+    let continuousAnalysisCount = 0;
+    let isAnalyzing = false;
+    
+    /**
+     * Inicializa el scanner continuo
+     */
+    function initContinuousScanner() {
+        const video = document.getElementById('scanner-continuous-video');
+        const toggleBtn = document.getElementById('scanner-continuous-toggle');
+        const intervalSlider = document.getElementById('scanner-continuous-interval');
+        const intervalValue = document.getElementById('scanner-interval-value');
+        const tabButtons = document.querySelectorAll('.scan-tab-btn');
+        
+        if (!video || !toggleBtn) {
+            console.warn('Elementos del scanner continuo no encontrados');
+            return;
+        }
+        
+        // Actualizar valor del intervalo cuando se mueve el slider
+        if (intervalSlider && intervalValue) {
+            intervalSlider.addEventListener('input', (e) => {
+                intervalValue.textContent = e.target.value;
+            });
+        }
+        
+        // Evento del botón de toggle
+        toggleBtn.addEventListener('click', async () => {
+            if (!continuousScannerActive) {
+                await startContinuousScanning();
+            } else {
+                stopContinuousScanning();
+            }
+        });
+        
+        // Detectar cambio de pestaña para detener el scanner
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const target = button.dataset.target;
+                if (target !== 'continuous-tab' && continuousScannerActive) {
+                    stopContinuousScanning();
+                }
+            });
+        });
+        
+        // NO inicializar la cámara automáticamente cuando se activa la pestaña
+        // El usuario debe presionar "Iniciar escaneo" para comenzar
+        
+        // Configurar el botón de reiniciar
+        const resetBtn = document.getElementById('scanner-continuous-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                resetContinuousScanner();
+            });
+        }
+        
+        // Configurar selector de cámaras
+        const cameraSelect = document.getElementById('scanner-continuous-camera-select');
+        const switchCameraBtn = document.getElementById('scanner-continuous-switch-camera');
+        
+        if (cameraSelect && switchCameraBtn) {
+            switchCameraBtn.addEventListener('click', async () => {
+                const selectedDeviceId = cameraSelect.value;
+                if (selectedDeviceId) {
+                    await switchContinuousCamera(selectedDeviceId);
+                }
+            });
+            
+            cameraSelect.addEventListener('change', async () => {
+                const selectedDeviceId = cameraSelect.value;
+                if (selectedDeviceId && continuousScannerStream) {
+                    await switchContinuousCamera(selectedDeviceId);
+                }
+            });
+        }
+    }
+    
+    /**
+     * Inicializa la cámara para el scanner continuo
+     */
+    async function initContinuousCamera(deviceId = null) {
+        const video = document.getElementById('scanner-continuous-video');
+        const toggleBtn = document.getElementById('scanner-continuous-toggle');
+        const cameraSelectContainer = document.getElementById('scanner-continuous-camera-select-container');
+        const cameraSelect = document.getElementById('scanner-continuous-camera-select');
+        const switchCameraBtn = document.getElementById('scanner-continuous-switch-camera');
+        
+        if (!video) {
+            return;
+        }
+        
+        try {
+            // Configuración del video
+            const constraints = { 
+                video: deviceId ? { deviceId: { exact: deviceId } } : {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            video.srcObject = stream;
+            continuousScannerStream = stream;
+            
+            // Listar cámaras disponibles
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            if (videoDevices.length > 1 && cameraSelect && cameraSelectContainer) {
+                // Limpiar opciones existentes
+                cameraSelect.innerHTML = '';
+                
+                // Agregar opciones de cámaras
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Cámara ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+                
+                // Seleccionar la cámara actual
+                const currentTrack = stream.getVideoTracks()[0];
+                const currentDeviceId = currentTrack.getSettings().deviceId;
+                cameraSelect.value = currentDeviceId;
+                
+                // Mostrar selector de cámaras
+                cameraSelectContainer.style.display = 'block';
+                if (switchCameraBtn) {
+                    switchCameraBtn.disabled = false;
+                }
+            }
+            
+            // El botón ya está habilitado por defecto, no necesitamos hacer nada más
+            
+        } catch (error) {
+            console.error('Error al inicializar cámara continua:', error);
+            showMessage('No se pudo acceder a la cámara. Verifica los permisos.', 'error');
+            throw error; // Re-lanzar el error para manejarlo en startContinuousScanning
+        }
+    }
+    
+    /**
+     * Cambia la cámara del scanner continuo
+     */
+    async function switchContinuousCamera(deviceId) {
+        const video = document.getElementById('scanner-continuous-video');
+        
+        // Detener stream actual
+        if (continuousScannerStream) {
+            const tracks = continuousScannerStream.getTracks();
+            tracks.forEach(track => track.stop());
+            continuousScannerStream = null;
+        }
+        
+        // Inicializar con nueva cámara
+        await initContinuousCamera(deviceId);
+    }
+    
+    /**
+     * Inicia el escaneo continuo
+     */
+    async function startContinuousScanning() {
+        const video = document.getElementById('scanner-continuous-video');
+        const toggleBtn = document.getElementById('scanner-continuous-toggle');
+        const toggleText = document.getElementById('scanner-continuous-toggle-text');
+        const intervalSlider = document.getElementById('scanner-continuous-interval');
+        const resultDiv = document.getElementById('scanner-continuous-result');
+        
+        // Inicializar cámara si no está activa
+        if (!video || !video.srcObject) {
+            toggleBtn.disabled = true;
+            toggleBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Iniciando cámara...';
+            
+            try {
+                await initContinuousCamera();
+                
+                if (!video || !video.srcObject) {
+                    throw new Error('No se pudo obtener stream de video');
+                }
+                
+                // Esperar a que el video esté completamente cargado
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Timeout al cargar video')), 10000);
+                    
+                    if (video.readyState >= 2) {
+                        clearTimeout(timeout);
+                        resolve();
+                    } else {
+                        video.onloadedmetadata = () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        };
+                    }
+                });
+            } catch (error) {
+                console.error('Error al iniciar cámara:', error);
+                showMessage('No se pudo iniciar la cámara. Verifica los permisos.', 'error');
+                
+                // Restaurar botón a estado inicial
+                toggleBtn.disabled = false;
+                toggleBtn.innerHTML = '<i class="fas fa-play mr-2"></i> <span id="scanner-continuous-toggle-text">Iniciar escaneo</span>';
+                return;
+            }
+        }
+        
+        continuousScannerActive = true;
+        continuousAnalysisCount = 0;
+        updateAnalysisCount();
+        
+        // Actualizar botón
+        if (toggleBtn) {
+            toggleBtn.disabled = false; // Asegurar que esté habilitado
+            toggleBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+            toggleBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            toggleBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> <span id="scanner-continuous-toggle-text">Detener escaneo</span>';
+        }
+        
+        // Deshabilitar slider durante el escaneo
+        if (intervalSlider) {
+            intervalSlider.disabled = true;
+        }
+        
+        // Mostrar resultado overlay con mensaje inicial
+        if (resultDiv) {
+            resultDiv.classList.remove('hidden');
+            const petNameEl = document.getElementById('scanner-continuous-pet-name');
+            const petInfoEl = document.getElementById('scanner-continuous-pet-info');
+            const statusIconEl = document.getElementById('scanner-continuous-status-icon');
+            
+            if (petNameEl && petInfoEl && statusIconEl) {
+                petNameEl.textContent = '🔍 Iniciando escaneo...';
+                petInfoEl.innerHTML = '<p class="text-blue-600"><i class="fas fa-radar mr-1"></i> Buscando mascotas...</p>';
+                statusIconEl.innerHTML = '<i class="fas fa-circle-notch fa-spin text-blue-500"></i>';
+            }
+        }
+        
+        // Iniciar captura periódica
+        const interval = parseFloat(intervalSlider?.value || 3) * 1000;
+        continuousScannerInterval = setInterval(() => {
+            if (continuousScannerActive && !isAnalyzing) {
+                captureAndRecognizeFrame();
+            }
+        }, interval);
+        
+        // Hacer primera captura inmediatamente
+        captureAndRecognizeFrame();
+    }
+    
+    /**
+     * Detiene el escaneo continuo
+     */
+    function stopContinuousScanning() {
+        const toggleBtn = document.getElementById('scanner-continuous-toggle');
+        const intervalSlider = document.getElementById('scanner-continuous-interval');
+        const analyzingIndicator = document.getElementById('scanner-analyzing-indicator');
+        const recognitionResult = document.getElementById('recognition-result');
+        
+        continuousScannerActive = false;
+        
+        if (continuousScannerInterval) {
+            clearInterval(continuousScannerInterval);
+            continuousScannerInterval = null;
+        }
+        
+        // Actualizar botón
+        if (toggleBtn) {
+            toggleBtn.disabled = false; // Asegurar que esté habilitado
+            toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            toggleBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+            toggleBtn.innerHTML = '<i class="fas fa-play mr-2"></i> <span id="scanner-continuous-toggle-text">Iniciar escaneo</span>';
+        }
+        
+        // Habilitar slider
+        if (intervalSlider) {
+            intervalSlider.disabled = false;
+        }
+        
+        // Ocultar indicador de análisis
+        if (analyzingIndicator) {
+            analyzingIndicator.style.display = 'none';
+        }
+        
+        // Resetear atributo de scroll para permitir scroll en próximo inicio
+        if (recognitionResult) {
+            recognitionResult.removeAttribute('data-scrolled');
+        }
+        
+        // Resetear estado de análisis
+        isAnalyzing = false;
+        
+        // Resetear resultado
+        resetContinuousResult();
+    }
+    
+    /**
+     * Captura un frame del video y lo envía para reconocimiento
+     */
+    async function captureAndRecognizeFrame() {
+        if (isAnalyzing || !continuousScannerActive) {
+            return;
+        }
+        
+        const video = document.getElementById('scanner-continuous-video');
+        const canvas = document.getElementById('scanner-canvas');
+        const analyzingIndicator = document.getElementById('scanner-analyzing-indicator');
+        
+        if (!video || !canvas) {
+            return;
+        }
+        
+        isAnalyzing = true;
+        
+        // Mostrar indicador de análisis
+        if (analyzingIndicator) {
+            analyzingIndicator.style.display = 'flex';
+        }
+        
+        try {
+            // Capturar frame
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            // Convertir a base64
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Enviar al endpoint existente
+            const formData = new FormData();
+            formData.append('imagen', dataURItoBlob(imageData), 'frame.jpg');
+            
+            const response = await fetch('/scanner/upload-recognition/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Incrementar contador
+            continuousAnalysisCount++;
+            updateAnalysisCount();
+            
+            // Mostrar resultado
+            if (data.success) {
+                displayContinuousResult(data);
+            } else {
+                displayContinuousNoMatch();
+            }
+            
+        } catch (error) {
+            console.error('Error en captura y reconocimiento:', error);
+            displayContinuousError();
+        } finally {
+            isAnalyzing = false;
+            // Ocultar indicador de análisis
+            if (analyzingIndicator) {
+                analyzingIndicator.style.display = 'none';
+            }
+        }
+    }
+    
+    /**
+     * Muestra el resultado del reconocimiento en tiempo real
+     */
+    function displayContinuousResult(data) {
+        // Ocultar el overlay del video temporalmente
+        const overlayResult = document.getElementById('scanner-continuous-result');
+        if (overlayResult) {
+            overlayResult.classList.add('hidden');
+        }
+        
+        // Obtener referencias a los elementos de UI
+        const recognitionResult = document.getElementById('recognition-result');
+        const resultLoading = document.getElementById('result-loading');
+        const resultSuccess = document.getElementById('result-success');
+        const resultError = document.getElementById('result-error');
+        
+        // Mostrar sección de resultados (sin loading, directo)
+        if (recognitionResult) recognitionResult.classList.remove('hidden');
+        if (resultLoading) resultLoading.classList.add('hidden');
+        if (resultError) resultError.classList.add('hidden');
+        
+        if (data.success) {
+            const reconocimiento = data.reconocimiento;
+            
+            if (reconocimiento && reconocimiento.exito) {
+                // Mostrar resultado exitoso
+                if (resultSuccess) resultSuccess.classList.remove('hidden');
+                
+                const mascota = data.mascota;
+                const propietario = data.propietario;
+                
+                // Actualizar información principal de la mascota
+                const nombreEl = document.getElementById('result-nombre');
+                if (nombreEl) nombreEl.textContent = mascota.nombre || 'Sin nombre';
+                
+                // Solo raza (sin especie)
+                const razaTexto = mascota.raza || 'Sin raza específica';
+                const razaEl = document.getElementById('result-raza');
+                if (razaEl) {
+                    const spanEl = razaEl.querySelector('span');
+                    if (spanEl) spanEl.textContent = razaTexto;
+                }
+                
+                // Edad y peso
+                const edadTexto = mascota.edad ? `${mascota.edad} años` : 'Edad desconocida';
+                const pesoTexto = mascota.peso ? `${mascota.peso} kg` : 'Peso no registrado';
+                const edadPesoEl = document.getElementById('result-edad-peso');
+                if (edadPesoEl) {
+                    const spanEl = edadPesoEl.querySelector('span');
+                    if (spanEl) spanEl.textContent = `${edadTexto} • ${pesoTexto}`;
+                }
+                
+                // Foto de la mascota
+                const fotoMascota = document.getElementById('result-foto-mascota');
+                const iconoMascota = document.getElementById('result-icono-mascota');
+                if (fotoMascota && iconoMascota) {
+                    if (mascota.foto_perfil) {
+                        fotoMascota.src = mascota.foto_perfil;
+                        fotoMascota.classList.remove('hidden');
+                        iconoMascota.classList.add('hidden');
+                    } else {
+                        fotoMascota.classList.add('hidden');
+                        iconoMascota.classList.remove('hidden');
+                    }
+                }
+                
+                // Información del propietario
+                if (propietario) {
+                    const propNombreEl = document.getElementById('result-propietario-nombre');
+                    if (propNombreEl) propNombreEl.textContent = propietario.nombre_completo || 'Sin nombre';
+                    
+                    const propEmailEl = document.getElementById('result-propietario-email');
+                    if (propEmailEl) {
+                        const spanEl = propEmailEl.querySelector('span');
+                        if (spanEl) spanEl.textContent = propietario.email || 'Sin email';
+                    }
+                    
+                    const propTelEl = document.getElementById('result-propietario-telefono');
+                    if (propTelEl) {
+                        const spanEl = propTelEl.querySelector('span');
+                        if (spanEl) spanEl.textContent = propietario.telefono || 'Sin teléfono';
+                    }
+                    
+                    // Foto del propietario
+                    const fotoPropietario = document.getElementById('result-foto-propietario');
+                    const iconoPropietario = document.getElementById('result-icono-propietario');
+                    if (fotoPropietario && iconoPropietario) {
+                        if (propietario.foto_perfil) {
+                            fotoPropietario.src = propietario.foto_perfil;
+                            fotoPropietario.classList.remove('hidden');
+                            iconoPropietario.classList.add('hidden');
+                        } else {
+                            fotoPropietario.classList.add('hidden');
+                            iconoPropietario.classList.remove('hidden');
+                        }
+                    }
+                }
+                
+                // Detalles adicionales
+                const colorEl = document.getElementById('result-color');
+                if (colorEl) colorEl.textContent = mascota.color || '-';
+                
+                const generoEl = document.getElementById('result-genero');
+                if (generoEl) generoEl.textContent = mascota.genero || '-';
+                
+                const etapaEl = document.getElementById('result-etapa-vida');
+                if (etapaEl) etapaEl.textContent = mascota.etapa_vida || '-';
+                
+                const estadoEl = document.getElementById('result-estado-salud');
+                if (estadoEl) estadoEl.textContent = mascota.estado_salud || 'Normal';
+                
+                // Confianza y tiempo
+                const confianzaEl = document.getElementById('result-confianza');
+                if (confianzaEl && reconocimiento.confianza !== undefined) {
+                    confianzaEl.textContent = `Confianza: ${(reconocimiento.confianza * 100).toFixed(1)}%`;
+                    
+                    // Actualizar clases de confianza
+                    confianzaEl.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium';
+                    
+                    if (reconocimiento.confianza >= 0.9) {
+                        confianzaEl.classList.add('bg-green-100', 'text-green-800');
+                    } else if (reconocimiento.confianza >= 0.7) {
+                        confianzaEl.classList.add('bg-blue-100', 'text-blue-800');
+                    } else {
+                        confianzaEl.classList.add('bg-yellow-100', 'text-yellow-800');
+                    }
+                }
+                
+                const tiempoEl = document.getElementById('result-tiempo');
+                if (tiempoEl && reconocimiento.tiempo_procesamiento !== undefined) {
+                    tiempoEl.textContent = `${reconocimiento.tiempo_procesamiento.toFixed(2)}s`;
+                }
+                
+                // Mensaje de éxito personalizado
+                const mensajeEl = document.getElementById('result-success-message');
+                if (mensajeEl) {
+                    mensajeEl.textContent = reconocimiento.mensaje || `¡${mascota.nombre} identificado exitosamente!`;
+                }
+                
+                // Verificar si la mascota está perdida y mostrar alerta
+                if (data.mascota_perdida) {
+                    currentMascotaUuid = mascota.uuid;
+                    currentMascotaNombre = mascota.nombre;
+                    if (typeof mostrarAlertaMascotaPerdida === 'function') {
+                        mostrarAlertaMascotaPerdida();
+                    }
+                } else {
+                    currentMascotaUuid = null;
+                    currentMascotaNombre = null;
+                    if (typeof ocultarAlertaMascotaPerdida === 'function') {
+                        ocultarAlertaMascotaPerdida();
+                    }
+                }
+                
+                // Hacer scroll suave hacia los resultados (solo la primera vez)
+                setTimeout(() => {
+                    if (recognitionResult && !recognitionResult.hasAttribute('data-scrolled')) {
+                        recognitionResult.setAttribute('data-scrolled', 'true');
+                        recognitionResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+            } else {
+                // No se pudo reconocer con suficiente confianza
+                displayContinuousNoMatch();
+            }
+        } else {
+            // Error en la respuesta
+            displayContinuousNoMatch();
+        }
+    }
+    
+    /**
+     * Muestra mensaje cuando no hay coincidencia
+     */
+    function displayContinuousNoMatch() {
+        // Mostrar en el overlay (mensaje temporal)
+        const petNameEl = document.getElementById('scanner-continuous-pet-name');
+        const petInfoEl = document.getElementById('scanner-continuous-pet-info');
+        const statusIconEl = document.getElementById('scanner-continuous-status-icon');
+        const resultDiv = document.getElementById('scanner-continuous-result');
+        
+        if (petNameEl && petInfoEl && statusIconEl) {
+            petNameEl.textContent = 'No se pudo reconocer';
+            petInfoEl.innerHTML = '<p class="text-gray-600"><i class="fas fa-search mr-1"></i> Seguiremos intentando detectar una mascota...</p>';
+            statusIconEl.innerHTML = '<i class="fas fa-search text-blue-500"></i>';
+            
+            // Mostrar el overlay brevemente
+            if (resultDiv) {
+                resultDiv.classList.remove('hidden');
+            }
+        }
+        
+        // NO ocultar el panel de resultados si ya hay una mascota detectada previamente
+        // Esto mantiene la información de la última mascota reconocida
+    }
+    
+    /**
+     * Muestra mensaje de error
+     */
+    function displayContinuousError() {
+        // Mostrar en el overlay (mensaje temporal)
+        const petNameEl = document.getElementById('scanner-continuous-pet-name');
+        const petInfoEl = document.getElementById('scanner-continuous-pet-info');
+        const statusIconEl = document.getElementById('scanner-continuous-status-icon');
+        const resultDiv = document.getElementById('scanner-continuous-result');
+        
+        if (petNameEl && petInfoEl && statusIconEl) {
+            petNameEl.textContent = 'No se pudo reconocer';
+            petInfoEl.innerHTML = '<p class="text-orange-600"><i class="fas fa-exclamation-circle mr-1"></i> Continuaremos intentando...</p>';
+            statusIconEl.innerHTML = '<i class="fas fa-redo text-orange-500"></i>';
+            
+            // Mostrar el overlay brevemente
+            if (resultDiv) {
+                resultDiv.classList.remove('hidden');
+            }
+        }
+        
+        // NO ocultar el panel de resultados si ya hay una mascota detectada previamente
+        // Esto mantiene la información de la última mascota reconocida
+    }
+    
+    /**
+     * Resetea el resultado continuo
+     */
+    function resetContinuousResult() {
+        const petNameEl = document.getElementById('scanner-continuous-pet-name');
+        const petInfoEl = document.getElementById('scanner-continuous-pet-info');
+        const statusIconEl = document.getElementById('scanner-continuous-status-icon');
+        const overlayResultDiv = document.getElementById('scanner-continuous-result');
+        
+        if (petNameEl && petInfoEl && statusIconEl) {
+            petNameEl.textContent = 'Buscando mascota...';
+            petInfoEl.innerHTML = '<p class="text-gray-500"><i class="fas fa-play-circle mr-1"></i> Presiona iniciar para comenzar</p>';
+            statusIconEl.innerHTML = '<i class="fas fa-paw text-gray-400"></i>';
+        }
+        
+        // Ocultar el overlay del video
+        if (overlayResultDiv) {
+            overlayResultDiv.classList.add('hidden');
+        }
+        
+        // NO ocultar el panel principal de resultados
+        // Esto permite que la información de la última mascota detectada permanezca visible
+    }
+    
+    /**
+     * Actualiza el contador de análisis
+     */
+    function updateAnalysisCount() {
+        const countEl = document.getElementById('scanner-continuous-count');
+        if (countEl) {
+            countEl.textContent = continuousAnalysisCount;
+        }
+    }
+    
+    /**
+     * Reinicia completamente el scanner continuo
+     */
+    function resetContinuousScanner() {
+        // Detener el escaneo si está activo
+        if (continuousScannerActive) {
+            stopContinuousScanning();
+        }
+        
+        // Detener la cámara
+        const video = document.getElementById('scanner-continuous-video');
+        if (continuousScannerStream) {
+            const tracks = continuousScannerStream.getTracks();
+            tracks.forEach(track => track.stop());
+            continuousScannerStream = null;
+        }
+        
+        if (video) {
+            video.srcObject = null;
+        }
+        
+        // Resetear contador
+        continuousAnalysisCount = 0;
+        updateAnalysisCount();
+        
+        // Resetear botón
+        const toggleBtn = document.getElementById('scanner-continuous-toggle');
+        if (toggleBtn) {
+            toggleBtn.disabled = false;
+            toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            toggleBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+            toggleBtn.innerHTML = '<i class="fas fa-play mr-2"></i> <span id="scanner-continuous-toggle-text">Iniciar escaneo</span>';
+        }
+        
+        // Resetear slider
+        const intervalSlider = document.getElementById('scanner-continuous-interval');
+        if (intervalSlider) {
+            intervalSlider.value = 3;
+            intervalSlider.disabled = false;
+        }
+        
+        const intervalValue = document.getElementById('scanner-interval-value');
+        if (intervalValue) {
+            intervalValue.textContent = '3';
+        }
+        
+        // Ocultar selector de cámaras
+        const cameraSelectContainer = document.getElementById('scanner-continuous-camera-select-container');
+        if (cameraSelectContainer) {
+            cameraSelectContainer.style.display = 'none';
+        }
+        
+        // Ocultar overlay de resultados
+        const overlayResult = document.getElementById('scanner-continuous-result');
+        if (overlayResult) {
+            overlayResult.classList.add('hidden');
+        }
+        
+        // Ocultar panel de resultados
+        const recognitionResult = document.getElementById('recognition-result');
+        if (recognitionResult) {
+            recognitionResult.classList.add('hidden');
+            recognitionResult.removeAttribute('data-scrolled');
+        }
+        
+        // Ocultar indicador de análisis
+        const analyzingIndicator = document.getElementById('scanner-analyzing-indicator');
+        if (analyzingIndicator) {
+            analyzingIndicator.style.display = 'none';
+        }
+        
+        // Resetear estados
+        continuousScannerActive = false;
+        isAnalyzing = false;
+        
+        showMessage('Scanner continuo reiniciado', 'success');
+    }
+    
+    /**
+     * Convierte data URI a Blob
+     */
+    function dataURItoBlob(dataURI) {
+        const byteString = atob(dataURI.split(',')[1]);
+        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+    }
+    
+    /**
+     * Obtiene cookie por nombre (para CSRF token)
+     */
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Inicializar el scanner continuo cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+        initContinuousScanner();
+    });

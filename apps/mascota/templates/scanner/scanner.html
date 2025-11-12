@@ -87,13 +87,16 @@
                 
                 <div class="mb-5">
                     <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                        <!-- Pestañas para cambiar entre cámara y subida -->
+                        <!-- Pestañas para cambiar entre cámara, scanner continuo y subida -->
                         <div class="bg-gray-100 rounded-lg p-1 flex mb-4 md:mb-0 w-full md:w-auto">
-                            <button type="button" class="scan-tab-btn active flex-1 md:flex-initial py-2 px-4 rounded-md bg-white shadow-sm text-sm font-medium" data-target="camera-tab">
-                                <i class="fas fa-camera mr-1"></i> Cámara
+                            <button type="button" class="scan-tab-btn active flex-1 md:flex-initial py-2 px-3 rounded-md bg-white shadow-sm text-xs sm:text-sm font-medium" data-target="camera-tab">
+                                <i class="fas fa-camera mr-1"></i> <span class="hidden sm:inline">Cámara</span><span class="sm:hidden">Foto</span>
                             </button>
-                            <button type="button" class="scan-tab-btn flex-1 md:flex-initial py-2 px-4 rounded-md text-gray-700 hover:text-gray-900 text-sm font-medium" data-target="upload-tab">
-                                <i class="fas fa-upload mr-1"></i> Subir imagen
+                            <button type="button" class="scan-tab-btn flex-1 md:flex-initial py-2 px-3 rounded-md text-gray-700 hover:text-gray-900 text-xs sm:text-sm font-medium" data-target="continuous-tab">
+                                <i class="fas fa-video mr-1"></i> <span class="hidden sm:inline">Scanner Continuo</span><span class="sm:hidden">Video</span>
+                            </button>
+                            <button type="button" class="scan-tab-btn flex-1 md:flex-initial py-2 px-3 rounded-md text-gray-700 hover:text-gray-900 text-xs sm:text-sm font-medium" data-target="upload-tab">
+                                <i class="fas fa-upload mr-1"></i> <span class="hidden sm:inline">Subir</span><span class="sm:hidden">Archivo</span>
                             </button>
                         </div>
                     </div>
@@ -150,6 +153,100 @@
                                     <button id="scanner-recognize-photo" class="flex-1 bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
                                         <i class="fas fa-search mr-2"></i> Reconocer mascota
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pestaña: Scanner Continuo -->
+                    <div class="scan-tab-content mt-4 hidden" id="continuous-tab">
+                        <!-- Contenedor del video con overlay -->
+                        <div class="relative bg-black rounded-lg overflow-hidden" style="max-height: 400px;">
+                            <video id="scanner-continuous-video" autoplay playsinline class="w-full h-auto max-h-96"></video>
+                            
+                            <!-- Canvas para overlay de detección -->
+                            <canvas id="scanner-continuous-overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                            
+                            <!-- Indicador de análisis -->
+                            <div id="scanner-analyzing-indicator" class="absolute top-4 right-4 bg-blue-600 text-white px-3 py-2 rounded-md text-sm items-center space-x-2" style="display: none;">
+                                <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                <span>Analizando...</span>
+                            </div>
+                            
+                            <!-- Resultado en tiempo real (overlay) -->
+                            <div id="scanner-continuous-result" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 hidden">
+                                <div class="bg-white/95 rounded-lg p-4 backdrop-blur-sm shadow-lg">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <span id="scanner-continuous-status-icon" class="text-3xl">
+                                                <i class="fas fa-circle-notch fa-spin text-gray-400"></i>
+                                            </span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-base font-bold text-gray-900 mb-1" id="scanner-continuous-pet-name">
+                                                Buscando mascota...
+                                            </p>
+                                            <div id="scanner-continuous-info" class="space-y-1 text-xs text-gray-600">
+                                                <p id="scanner-continuous-pet-info">Esperando detección...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Controles -->
+                        <div class="mt-4 space-y-3">
+                            <!-- Selector de cámara -->
+                            <div id="scanner-continuous-camera-select-container" class="bg-gray-50 rounded-md p-3 border border-gray-200" style="display: none;">
+                                <label for="scanner-continuous-camera-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-video mr-1"></i> Seleccionar cámara:
+                                </label>
+                                <div class="flex space-x-2">
+                                    <select id="scanner-continuous-camera-select" class="flex-1 block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md">
+                                        <option value="">Cargando cámaras...</option>
+                                    </select>
+                                    <button id="scanner-continuous-switch-camera" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md flex items-center justify-center text-sm" disabled>
+                                        <i class="fas fa-sync-alt mr-0 sm:mr-2"></i>
+                                        <span class="hidden sm:inline">Cambiar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Botones de control -->
+                            <div class="flex space-x-2">
+                                <!-- Botón de iniciar/detener -->
+                                <button id="scanner-continuous-toggle" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-md flex items-center justify-center font-medium transition-colors">
+                                    <i class="fas fa-play mr-2"></i> <span id="scanner-continuous-toggle-text">Iniciar escaneo</span>
+                                </button>
+                                
+                                <!-- Botón de reiniciar todo -->
+                                <button id="scanner-continuous-reset" class="bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-md flex items-center justify-center font-medium transition-colors" title="Reiniciar todo">
+                                    <i class="fas fa-redo"></i>
+                                    <span class="hidden sm:inline sm:ml-2">Reiniciar</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Configuración del intervalo -->
+                            <div class="bg-gray-50 rounded-md p-3 border border-gray-200">
+                                <label for="scanner-continuous-interval" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-clock mr-1"></i> Intervalo de análisis: <span id="scanner-interval-value" class="text-primary-600 font-semibold">3</span> segundos
+                                </label>
+                                <input type="range" id="scanner-continuous-interval" min="2" max="5" step="0.5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600">
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>2s (Rápido)</span>
+                                    <span>5s (Lento)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Estadísticas -->
+                            <div class="bg-blue-50 rounded-md p-3 border border-blue-200">
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-chart-line text-blue-600"></i>
+                                        <span class="text-gray-700">Análisis realizados:</span>
+                                    </div>
+                                    <span id="scanner-continuous-count" class="font-semibold text-blue-600">0</span>
                                 </div>
                             </div>
                         </div>

@@ -5,3 +5,92 @@
     #scanner-webcam {
         transform: scaleX(-1); /* Efecto espejo para la cámara frontal */
     }
+
+    /* ============================================
+       SCANNER CONTINUO - Estilos
+       ============================================ */
+    
+    #scanner-continuous-video {
+        transform: scaleX(-1); /* Efecto espejo */
+        max-height: 400px;
+        object-fit: cover;
+    }
+    
+    #scanner-continuous-overlay {
+        pointer-events: none;
+    }
+    
+    /* Animación de pulso para resultados */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.02);
+            opacity: 0.95;
+        }
+    }
+    
+    /* Indicador de análisis con animación de brillo */
+    #scanner-analyzing-indicator {
+        backdrop-filter: blur(4px);
+        animation: glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% {
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);
+        }
+    }
+    
+    /* Slider personalizado */
+    #scanner-continuous-interval::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: var(--color-primary-600);
+        cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    
+    #scanner-continuous-interval::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        background: var(--color-primary-700);
+    }
+    
+    #scanner-continuous-interval::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: var(--color-primary-600);
+        cursor: pointer;
+        border-radius: 50%;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    #scanner-continuous-interval::-moz-range-thumb:hover {
+        transform: scale(1.2);
+        background: var(--color-primary-700);
+    }
+    
+    /* Resultado en tiempo real con degradado suave */
+    #scanner-continuous-result {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    /* Efecto de entrada para estadísticas */
+    #scanner-continuous-count {
+        transition: all 0.3s ease;
+    }
+    
+    #scanner-continuous-count:after {
+        content: '';
+        display: inline-block;
+        width: 0;
+        height: 0;
+    }

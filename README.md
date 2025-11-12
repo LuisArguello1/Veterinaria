@@ -9,7 +9,7 @@
 
 ---
 
-## 📑 Índice
+## �📑 Índice
 
 ### 📦 [PARTE 1: GUÍA DE INSTALACIÓN](#parte-1-guía-de-instalación)
 - [📌 Información Importante](#-información-importante)
