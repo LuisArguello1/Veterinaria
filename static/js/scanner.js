@@ -1321,16 +1321,42 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Configuración del video
-            const constraints = { 
-                video: deviceId ? { deviceId: { exact: deviceId } } : {
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            };
+            // Configuración del video - compatible con laptop y móvil
+            let constraints;
+            if (deviceId) {
+                // Si se especifica un dispositivo, usarlo
+                constraints = { 
+                    video: { 
+                        deviceId: { exact: deviceId },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+            } else {
+                // Intentar primero con facingMode para móviles
+                constraints = { 
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+            }
             
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (error) {
+                // Si falla (probablemente en laptop), intentar sin facingMode
+                console.log('Intento con facingMode falló, intentando sin restricciones específicas...');
+                constraints = { 
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+            }
             
             video.srcObject = stream;
             continuousScannerStream = stream;
